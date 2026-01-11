@@ -1,0 +1,4 @@
+            // For mock users: random submissions (1-8). For real users: just mark as active (1)
+            const isMock = row.user_id === userId ? isUserMock : isFriendMock;
+            const random = row.user_id === userId ? userRandom() : friendRandom();
+            const count = isMock ? Math.floor(random * 8) + 1 : 1;
