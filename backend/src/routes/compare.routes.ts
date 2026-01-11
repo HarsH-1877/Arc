@@ -452,32 +452,69 @@ router.get('/:friendId/consistency', authenticate, async (req: AuthRequest, res:
         const isUserMock = mockUserEmails.includes(emailMap.get(userId) || '');
         const isFriendMock = mockUserEmails.includes(emailMap.get(friendId) || '');
 
-        // Create seeded random function for consistent randomness per user
-        const createSeededRandom = (seed: number) => {
-            let current = seed;
-            return () => {
-                const x = Math.sin(current++) * 10000;
-                return x - Math.floor(x);
-            };
-        };
+        // For real users, fetch from daily_submissions table
+        if (!isUserMock || !isFriendMock) {
+            let dailyQuery = `
+                SELECT user_id, date::text as date_str, SUM(submission_count) as count
+                FROM daily_submissions
+                WHERE user_id IN ($1, $2) AND date >= $3`;
 
-        const userRandom = createSeededRandom(userId * 12345);
-        const friendRandom = createSeededRandom(friendId * 12345);
+            const dailyParams: any[] = [userId, friendId, sixMonthsAgo];
 
-        snapshotsResult.rows.forEach(row => {
-            const dateStr = row.date.toISOString().split('T')[0];
-
-            // For mock users: random submissions (1-8). For real users: just mark as active (1)
-            const isMock = row.user_id === userId ? isUserMock : isFriendMock;
-            const random = row.user_id === userId ? userRandom() : friendRandom();
-            const count = isMock ? Math.floor(random * 8) + 1 : 1;
-
-            if (row.user_id === userId) {
-                userDailyActivity.set(dateStr, count);
-            } else {
-                friendDailyActivity.set(dateStr, count);
+            if (platform !== 'overall') {
+                dailyQuery += ` AND platform = $4`;
+                dailyParams.push(platform);
             }
-        });
+
+            dailyQuery += ` GROUP BY user_id, date ORDER BY date ASC`;
+
+            const dailyResult = await pool.query(dailyQuery, dailyParams);
+
+            dailyResult.rows.forEach(row => {
+                const count = parseInt(row.count) || 0;
+                if (row.user_id === userId && !isUserMock) {
+                    userDailyActivity.set(row.date_str, count);
+                } else if (row.user_id === friendId && !isFriendMock) {
+                    friendDailyActivity.set(row.date_str, count);
+                }
+            });
+        }
+
+        // For mock users, use snapshot-based random generation
+        if (isUserMock || isFriendMock) {
+            const createSeededRandom = (seed: number) => {
+                let current = seed;
+                return () => {
+                    const x = Math.sin(current++) * 10000;
+                    return x - Math.floor(x);
+                };
+            };
+
+            if (isUserMock) {
+                // Use platform-specific seed (CF and LC get different data)
+                const platformSeed = userId * 12345 + (platform === 'leetcode' ? 7777 : platform === 'codeforces' ? 3333 : 5555);
+                const userRandom = createSeededRandom(platformSeed);
+                snapshotsResult.rows.forEach(row => {
+                    if (row.user_id !== userId) return;
+                    const dateStr = row.date.toISOString().split('T')[0];
+                    const count = Math.floor(userRandom() * 8) + 1;
+                    userDailyActivity.set(dateStr, count);
+                });
+            }
+
+            if (isFriendMock) {
+                // Use platform-specific seed (CF and LC get different data)
+                const platformSeed = friendId * 12345 + (platform === 'leetcode' ? 7777 : platform === 'codeforces' ? 3333 : 5555);
+                const friendRandom = createSeededRandom(platformSeed);
+                snapshotsResult.rows.forEach(row => {
+                    if (row.user_id !== friendId) return;
+                    const dateStr = row.date.toISOString().split('T')[0];
+                    const count = Math.floor(friendRandom() * 8) + 1;
+                    friendDailyActivity.set(dateStr, count);
+                });
+            }
+        }
+
 
         // Calculate metrics for both users
         const userMetrics = calculateMetrics(userDailyActivity);
