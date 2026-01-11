@@ -38,8 +38,18 @@ export class SnapshotService {
                 change => change.ratingUpdateTimeSeconds >= ninetyDaysAgo
             );
 
-            // Get topic breakdown once
+            // Get topic breakdown and total solved count
             const topicBreakdown = await CodeforcesService.getTopicBreakdown(handle);
+            const submissions = await CodeforcesService.getUserSubmissions(handle, 500);
+
+            // Count unique accepted problems
+            const solvedProblems = new Set<string>();
+            submissions.forEach(sub => {
+                if (sub.verdict === 'OK') {
+                    solvedProblems.add(`${sub.contestId}-${sub.problem.name}`);
+                }
+            });
+            const totalSolved = solvedProblems.size;
 
             let snapshotsCreated = 0;
 
@@ -50,7 +60,7 @@ export class SnapshotService {
                     `INSERT INTO snapshots (user_id, platform, timestamp, rating, total_solved, topic_breakdown)
            VALUES ($1, $2, $3, $4, $5, $6)
            ON CONFLICT (user_id, platform, timestamp) DO NOTHING`,
-                    [userId, 'codeforces', timestamp, change.newRating, 0, JSON.stringify(topicBreakdown)]
+                    [userId, 'codeforces', timestamp, change.newRating, totalSolved, JSON.stringify(topicBreakdown)]
                 );
 
                 snapshotsCreated++;
@@ -63,13 +73,13 @@ export class SnapshotService {
                     user_id: userId,
                     platform: 'codeforces',
                     rating: userInfo.rating,
-                    total_solved: 0, // Will be updated by submission count
+                    total_solved: totalSolved,
                     topic_breakdown: topicBreakdown
                 });
                 snapshotsCreated++;
             }
 
-            console.log(`Backfilled ${snapshotsCreated} Codeforces snapshots for user ${userId}`);
+            console.log(`Backfilled ${snapshotsCreated} Codeforces snapshots for user ${userId} (${totalSolved} problems solved)`);
             return snapshotsCreated;
         } catch (error: any) {
             console.error('Backfill CF history error:', error);
