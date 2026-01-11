@@ -491,27 +491,64 @@ router.get('/:friendId/consistency', authenticate, async (req: AuthRequest, res:
             };
 
             if (isUserMock) {
-                // Use platform-specific seed (CF and LC get different data)
-                const platformSeed = userId * 12345 + (platform === 'leetcode' ? 7777 : platform === 'codeforces' ? 3333 : 5555);
-                const userRandom = createSeededRandom(platformSeed);
-                snapshotsResult.rows.forEach(row => {
-                    if (row.user_id !== userId) return;
-                    const dateStr = row.date.toISOString().split('T')[0];
-                    const count = Math.floor(userRandom() * 8) + 1;
-                    userDailyActivity.set(dateStr, count);
-                });
+                if (platform === 'overall') {
+                    // For overall: combine CF and LC with their respective seeds
+                    const cfSeed = userId * 12345 + 3333;
+                    const lcSeed = userId * 12345 + 7777;
+                    const cfRandom = createSeededRandom(cfSeed);
+                    const lcRandom = createSeededRandom(lcSeed);
+
+                    snapshotsResult.rows.forEach(row => {
+                        if (row.user_id !== userId) return;
+                        const dateStr = row.date.toISOString().split('T')[0];
+
+                        // Use platform-specific seed and add to existing count if date already exists
+                        const random = row.platform === 'codeforces' ? cfRandom() : lcRandom();
+                        const count = Math.floor(random * 8) + 1;
+                        const existing = userDailyActivity.get(dateStr) || 0;
+                        userDailyActivity.set(dateStr, existing + count);
+                    });
+                } else {
+                    // Single platform: use platform-specific seed
+                    const platformSeed = userId * 12345 + (platform === 'leetcode' ? 7777 : 3333);
+                    const userRandom = createSeededRandom(platformSeed);
+                    snapshotsResult.rows.forEach(row => {
+                        if (row.user_id !== userId) return;
+                        const dateStr = row.date.toISOString().split('T')[0];
+                        const count = Math.floor(userRandom() * 8) + 1;
+                        userDailyActivity.set(dateStr, count);
+                    });
+                }
             }
 
             if (isFriendMock) {
-                // Use platform-specific seed (CF and LC get different data)
-                const platformSeed = friendId * 12345 + (platform === 'leetcode' ? 7777 : platform === 'codeforces' ? 3333 : 5555);
-                const friendRandom = createSeededRandom(platformSeed);
-                snapshotsResult.rows.forEach(row => {
-                    if (row.user_id !== friendId) return;
-                    const dateStr = row.date.toISOString().split('T')[0];
-                    const count = Math.floor(friendRandom() * 8) + 1;
-                    friendDailyActivity.set(dateStr, count);
-                });
+                if (platform === 'overall') {
+                    // For overall: combine CF and LC with their respective seeds
+                    const cfSeed = friendId * 12345 + 3333;
+                    const lcSeed = friendId * 12345 + 7777;
+                    const cfRandom = createSeededRandom(cfSeed);
+                    const lcRandom = createSeededRandom(lcSeed);
+
+                    snapshotsResult.rows.forEach(row => {
+                        if (row.user_id !== friendId) return;
+                        const dateStr = row.date.toISOString().split('T')[0];
+
+                        const random = row.platform === 'codeforces' ? cfRandom() : lcRandom();
+                        const count = Math.floor(random * 8) + 1;
+                        const existing = friendDailyActivity.get(dateStr) || 0;
+                        friendDailyActivity.set(dateStr, existing + count);
+                    });
+                } else {
+                    // Single platform: use platform-specific seed
+                    const platformSeed = friendId * 12345 + (platform === 'leetcode' ? 7777 : 3333);
+                    const friendRandom = createSeededRandom(platformSeed);
+                    snapshotsResult.rows.forEach(row => {
+                        if (row.user_id !== friendId) return;
+                        const dateStr = row.date.toISOString().split('T')[0];
+                        const count = Math.floor(friendRandom() * 8) + 1;
+                        friendDailyActivity.set(dateStr, count);
+                    });
+                }
             }
         }
 
