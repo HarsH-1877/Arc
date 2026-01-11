@@ -225,6 +225,7 @@ router.get('/:friendId/topics', authenticate, async (req: AuthRequest, res: Resp
     try {
         const userId = req.user!.userId;
         const friendId = parseInt(req.params.friendId);
+        const platform = (req.query.platform as string) || 'overall';
 
         // Verify friendship exists
         const friendCheck = await pool.query(
@@ -248,8 +249,9 @@ router.get('/:friendId/topics', authenticate, async (req: AuthRequest, res: Resp
                 ORDER BY user_id, platform, timestamp DESC
             )
             SELECT user_id, platform, topic_breakdown
-            FROM latest_snapshots`,
-            [userId, friendId]
+            FROM latest_snapshots
+            WHERE $3 = 'overall' OR platform = $3`,
+            [userId, friendId, platform]
         );
 
         // Aggregate topics across all platforms for each user
@@ -308,6 +310,7 @@ router.get('/:friendId/consistency', authenticate, async (req: AuthRequest, res:
     try {
         const userId = req.user!.userId;
         const friendId = parseInt(req.params.friendId);
+        const platform = (req.query.platform as string) || 'overall';
 
         // Verify friendship exists
         const friendCheck = await pool.query(
@@ -326,14 +329,25 @@ router.get('/:friendId/consistency', authenticate, async (req: AuthRequest, res:
         const sixMonthsAgo = new Date();
         sixMonthsAgo.setDate(sixMonthsAgo.getDate() - 180);
 
-        const snapshotsResult = await pool.query(
-            `SELECT DISTINCT user_id, DATE(timestamp) as date
-             FROM snapshots
-             WHERE user_id IN ($1, $2) AND timestamp >= $3
-             GROUP BY user_id, DATE(timestamp)
-             ORDER BY user_id, date ASC`,
-            [userId, friendId, sixMonthsAgo]
-        );
+        // Build snapshot query with optional platform filtering
+        let snapshotsQuery = `
+            SELECT DISTINCT user_id, DATE(timestamp) as date
+            FROM snapshots
+            WHERE user_id IN ($1, $2) AND timestamp >= $3`;
+
+        const snapshotsParams: any[] = [userId, friendId, sixMonthsAgo];
+
+        if (platform !== 'overall') {
+            snapshotsQuery += ` AND platform = $4`;
+            snapshotsParams.push(platform);
+        }
+
+        snapshotsQuery += `
+            GROUP BY user_id, DATE(timestamp)
+            ORDER BY user_id, date ASC`;
+
+        const snapshotsResult = await pool.query(snapshotsQuery, snapshotsParams);
+
 
         // Get usernames
         const usersResult = await pool.query(
