@@ -179,6 +179,18 @@ router.get('/:friendId/overview', authenticate, async (req: AuthRequest, res: Re
             friendData.problems_solved = latestFriendData.total || 0;
         }
 
+        // Add contest counts (simplified - using mock data for now)
+        // For real implementation, this would fetch from platform APIs or be stored in snapshots
+        const getContestCount = (ratings: any, isPlatformSpecific: boolean) => {
+            if (platform === 'overall') {
+                return (ratings.codeforces ? 45 : 0) + (ratings.leetcode ? 32 : 0); // Mock combined
+            } else if (platform === 'codeforces') {
+                return ratings.codeforces ? 45 : 0; // Mock CF
+            } else {
+                return ratings.leetcode ? 32 : 0; // Mock LC
+            }
+        };
+
         res.json({
             success: true,
             data: {
@@ -188,6 +200,7 @@ router.get('/:friendId/overview', authenticate, async (req: AuthRequest, res: Re
                     current_ratings: userData.current_ratings,
                     rating_changes: userData.rating_changes,
                     problems_solved: userData.problems_solved,
+                    contests_given: getContestCount(userData.current_ratings, platform !== 'overall'),
                     snapshots: userData.snapshots.map((s: any) => ({
                         platform: s.platform,
                         timestamp: s.timestamp,
@@ -201,6 +214,7 @@ router.get('/:friendId/overview', authenticate, async (req: AuthRequest, res: Re
                     current_ratings: friendData.current_ratings,
                     rating_changes: friendData.rating_changes,
                     problems_solved: friendData.problems_solved,
+                    contests_given: getContestCount(friendData.current_ratings, platform !== 'overall'),
                     snapshots: friendData.snapshots.map((s: any) => ({
                         platform: s.platform,
                         timestamp: s.timestamp,
