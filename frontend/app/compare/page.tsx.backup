@@ -1,0 +1,698 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../context/AuthContext';
+import { Users, ChevronDown, ArrowUp, ArrowDown, Search } from 'lucide-react';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    RadialLinearScale,
+    Filler,
+    Title,
+    Tooltip,
+    Legend
+} from 'chart.js';
+import { Line, Radar } from 'react-chartjs-2';
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    RadialLinearScale,
+    Filler,
+    Title,
+    Tooltip,
+    Legend
+);
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+interface Friend {
+    id: number;
+    username: string;
+    email: string;
+}
+
+interface Snapshot {
+    platform: string;
+    timestamp: string;
+    rating: number;
+    total_solved: number;
+}
+
+interface UserData {
+    id: number;
+    username: string;
+    current_ratings: { [key: string]: number };
+    rating_changes: { [key: string]: number };
+    problems_solved: number;
+    snapshots: Snapshot[];
+}
+
+interface OverviewData {
+    you: UserData;
+    friend: UserData;
+}
+
+interface TopicData {
+    you: {
+        username: string;
+        topics: Array<{ topic_name: string; count: number }>;
+    };
+    friend: {
+        username: string;
+        topics: Array<{ topic_name: string; count: number }>;
+    };
+}
+
+export default function ComparePage() {
+    const router = useRouter();
+    const { isAuthenticated, loading, token } = useAuth();
+
+    const [friends, setFriends] = useState<Friend[]>([]);
+    const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [friendSearchQuery, setFriendSearchQuery] = useState('');
+    const [activeTab, setActiveTab] = useState<'overview' | 'topics'>('overview');
+    const [platformFilter, setPlatformFilter] = useState<'overall' | 'codeforces' | 'leetcode'>('overall');
+
+    const [overviewData, setOverviewData] = useState<OverviewData | null>(null);
+    const [topicData, setTopicData] = useState<TopicData | null>(null);
+    const [loadingData, setLoadingData] = useState(false);
+    const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+    const [availableTopics, setAvailableTopics] = useState<Array<{ name: string, total: number }>>([]);
+
+    useEffect(() => {
+        if (!loading && !isAuthenticated) {
+            router.push('/login');
+        }
+    }, [isAuthenticated, loading, router]);
+
+    useEffect(() => {
+        if (token) {
+            fetchFriends();
+        }
+    }, [token]);
+
+    useEffect(() => {
+        if (selectedFriend && token) {
+            if (activeTab === 'overview') {
+                fetchOverviewData();
+            } else {
+                fetchTopicData();
+            }
+        }
+    }, [selectedFriend, activeTab, token]);
+
+    const fetchFriends = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/friends`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const friendsList = data.data.friends || [];
+                setFriends(friendsList);
+                if (friendsList.length > 0) {
+                    setSelectedFriend(friendsList[0]);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching friends:', error);
+        }
+    };
+
+    const fetchOverviewData = async () => {
+        if (!selectedFriend) return;
+
+        setLoadingData(true);
+        try {
+            const response = await fetch(`${API_URL}/api/compare/${selectedFriend.id}/overview?platform=${platformFilter}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setOverviewData(data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching overview:', error);
+        } finally {
+            setLoadingData(false);
+        }
+    };
+
+    const fetchTopicData = async () => {
+        if (!selectedFriend) return;
+
+        setLoadingData(true);
+        try {
+            const response = await fetch(`${API_URL}/api/compare/${selectedFriend.id}/topics`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setTopicData(data.data);
+
+                // Calculate available topics sorted by total count
+                const topicMap = new Map<string, number>();
+                data.data.you.topics.forEach((t: any) => {
+                    topicMap.set(t.topic_name, (topicMap.get(t.topic_name) || 0) + t.count);
+                });
+                data.data.friend.topics.forEach((t: any) => {
+                    topicMap.set(t.topic_name, (topicMap.get(t.topic_name) || 0) + t.count);
+                });
+
+                const sortedTopics = Array.from(topicMap.entries())
+                    .map(([name, total]) => ({ name, total }))
+                    .sort((a, b) => b.total - a.total);
+
+                setAvailableTopics(sortedTopics);
+
+                // Set default selected topics to top 6 (or less if not enough)
+                const defaultTopics = sortedTopics.slice(0, Math.min(6, sortedTopics.length)).map(t => t.name);
+                setSelectedTopics(defaultTopics);
+            }
+        } catch (error) {
+            console.error('Error fetching topics:', error);
+        } finally {
+            setLoadingData(false);
+        }
+    };
+
+    // Fetch data when friend or platform changes
+    useEffect(() => {
+        if (selectedFriend && token) {
+            fetchOverviewData();
+        }
+    }, [selectedFriend, platformFilter, token]);
+
+    if (loading || !isAuthenticated) {
+        return null;
+    }
+
+    if (friends.length === 0) {
+        return (
+            <div className="h-screen bg-[#0f1419] p-6 overflow-auto">
+                <div className="max-w-6xl mx-auto">
+                    <h1 className="text-3xl font-bold text-white mb-8">Compare</h1>
+                    <div className="rounded-2xl bg-[#1a1f2e] border border-gray-800 p-12 text-center">
+                        <Users className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                        <p className="text-gray-400 text-lg">No friends to compare with</p>
+                        <p className="text-sm text-gray-500 mt-2">Add friends to start comparing your progress</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Prepare chart data for Overview tab
+    const getLineChartData = () => {
+        if (!overviewData) return null;
+
+        const userSnapshots = overviewData.you.snapshots;
+        const friendSnapshots = overviewData.friend.snapshots;
+
+        if (platformFilter === 'overall') {
+            // Multi-platform mode: show 4 lines (You CF, You LC, Friend CF, Friend LC)
+            const allTimestamps = [...new Set([
+                ...userSnapshots.map(s => new Date(s.timestamp).toLocaleDateString()),
+                ...friendSnapshots.map(s => new Date(s.timestamp).toLocaleDateString())
+            ])].sort();
+
+            return {
+                labels: allTimestamps,
+                datasets: [
+                    {
+                        label: 'You (Codeforces)',
+                        data: allTimestamps.map(date => {
+                            const snapshot = userSnapshots.find(s =>
+                                s.platform === 'codeforces' && new Date(s.timestamp).toLocaleDateString() === date
+                            );
+                            return snapshot ? snapshot.rating : null;
+                        }),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        spanGaps: true,
+                    },
+                    {
+                        label: 'You (LeetCode)',
+                        data: allTimestamps.map(date => {
+                            const snapshot = userSnapshots.find(s =>
+                                s.platform === 'leetcode' && new Date(s.timestamp).toLocaleDateString() === date
+                            );
+                            return snapshot ? snapshot.rating : null;
+                        }),
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4,
+                        spanGaps: true,
+                    },
+                    {
+                        label: `${overviewData.friend.username} (Codeforces)`,
+                        data: allTimestamps.map(date => {
+                            const snapshot = friendSnapshots.find(s =>
+                                s.platform === 'codeforces' && new Date(s.timestamp).toLocaleDateString() === date
+                            );
+                            return snapshot ? snapshot.rating : null;
+                        }),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        spanGaps: true,
+                    },
+                    {
+                        label: `${overviewData.friend.username} (LeetCode)`,
+                        data: allTimestamps.map(date => {
+                            const snapshot = friendSnapshots.find(s =>
+                                s.platform === 'leetcode' && new Date(s.timestamp).toLocaleDateString() === date
+                            );
+                            return snapshot ? snapshot.rating : null;
+                        }),
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4,
+                        spanGaps: true,
+                    }
+                ]
+            };
+        } else {
+            // Single platform mode: show 2 lines (You, Friend)
+            const platformSnapshots = {
+                you: userSnapshots.filter(s => s.platform === platformFilter),
+                friend: friendSnapshots.filter(s => s.platform === platformFilter)
+            };
+
+            const allTimestamps = [...new Set([
+                ...platformSnapshots.you.map(s => new Date(s.timestamp).toLocaleDateString()),
+                ...platformSnapshots.friend.map(s => new Date(s.timestamp).toLocaleDateString())
+            ])].sort();
+
+            return {
+                labels: allTimestamps,
+                datasets: [
+                    {
+                        label: 'You',
+                        data: allTimestamps.map(date => {
+                            const snapshot = platformSnapshots.you.find(s =>
+                                new Date(s.timestamp).toLocaleDateString() === date
+                            );
+                            return snapshot ? snapshot.rating : null;
+                        }),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        spanGaps: true,
+                    },
+                    {
+                        label: overviewData.friend.username,
+                        data: allTimestamps.map(date => {
+                            const snapshot = platformSnapshots.friend.find(s =>
+                                new Date(s.timestamp).toLocaleDateString() === date
+                            );
+                            return snapshot ? snapshot.rating : null;
+                        }),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        spanGaps: true,
+                    }
+                ]
+            };
+        }
+    };
+
+    // Prepare radar chart data for Topics tab
+    const getRadarChartData = () => {
+        if (!topicData || selectedTopics.length < 3) return null;
+
+        // Use selected topics
+        const youData = selectedTopics.map(topic => {
+            const found = topicData.you.topics.find(t => t.topic_name === topic);
+            return found ? found.count : 0;
+        });
+
+        const friendData = selectedTopics.map(topic => {
+            const found = topicData.friend.topics.find(t => t.topic_name === topic);
+            return found ? found.count : 0;
+        });
+
+        return {
+            labels: selectedTopics,
+            datasets: [
+                {
+                    label: 'You',
+                    data: youData,
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                },
+                {
+                    label: topicData.friend.username,
+                    data: friendData,
+                    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                    borderColor: '#10b981',
+                    borderWidth: 2,
+                }
+            ]
+        };
+    };
+
+    const toggleTopicSelection = (topicName: string) => {
+        setSelectedTopics(prev => {
+            if (prev.includes(topicName)) {
+                // Don't allow deselecting if we'd go below 3
+                if (prev.length <= 3) return prev;
+                return prev.filter(t => t !== topicName);
+            } else {
+                // Don't allow selecting more than 6
+                if (prev.length >= 6) return prev;
+                return [...prev, topicName];
+            }
+        });
+    };
+
+    // Helper functions to get platform-specific values
+    const getCurrentRating = (userData: UserData) => {
+        if (platformFilter === 'overall') {
+            // Return sum or average of all platforms
+            const ratings = Object.values(userData.current_ratings);
+            return ratings.length > 0 ? Math.round(ratings.reduce((a, b) => a + b, 0) / ratings.length) : 0;
+        }
+        return userData.current_ratings[platformFilter] || 0;
+    };
+
+    const getRatingChange = (userData: UserData) => {
+        if (platformFilter === 'overall') {
+            // Return sum of all platform changes
+            const changes = Object.values(userData.rating_changes);
+            return changes.length > 0 ? changes.reduce((a, b) => a + b, 0) : 0;
+        }
+        return userData.rating_changes[platformFilter] || 0;
+    };
+
+    const lineChartData = getLineChartData();
+    const radarChartData = getRadarChartData();
+
+    return (
+        <div className="h-screen bg-[#0f1419] p-6 overflow-auto custom-scrollbar">
+            <div className="max-w-7xl mx-auto">
+                {/* Header with Friend Selector */}
+                <div className="mb-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <h1 className="text-3xl font-bold text-white">Comparison</h1>
+
+                        {/* Friend Selector Dropdown with Search */}
+                        <div className="relative w-80">
+                            <button
+                                onClick={() => setShowDropdown(!showDropdown)}
+                                className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-[#1a1f2e] border border-gray-700 hover:border-gray-600 transition-colors"
+                            >
+                                <span className="text-white font-medium">
+                                    {selectedFriend?.username || 'Select Friend'}
+                                </span>
+                                <ChevronDown className="w-5 h-5 text-gray-400" />
+                            </button>
+
+                            {showDropdown && (
+                                <div className="absolute top-full mt-2 w-full rounded-xl bg-[#1a1f2e] border border-gray-700 overflow-hidden z-10 shadow-xl">
+                                    {/* Search Input */}
+                                    <div className="p-3 border-b border-gray-700">
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                            <input
+                                                type="text"
+                                                placeholder="Search friends..."
+                                                value={friendSearchQuery}
+                                                onChange={(e) => setFriendSearchQuery(e.target.value)}
+                                                className="w-full pl-10 pr-3 py-2 bg-gray-800 text-white text-sm rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Friends List */}
+                                    <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                                        {friends
+                                            .filter(friend =>
+                                                friend.username.toLowerCase().includes(friendSearchQuery.toLowerCase()) ||
+                                                friend.email.toLowerCase().includes(friendSearchQuery.toLowerCase())
+                                            )
+                                            .map((friend) => (
+                                                <button
+                                                    key={friend.id}
+                                                    onClick={() => {
+                                                        setSelectedFriend(friend);
+                                                        setShowDropdown(false);
+                                                        setFriendSearchQuery('');
+                                                    }}
+                                                    className={`w-full px-4 py-3 text-left hover:bg-gray-800 transition-colors ${selectedFriend?.id === friend.id ? 'bg-gray-800/50' : ''
+                                                        }`}
+                                                >
+                                                    <p className="text-white font-medium">{friend.username}</p>
+                                                    <p className="text-xs text-gray-400">{friend.email}</p>
+                                                </button>
+                                            ))}
+                                        {friends.filter(friend =>
+                                            friend.username.toLowerCase().includes(friendSearchQuery.toLowerCase()) ||
+                                            friend.email.toLowerCase().includes(friendSearchQuery.toLowerCase())
+                                        ).length === 0 && (
+                                                <p className="text-gray-400 text-sm text-center py-4">No friends found</p>
+                                            )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {selectedFriend && (
+                    <>
+                        {/* User vs Friend Header with Stats */}
+                        <div className="rounded-2xl bg-[#1a1f2e] border border-gray-800 p-6 mb-6">
+                            <div className="grid grid-cols-3 gap-8 items-center">
+                                {/* You Stats */}
+                                <div className="flex flex-col items-center">
+                                    <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-600 to-blue-400 flex items-center justify-center mb-3">
+                                        <span className="text-white font-bold text-2xl">
+                                            {overviewData?.you.username?.charAt(0).toUpperCase() || 'Y'}
+                                        </span>
+                                    </div>
+                                    <p className="text-white font-semibold mb-3">You</p>
+
+                                    {overviewData && (
+                                        <div className="flex items-center gap-3 w-full justify-center">
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-gray-400 text-sm">Questions: <span className="text-white font-medium">{overviewData.you.problems_solved}</span></span>
+                                                {overviewData.you.problems_solved > overviewData.friend.problems_solved && (
+                                                    <ArrowUp className="w-3.5 h-3.5 text-green-400" />
+                                                )}
+                                                {overviewData.you.problems_solved < overviewData.friend.problems_solved && (
+                                                    <ArrowDown className="w-3.5 h-3.5 text-red-400" />
+                                                )}
+                                            </div>
+                                            <span className="text-gray-400">|</span>
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-gray-400 text-sm">Rating: <span className="text-white font-medium">{getCurrentRating(overviewData.you)}</span></span>
+                                                {getCurrentRating(overviewData.you) > getCurrentRating(overviewData.friend) && (
+                                                    <ArrowUp className="w-3.5 h-3.5 text-green-400" />
+                                                )}
+                                                {getCurrentRating(overviewData.you) < getCurrentRating(overviewData.friend) && (
+                                                    <ArrowDown className="w-3.5 h-3.5 text-red-400" />
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* VS with Platform Filter */}
+                                <div className="flex flex-col items-center">
+                                    {/* Platform Filter Dropdown */}
+                                    <select
+                                        value={platformFilter}
+                                        onChange={(e) => setPlatformFilter(e.target.value as 'overall' | 'codeforces' | 'leetcode')}
+                                        className="mb-3 px-3 py-1.5 pr-8 bg-gray-800 text-white text-xs rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none cursor-pointer appearance-none text-center"
+                                        style={{
+                                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                                            backgroundRepeat: 'no-repeat',
+                                            backgroundPosition: 'right 0.5rem center',
+                                            backgroundSize: '12px'
+                                        }}
+                                    >
+                                        <option value="overall" className="text-center">Overall</option>
+                                        <option value="codeforces" className="text-center">Codeforces</option>
+                                        <option value="leetcode" className="text-center">LeetCode</option>
+                                    </select>
+
+                                    <div className="text-2xl font-bold text-gray-600 mb-2">VS</div>
+                                    {overviewData && (
+                                        <p className="text-center text-gray-400 text-xs">
+                                            {getRatingChange(overviewData.you) > getRatingChange(overviewData.friend)
+                                                ? "You're improving faster!"
+                                                : getRatingChange(overviewData.you) < getRatingChange(overviewData.friend)
+                                                    ? `${selectedFriend.username} is improving faster`
+                                                    : "Both improving equally"}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Friend Stats */}
+                                <div className="flex flex-col items-center">
+                                    <div className="w-20 h-20 rounded-full bg-gradient-to-r from-green-600 to-green-400 flex items-center justify-center mb-3">
+                                        <span className="text-white font-bold text-2xl">
+                                            {selectedFriend.username.charAt(0).toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <p className="text-white font-semibold mb-3">{selectedFriend.username}</p>
+
+                                    {overviewData && (
+                                        <div className="flex items-center gap-2 w-full justify-center">
+                                            <span className="text-gray-400 text-sm">Questions: <span className="text-white font-medium">{overviewData.friend.problems_solved}</span></span>
+                                            <span className="text-gray-400">|</span>
+                                            <span className="text-gray-400 text-sm">Rating: <span className="text-white font-medium">{getCurrentRating(overviewData.friend)}</span></span>
+                                            {(overviewData.friend.problems_solved > overviewData.you.problems_solved || getCurrentRating(overviewData.friend) > getCurrentRating(overviewData.you)) && (
+                                                <ArrowUp className="w-4 h-4 text-green-400" />
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Tabs */}
+                        <div className="flex gap-4 mb-6 border-b border-gray-800">
+                            <button
+                                onClick={() => setActiveTab('overview')}
+                                className={`px-6 py-3 font-medium transition-colors border-b-2 ${activeTab === 'overview'
+                                    ? 'text-blue-400 border-blue-400'
+                                    : 'text-gray-400 border-transparent hover:text-gray-300'
+                                    }`}
+                            >
+                                Overview
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('topics')}
+                                className={`px-6 py-3 font-medium transition-colors border-b-2 ${activeTab === 'topics'
+                                    ? 'text-blue-400 border-blue-400'
+                                    : 'text-gray-400 border-transparent hover:text-gray-300'
+                                    }`}
+                            >
+                                Topic Analysis
+                            </button>
+                        </div>
+
+                        {/* Tab Content */}
+                        {activeTab === 'overview' && (
+                            <div className="space-y-6">
+                                {/* Rating Progress Chart */}
+                                <div className="rounded-2xl bg-[#1a1f2e] border border-gray-800 p-6">
+                                    <h3 className="text-lg font-semibold text-white mb-6">
+                                        Rating Progress (Last 90 Days)
+                                    </h3>
+                                    {lineChartData && (
+                                        <div className="h-80">
+                                            <Line
+                                                data={lineChartData}
+                                                options={{
+                                                    responsive: true,
+                                                    maintainAspectRatio: false,
+                                                    plugins: {
+                                                        legend: {
+                                                            labels: {
+                                                                color: '#9ca3af',
+                                                                font: { size: 12 }
+                                                            }
+                                                        }
+                                                    },
+                                                    scales: {
+                                                        x: {
+                                                            grid: { color: '#374151' },
+                                                            ticks: { color: '#9ca3af' }
+                                                        },
+                                                        y: {
+                                                            grid: { color: '#374151' },
+                                                            ticks: { color: '#9ca3af' }
+                                                        }
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'topics' && (
+                            <div className="rounded-2xl bg-[#1a1f2e] border border-gray-800 p-8">
+                                <h3 className="text-lg font-semibold text-white mb-6">
+                                    Topic Strengths Comparison
+                                </h3>
+
+                                {/* 2-Column Grid Layout */}
+                                <div className="grid grid-cols-3 gap-6">
+                                    {/* Left Column - Radar Chart (2/3 width) */}
+                                    <div className="col-span-2">
+                                        {radarChartData && (
+                                            <div className="h-[500px] flex items-center justify-center">
+                                                <div className="w-full h-full">
+                                                    <Radar
+                                                        data={radarChartData}
+                                                        options={{
+                                                            responsive: true,
+                                                            maintainAspectRatio: false,
+                                                            plugins: {
+                                                                legend: {
+                                                                    position: 'top',
+                                                                    labels: {
+                                                                        color: '#9ca3af',
+                                                                        font: { size: 14 },
+                                                                        padding: 20,
+                                                                        usePointStyle: true,
+                                                                    }
+                                                                }
+                                                            },
+                                                            scales: {
+                                                                r: {
+                                                                    beginAtZero: true,
+                                                                    grid: {
+                                                                        color: '#374151',
+                                                                        lineWidth: 1
+                                                                    },
+                                                                    angleLines: {
+                                                                        color: '#374151',
+                                                                        lineWidth: 1
+                                                                    },
+                                                                    pointLabels: {
+                                                                        color: '#9ca3af',
+                                                                        font: {
+                                                                            size: 14,
+                                                                            weight: 500
+                                                                        },
+                                                                        padding: 15
+                                                                    },
+                                                                    ticks: {
+                                                                        color: '#6b7280',
+                                                                        backdropColor: 'transparent',
+                                                                        font: { size: 12 },
+                                                                        stepSize: 10
+                                                                    }
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                        )}
+                                </>
+                )}
+                            </div>
+        </div>
+                );
+}
