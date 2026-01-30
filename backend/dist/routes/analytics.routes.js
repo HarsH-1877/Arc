@@ -100,9 +100,9 @@ router.get('/rating-history', auth_1.authenticate, async (req, res) => {
         const friendsResult = await database_1.default.query(friendsQuery, friendsParams);
         const friendIds = friendsResult.rows.map(r => r.friend_id);
         const allUserIds = [userId, ...friendIds];
-        // 2. Fetch ALL snapshots for these users (Last 100 days to ensure we have a starting point)
+        // 2. Fetch ALL snapshots for these users (Last 200 days to ensure we have a starting point)
         const backfillDaysAgo = new Date();
-        backfillDaysAgo.setDate(backfillDaysAgo.getDate() - 100);
+        backfillDaysAgo.setDate(backfillDaysAgo.getDate() - 200);
         let snapshotsQuery = `
             SELECT user_id, platform, timestamp, rating 
             FROM snapshots 
@@ -129,8 +129,8 @@ router.get('/rating-history', auth_1.authenticate, async (req, res) => {
             if (userSnaps[s.user_id][s.platform])
                 userSnaps[s.user_id][s.platform].push(s);
         });
-        // 4. Generate Master Date List (Last 90 days)
-        const dateList = getLastNDays(90);
+        // 4. Generate Master Date List (Last 180 days)
+        const dateList = getLastNDays(180);
         // 5. Interpolate History for Every User
         // Structure: result[userId][dateIndex] = { rating, normalized }
         const interpolatedData = {};

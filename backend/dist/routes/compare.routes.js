@@ -22,9 +22,9 @@ router.get('/:friendId/overview', auth_1.authenticate, async (req, res) => {
                 error: 'Not friends with this user'
             });
         }
-        // Get snapshots for last 90 days for both users
-        const ninetyDaysAgo = new Date();
-        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+        // Get snapshots for last 180 days for both users
+        const oneEightyDaysAgo = new Date();
+        oneEightyDaysAgo.setDate(oneEightyDaysAgo.getDate() - 180);
         let snapshotsQuery;
         let queryParams;
         if (platform === 'overall') {
@@ -33,7 +33,7 @@ router.get('/:friendId/overview', auth_1.authenticate, async (req, res) => {
                               FROM snapshots
                               WHERE user_id IN ($1, $2) AND timestamp >= $3
                               ORDER BY timestamp ASC`;
-            queryParams = [userId, friendId, ninetyDaysAgo];
+            queryParams = [userId, friendId, oneEightyDaysAgo];
         }
         else {
             // Get snapshots from specific platform
@@ -41,7 +41,7 @@ router.get('/:friendId/overview', auth_1.authenticate, async (req, res) => {
                               FROM snapshots
                               WHERE user_id IN ($1, $2) AND platform = $3 AND timestamp >= $4
                               ORDER BY timestamp ASC`;
-            queryParams = [userId, friendId, platform, ninetyDaysAgo];
+            queryParams = [userId, friendId, platform, oneEightyDaysAgo];
         }
         const snapshotsResult = await database_1.default.query(snapshotsQuery, queryParams);
         // Get user info
@@ -97,7 +97,7 @@ router.get('/:friendId/overview', auth_1.authenticate, async (req, res) => {
             }
         });
         // Calculate rating changes and problems solved by platform
-        // For rating changes, use the 90-day window data
+        // For rating changes, use the 180-day window data
         // For problems_solved, get the LATEST snapshot regardless of time window
         const latestSnapshotsQuery = platform === 'overall'
             ? `SELECT DISTINCT ON (user_id, platform) user_id, platform, total_solved
