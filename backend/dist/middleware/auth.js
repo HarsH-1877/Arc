@@ -16,11 +16,17 @@ const authenticate = (req, res, next) => {
         }
         const token = authHeader.substring(7);
         const secret = process.env.JWT_SECRET || 'your_jwt_secret';
+        console.log('AUTH MIDDLEWARE: Verifying token with secret:', secret.substring(0, 10) + '...');
         const decoded = jsonwebtoken_1.default.verify(token, secret);
         req.user = decoded;
         next();
     }
     catch (error) {
+        console.error('========== AUTH MIDDLEWARE ERROR ==========');
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Token received:', req.headers.authorization?.substring(7, 50) + '...');
+        console.error('==========================================');
         return res.status(401).json({
             success: false,
             error: 'Invalid or expired token'

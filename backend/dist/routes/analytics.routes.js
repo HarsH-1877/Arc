@@ -18,230 +18,201 @@ const normalizeRating = (rating, platform) => {
     const normalized = ((rating - range.min) / (range.max - range.min)) * 100;
     return Math.max(0, Math.min(100, normalized)); // Clamp between 0-100
 };
+// Utility to get Date object from various formats
+const parseDate = (d) => new Date(d);
+// Generate array of last N days (as YYYY-MM-DD strings for easy lookup)
+const getLastNDays = (n) => {
+    const days = [];
+    for (let i = n - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        days.push(d.toISOString().split('T')[0]);
+    }
+    return days;
+};
+// Helper to interpolate history (Forward Fill)
+const interpolateHistory = (snapshots, allDates) => {
+    // Sort snapshots by time
+    const sorted = [...snapshots].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    let lastKnownRating = 0;
+    let hasData = false;
+    return allDates.map(dateStr => {
+        const dateObj = new Date(dateStr);
+        // Find latest snapshot on or before this date
+        const relevantSnaps = sorted.filter(s => new Date(s.timestamp).toISOString().split('T')[0] <= dateStr);
+        if (relevantSnaps.length > 0) {
+            lastKnownRating = relevantSnaps[relevantSnaps.length - 1].rating;
+            hasData = true;
+        }
+        return {
+            rating: hasData ? lastKnownRating : null,
+            snapshot_date: dateObj.toISOString(),
+            raw_date: dateStr
+        };
+    });
+};
+// Normalize rating helper
+const normalizeRatingVal = (rating, plat) => {
+    // Standardize max ratings for normalization (Same as before)
+    const MAX_RATINGS = { 'codeforces': 3500, 'leetcode': 3000 };
+    const max = MAX_RATINGS[plat] || 3500;
+    return Math.min(100, (rating / max) * 100);
+};
 // Get rating history for a user (for charts)
 // @ts-ignore - Express middleware type conflict
 router.get('/rating-history', auth_1.authenticate, async (req, res) => {
     try {
         const userId = req.user.userId;
         const { platform, mode } = req.query; // mode can be 'friends-avg' or 'friends'
-        // Get user's top 4 friends by rating
+        // 1. Get user's top 4 friends
         let friendsQuery, friendsParams;
         if (platform && platform !== 'overall') {
-            // Get top 4 friends by platform-specific rating
             friendsQuery = `
                 SELECT DISTINCT
-                    CASE 
-                        WHEN f.user_id = $1 THEN f.friend_id
-                        ELSE f.user_id
-                    END as friend_id,
+                    CASE WHEN f.user_id = $1 THEN f.friend_id ELSE f.user_id END as friend_id,
                     u.username as name,
                     ph.current_rating
-                 FROM friends f
-                 JOIN users u ON (
-                    CASE 
-                        WHEN f.user_id = $1 THEN f.friend_id
-                        ELSE f.user_id
-                    END = u.id
-                 )
-                 LEFT JOIN platform_handles ph ON u.id = ph.user_id AND ph.platform = $2
-                 WHERE f.user_id = $1 OR f.friend_id = $1
-                 ORDER BY ph.current_rating DESC NULLS LAST
-                 LIMIT 4
+                FROM friends f
+                JOIN users u ON (CASE WHEN f.user_id = $1 THEN f.friend_id ELSE f.user_id END = u.id)
+                LEFT JOIN platform_handles ph ON u.id = ph.user_id AND ph.platform = $2
+                WHERE f.user_id = $1 OR f.friend_id = $1
+                ORDER BY ph.current_rating DESC NULLS LAST
+                LIMIT 4
             `;
             friendsParams = [userId, platform];
         }
         else {
-            // Get top 4 friends by average rating across platforms
             friendsQuery = `
                 SELECT DISTINCT
-                    CASE 
-                        WHEN f.user_id = $1 THEN f.friend_id
-                        ELSE f.user_id
-                    END as friend_id,
+                    CASE WHEN f.user_id = $1 THEN f.friend_id ELSE f.user_id END as friend_id,
                     u.username as name,
                     COALESCE(ROUND(AVG(ph.current_rating)), 0) as avg_rating
-                 FROM friends f
-                 JOIN users u ON (
-                    CASE 
-                        WHEN f.user_id = $1 THEN f.friend_id
-                        ELSE f.user_id
-                    END = u.id
-                 )
-                 LEFT JOIN platform_handles ph ON u.id = ph.user_id
-                 WHERE f.user_id = $1 OR f.friend_id = $1
-                 GROUP BY friend_id, u.username
-                 ORDER BY avg_rating DESC NULLS LAST
-                 LIMIT 4
+                FROM friends f
+                JOIN users u ON (CASE WHEN f.user_id = $1 THEN f.friend_id ELSE f.user_id END = u.id)
+                LEFT JOIN platform_handles ph ON u.id = ph.user_id
+                WHERE f.user_id = $1 OR f.friend_id = $1
+                GROUP BY friend_id, u.username
+                ORDER BY avg_rating DESC NULLS LAST
+                LIMIT 4
             `;
             friendsParams = [userId];
         }
         const friendsResult = await database_1.default.query(friendsQuery, friendsParams);
         const friendIds = friendsResult.rows.map(r => r.friend_id);
         const allUserIds = [userId, ...friendIds];
-        // Get snapshots for user and friends from last 90 days
-        const ninetyDaysAgo = new Date();
-        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-        let snapshotsQuery;
-        let snapshotsParams;
+        // 2. Fetch ALL snapshots for these users (Last 100 days to ensure we have a starting point)
+        const backfillDaysAgo = new Date();
+        backfillDaysAgo.setDate(backfillDaysAgo.getDate() - 100);
+        let snapshotsQuery = `
+            SELECT user_id, platform, timestamp, rating 
+            FROM snapshots 
+            WHERE user_id = ANY($1) AND timestamp >= $2
+            ORDER BY timestamp ASC
+        `;
+        let snapshotsParams = [allUserIds, backfillDaysAgo];
         if (platform && platform !== 'overall') {
             snapshotsQuery = `
-                SELECT user_id, platform, timestamp, rating, total_solved
-                FROM snapshots
+                SELECT user_id, platform, timestamp, rating 
+                FROM snapshots 
                 WHERE user_id = ANY($1) AND platform = $2 AND timestamp >= $3
                 ORDER BY timestamp ASC
             `;
-            snapshotsParams = [allUserIds, platform, ninetyDaysAgo];
-        }
-        else {
-            snapshotsQuery = `
-                SELECT user_id, platform, timestamp, rating, total_solved
-                FROM snapshots
-                WHERE user_id = ANY($1) AND timestamp >= $2
-                ORDER BY timestamp ASC
-            `;
-            snapshotsParams = [allUserIds, ninetyDaysAgo];
+            snapshotsParams = [allUserIds, platform, backfillDaysAgo];
         }
         const snapshotsResult = await database_1.default.query(snapshotsQuery, snapshotsParams);
-        // Organize snapshots by user and platform
-        const userSnapshots = {};
-        snapshotsResult.rows.forEach(snap => {
-            if (!userSnapshots[snap.user_id]) {
-                userSnapshots[snap.user_id] = {};
-            }
-            if (!userSnapshots[snap.user_id][snap.platform]) {
-                userSnapshots[snap.user_id][snap.platform] = [];
-            }
-            userSnapshots[snap.user_id][snap.platform].push(snap);
+        // 3. Group snapshots by User -> Platform
+        const userSnaps = {};
+        allUserIds.forEach(uid => userSnaps[uid] = { codeforces: [], leetcode: [] });
+        snapshotsResult.rows.forEach(s => {
+            if (!userSnaps[s.user_id])
+                userSnaps[s.user_id] = { codeforces: [], leetcode: [] };
+            if (userSnaps[s.user_id][s.platform])
+                userSnaps[s.user_id][s.platform].push(s);
         });
-        // Helper function to normalize ratings
-        const normalizeRating = (rating, plat) => {
-            if (plat === 'codeforces') {
-                return Math.min(100, (rating / 3500) * 100);
-            }
-            else if (plat === 'leetcode') {
-                return Math.min(100, (rating / 3500) * 100);
-            }
-            return 0;
-        };
-        // Build response based on platform
-        let responseData = {};
-        if (platform === 'codeforces' || platform === 'leetcode') {
-            // Single platform mode
-            const userHistory = userSnapshots[userId]?.[platform] || [];
-            responseData.history = userHistory.map(snap => ({
-                rating: snap.rating,
-                snapshot_date: snap.timestamp,
-                platform
-            }));
-            // Friends average
-            if (mode === 'friends-avg' || !mode) {
-                const friendsAvg = [];
-                const historyLength = userHistory.length;
-                for (let i = 0; i < historyLength; i++) {
-                    let totalRating = 0;
-                    let count = 0;
-                    friendIds.forEach(friendId => {
-                        const friendHistory = userSnapshots[friendId]?.[platform] || [];
-                        if (friendHistory[i]) {
-                            totalRating += friendHistory[i].rating;
-                            count++;
+        // 4. Generate Master Date List (Last 90 days)
+        const dateList = getLastNDays(90);
+        // 5. Interpolate History for Every User
+        // Structure: result[userId][dateIndex] = { rating, normalized }
+        const interpolatedData = {};
+        allUserIds.forEach(uid => {
+            // Get interpolated streams for both platforms
+            const cfStream = interpolateHistory(userSnaps[uid].codeforces, dateList);
+            const lcStream = interpolateHistory(userSnaps[uid].leetcode, dateList);
+            // Combine based on requested view
+            interpolatedData[uid] = dateList.map((dateStr, idx) => {
+                const cfRating = cfStream[idx]?.rating;
+                const lcRating = lcStream[idx]?.rating;
+                let finalRating = null;
+                if (platform === 'codeforces') {
+                    finalRating = cfRating;
+                }
+                else if (platform === 'leetcode') {
+                    finalRating = lcRating;
+                }
+                else {
+                    // Overall Logic with Normalization
+                    if (cfRating !== null || lcRating !== null) {
+                        const cfNorm = (cfRating !== null && cfRating > 0) ? normalizeRatingVal(cfRating, 'codeforces') : 0;
+                        const lcNorm = (lcRating !== null && lcRating > 0) ? normalizeRatingVal(lcRating, 'leetcode') : 0;
+                        if (cfRating !== null && cfRating > 0 && lcRating !== null && lcRating > 0) {
+                            finalRating = (cfNorm + lcNorm) / 2;
                         }
-                    });
-                    if (count > 0) {
-                        friendsAvg.push({
-                            rating: totalRating / count,
-                            snapshot_date: userHistory[i].timestamp
-                        });
+                        else {
+                            finalRating = cfNorm || lcNorm;
+                        }
                     }
                 }
-                responseData.friends_avg = friendsAvg;
-            }
-            // Individual friends
-            if (mode === 'friends') {
-                responseData.friends = friendsResult.rows.map(friend => ({
-                    id: friend.friend_id,
-                    name: friend.name,
-                    history: (userSnapshots[friend.friend_id]?.[platform] || []).map(snap => ({
-                        rating: snap.rating,
-                        snapshot_date: snap.timestamp
-                    }))
-                }));
+                return {
+                    rating: finalRating !== null ? Math.round(finalRating) : null,
+                    snapshot_date: cfStream[idx].snapshot_date
+                };
+            });
+        });
+        // Find the first index where the main user has valid data
+        let startIndex = 0;
+        for (let i = 0; i < interpolatedData[userId].length; i++) {
+            if (interpolatedData[userId][i].rating !== null) {
+                startIndex = i;
+                break;
             }
         }
-        else {
-            // Overall mode - combined normalized data
-            const userCfHistory = userSnapshots[userId]?.['codeforces'] || [];
-            const userLcHistory = userSnapshots[userId]?.['leetcode'] || [];
-            // Combine and normalize
-            const combinedHistory = [];
-            const maxLength = Math.max(userCfHistory.length, userLcHistory.length);
-            for (let i = 0; i < maxLength; i++) {
-                const cfSnap = userCfHistory[i];
-                const lcSnap = userLcHistory[i];
-                if (cfSnap || lcSnap) {
-                    const cfNorm = cfSnap ? normalizeRating(cfSnap.rating, 'codeforces') : 0;
-                    const lcNorm = lcSnap ? normalizeRating(lcSnap.rating, 'leetcode') : 0;
-                    const combined = cfSnap && lcSnap ? (cfNorm + lcNorm) / 2 : (cfNorm || lcNorm);
-                    combinedHistory.push({
-                        rating: combined,
-                        snapshot_date: cfSnap?.timestamp || lcSnap?.timestamp
-                    });
-                }
-            }
-            responseData.history = combinedHistory;
-            // Friends average for overall
-            if (mode === 'friends-avg' || !mode) {
-                const friendsAvg = [];
-                for (let i = 0; i < combinedHistory.length; i++) {
-                    let totalRating = 0;
-                    let count = 0;
-                    friendIds.forEach(friendId => {
-                        const friendCf = userSnapshots[friendId]?.['codeforces']?.[i];
-                        const friendLc = userSnapshots[friendId]?.['leetcode']?.[i];
-                        if (friendCf || friendLc) {
-                            const cfNorm = friendCf ? normalizeRating(friendCf.rating, 'codeforces') : 0;
-                            const lcNorm = friendLc ? normalizeRating(friendLc.rating, 'leetcode') : 0;
-                            const combined = friendCf && friendLc ? (cfNorm + lcNorm) / 2 : (cfNorm || lcNorm);
-                            totalRating += combined;
-                            count++;
-                        }
-                    });
-                    if (count > 0) {
-                        friendsAvg.push({
-                            rating: totalRating / count,
-                            snapshot_date: combinedHistory[i].snapshot_date
-                        });
+        // Trim all arrays from startIndex to maintain alignment
+        const trimmedDateList = dateList.slice(startIndex);
+        Object.keys(interpolatedData).forEach(uid => {
+            interpolatedData[Number(uid)] = interpolatedData[Number(uid)].slice(startIndex);
+        });
+        // 6. Construct Final Response
+        const myHistory = interpolatedData[userId];
+        let responseData = {
+            history: myHistory,
+            friends_avg: [],
+            friends: []
+        };
+        // Calculate Friends Average
+        if (mode === 'friends-avg' || !mode) {
+            responseData.friends_avg = myHistory.map((item, idx) => {
+                let total = 0;
+                let count = 0;
+                friendIds.forEach(fid => {
+                    const r = interpolatedData[fid][idx]?.rating;
+                    if (r !== null && r > 0) {
+                        total += r;
+                        count++;
                     }
-                }
-                responseData.friends_avg = friendsAvg;
-            }
-            // Individual friends for overall
-            if (mode === 'friends') {
-                responseData.friends = friendsResult.rows.map(friend => {
-                    const friendCfHistory = userSnapshots[friend.friend_id]?.['codeforces'] || [];
-                    const friendLcHistory = userSnapshots[friend.friend_id]?.['leetcode'] || [];
-                    const maxLen = Math.max(friendCfHistory.length, friendLcHistory.length);
-                    const combinedFriendHistory = [];
-                    for (let i = 0; i < maxLen; i++) {
-                        const cfSnap = friendCfHistory[i];
-                        const lcSnap = friendLcHistory[i];
-                        if (cfSnap || lcSnap) {
-                            const cfNorm = cfSnap ? normalizeRating(cfSnap.rating, 'codeforces') : 0;
-                            const lcNorm = lcSnap ? normalizeRating(lcSnap.rating, 'leetcode') : 0;
-                            const combined = cfSnap && lcSnap ? (cfNorm + lcNorm) / 2 : (cfNorm || lcNorm);
-                            combinedFriendHistory.push({
-                                rating: combined,
-                                snapshot_date: cfSnap?.timestamp || lcSnap?.timestamp
-                            });
-                        }
-                    }
-                    return {
-                        id: friend.friend_id,
-                        name: friend.name,
-                        history: combinedFriendHistory
-                    };
                 });
-            }
+                return {
+                    rating: count > 0 ? Math.round(total / count) : null,
+                    snapshot_date: item.snapshot_date
+                };
+            });
+        }
+        // Individual Friends Data
+        if (mode === 'friends') {
+            responseData.friends = friendsResult.rows.map(f => ({
+                id: f.friend_id,
+                name: f.name,
+                history: interpolatedData[f.friend_id]
+            }));
         }
         res.json({
             success: true,

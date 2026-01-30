@@ -163,5 +163,42 @@ class LeetCodeService {
             return false;
         }
     }
+    /**
+     * Get daily submission counts for heatmap
+     * Returns a map of date string -> submission count
+     */
+    static async getDailySubmissions(username) {
+        try {
+            const query = `
+        query userProfileCalendar($username: String!) {
+          matchedUser(username: $username) {
+            userCalendar {
+              submissionCalendar
+            }
+          }
+        }
+      `;
+            const response = await axios_1.default.post(LC_GRAPHQL_ENDPOINT, {
+                query,
+                variables: { username }
+            });
+            const calendarData = response.data.data?.matchedUser?.userCalendar?.submissionCalendar;
+            if (!calendarData)
+                return new Map();
+            // Parse the calendar JSON (timestamp -> count)
+            const calendar = JSON.parse(calendarData || '{}');
+            const dailyCounts = new Map();
+            Object.entries(calendar).forEach(([timestamp, count]) => {
+                const date = new Date(parseInt(timestamp) * 1000);
+                const dateStr = date.toISOString().split('T')[0];
+                dailyCounts.set(dateStr, count);
+            });
+            return dailyCounts;
+        }
+        catch (error) {
+            console.error('LeetCode getDailySubmissions error:', error.message);
+            return new Map();
+        }
+    }
 }
 exports.LeetCodeService = LeetCodeService;

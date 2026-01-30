@@ -103,5 +103,33 @@ class CodeforcesService {
             return false;
         }
     }
+    /**
+     * Get daily submission counts for heatmap
+     * Returns a map of date string -> submission count
+     */
+    static async getDailySubmissions(handle, days = 365) {
+        try {
+            const response = await axios_1.default.get(`${CF_API_BASE}/user.status`, {
+                params: { handle, from: 1, count: 10000 }
+            });
+            if (response.data.status !== 'OK')
+                return new Map();
+            const submissions = response.data.result;
+            const dailyCounts = new Map();
+            const cutoffTime = Date.now() / 1000 - (days * 24 * 60 * 60);
+            submissions.forEach((sub) => {
+                if (sub.creationTimeSeconds < cutoffTime)
+                    return;
+                const date = new Date(sub.creationTimeSeconds * 1000);
+                const dateStr = date.toISOString().split('T')[0];
+                dailyCounts.set(dateStr, (dailyCounts.get(dateStr) || 0) + 1);
+            });
+            return dailyCounts;
+        }
+        catch (error) {
+            console.error('Codeforces getDailySubmissions error:', error.message);
+            return new Map();
+        }
+    }
 }
 exports.CodeforcesService = CodeforcesService;

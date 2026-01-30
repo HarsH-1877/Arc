@@ -159,7 +159,7 @@ router.get('/requests/pending', auth_1.authenticate, async (req, res) => {
 });
 // Accept friend request
 // @ts-ignore - Express middleware type conflict
-router.post('/requests/:requestId/accept', auth_1.authenticate, async (req, res) => {
+router.post('/request/:requestId/accept', auth_1.authenticate, async (req, res) => {
     try {
         const { requestId } = req.params;
         const userId = req.user.userId;

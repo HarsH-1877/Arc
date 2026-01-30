@@ -35,14 +35,23 @@ class SnapshotService {
             // Filter last 90 days
             const ninetyDaysAgo = Date.now() / 1000 - (90 * 24 * 60 * 60);
             const recentChanges = ratingHistory.filter(change => change.ratingUpdateTimeSeconds >= ninetyDaysAgo);
-            // Get topic breakdown once
+            // Get topic breakdown and total solved count
             const topicBreakdown = await codeforces_service_1.CodeforcesService.getTopicBreakdown(handle);
+            const submissions = await codeforces_service_1.CodeforcesService.getUserSubmissions(handle, 500);
+            // Count unique accepted problems
+            const solvedProblems = new Set();
+            submissions.forEach(sub => {
+                if (sub.verdict === 'OK') {
+                    solvedProblems.add(`${sub.contestId}-${sub.problem.name}`);
+                }
+            });
+            const totalSolved = solvedProblems.size;
             let snapshotsCreated = 0;
             for (const change of recentChanges) {
                 const timestamp = new Date(change.ratingUpdateTimeSeconds * 1000);
                 await database_1.default.query(`INSERT INTO snapshots (user_id, platform, timestamp, rating, total_solved, topic_breakdown)
            VALUES ($1, $2, $3, $4, $5, $6)
-           ON CONFLICT (user_id, platform, timestamp) DO NOTHING`, [userId, 'codeforces', timestamp, change.newRating, 0, JSON.stringify(topicBreakdown)]);
+           ON CONFLICT (user_id, platform, timestamp) DO NOTHING`, [userId, 'codeforces', timestamp, change.newRating, totalSolved, JSON.stringify(topicBreakdown)]);
                 snapshotsCreated++;
             }
             // Create current snapshot
@@ -52,12 +61,12 @@ class SnapshotService {
                     user_id: userId,
                     platform: 'codeforces',
                     rating: userInfo.rating,
-                    total_solved: 0, // Will be updated by submission count
+                    total_solved: totalSolved,
                     topic_breakdown: topicBreakdown
                 });
                 snapshotsCreated++;
             }
-            console.log(`Backfilled ${snapshotsCreated} Codeforces snapshots for user ${userId}`);
+            console.log(`Backfilled ${snapshotsCreated} Codeforces snapshots for user ${userId} (${totalSolved} problems solved)`);
             return snapshotsCreated;
         }
         catch (error) {

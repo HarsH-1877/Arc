@@ -159,6 +159,19 @@ router.get('/:friendId/overview', auth_1.authenticate, async (req, res) => {
             userData.problems_solved = latestUserData.total || 0;
             friendData.problems_solved = latestFriendData.total || 0;
         }
+        // Add contest counts (simplified - using mock data for now)
+        // For real implementation, this would fetch from platform APIs or be stored in snapshots
+        const getContestCount = (ratings, isPlatformSpecific) => {
+            if (platform === 'overall') {
+                return (ratings.codeforces ? 45 : 0) + (ratings.leetcode ? 32 : 0); // Mock combined
+            }
+            else if (platform === 'codeforces') {
+                return ratings.codeforces ? 45 : 0; // Mock CF
+            }
+            else {
+                return ratings.leetcode ? 32 : 0; // Mock LC
+            }
+        };
         res.json({
             success: true,
             data: {
@@ -168,6 +181,7 @@ router.get('/:friendId/overview', auth_1.authenticate, async (req, res) => {
                     current_ratings: userData.current_ratings,
                     rating_changes: userData.rating_changes,
                     problems_solved: userData.problems_solved,
+                    contests_given: getContestCount(userData.current_ratings, platform !== 'overall'),
                     snapshots: userData.snapshots.map((s) => ({
                         platform: s.platform,
                         timestamp: s.timestamp,
@@ -181,6 +195,7 @@ router.get('/:friendId/overview', auth_1.authenticate, async (req, res) => {
                     current_ratings: friendData.current_ratings,
                     rating_changes: friendData.rating_changes,
                     problems_solved: friendData.problems_solved,
+                    contests_given: getContestCount(friendData.current_ratings, platform !== 'overall'),
                     snapshots: friendData.snapshots.map((s) => ({
                         platform: s.platform,
                         timestamp: s.timestamp,
@@ -205,6 +220,7 @@ router.get('/:friendId/topics', auth_1.authenticate, async (req, res) => {
     try {
         const userId = req.user.userId;
         const friendId = parseInt(req.params.friendId);
+        const platform = req.query.platform || 'overall';
         // Verify friendship exists
         const friendCheck = await database_1.default.query('SELECT id FROM friends WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)', [userId, friendId]);
         if (friendCheck.rows.length === 0) {
@@ -221,7 +237,8 @@ router.get('/:friendId/topics', auth_1.authenticate, async (req, res) => {
                 ORDER BY user_id, platform, timestamp DESC
             )
             SELECT user_id, platform, topic_breakdown
-            FROM latest_snapshots`, [userId, friendId]);
+            FROM latest_snapshots
+            WHERE $3 = 'overall' OR platform = $3`, [userId, friendId, platform]);
         // Aggregate topics across all platforms for each user
         const userTopicsMap = {};
         const friendTopicsMap = {};
@@ -259,6 +276,254 @@ router.get('/:friendId/topics', auth_1.authenticate, async (req, res) => {
     }
     catch (error) {
         console.error('Compare topics error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Server error'
+        });
+    }
+});
+// Get consistency comparison between user and friend
+// @ts-ignore - Express middleware type conflict
+router.get('/:friendId/consistency', auth_1.authenticate, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const friendId = parseInt(req.params.friendId);
+        const platform = req.query.platform || 'overall';
+        // Verify friendship exists
+        const friendCheck = await database_1.default.query('SELECT id FROM friends WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)', [userId, friendId]);
+        if (friendCheck.rows.length === 0) {
+            return res.status(403).json({
+                success: false,
+                error: 'Not friends with this user'
+            });
+        }
+        // Get snapshots for last 180 days (6 months) for both users
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setDate(sixMonthsAgo.getDate() - 180);
+        // Build snapshot query with optional platform filtering
+        let snapshotsQuery = `
+            SELECT DISTINCT user_id, DATE(timestamp) as date
+            FROM snapshots
+            WHERE user_id IN ($1, $2) AND timestamp >= $3`;
+        const snapshotsParams = [userId, friendId, sixMonthsAgo];
+        if (platform !== 'overall') {
+            snapshotsQuery += ` AND platform = $4`;
+            snapshotsParams.push(platform);
+        }
+        snapshotsQuery += `
+            GROUP BY user_id, DATE(timestamp)
+            ORDER BY user_id, date ASC`;
+        const snapshotsResult = await database_1.default.query(snapshotsQuery, snapshotsParams);
+        // Get usernames
+        const usersResult = await database_1.default.query('SELECT id, username FROM users WHERE id IN ($1, $2)', [userId, friendId]);
+        const userMap = new Map(usersResult.rows.map(u => [u.id, u.username]));
+        // Helper function to calculate activity metrics
+        const calculateMetrics = (dailyData) => {
+            const sortedDates = Array.from(dailyData.keys()).sort();
+            let currentStreak = 0;
+            let longestStreak = 0;
+            let tempStreak = 0;
+            // Calculate streaks
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            // Check current streak (working backwards from today)
+            let checkDate = new Date(today);
+            let foundToday = false;
+            for (let i = 0; i < 180; i++) {
+                const dateStr = checkDate.toISOString().split('T')[0];
+                if (dailyData.has(dateStr)) {
+                    if (!foundToday)
+                        foundToday = true;
+                    currentStreak++;
+                }
+                else if (foundToday) {
+                    break;
+                }
+                checkDate.setDate(checkDate.getDate() - 1);
+            }
+            // Calculate longest streak
+            let prevDate = null;
+            for (const dateStr of sortedDates) {
+                const currentDate = new Date(dateStr);
+                if (prevDate) {
+                    const dayDiff = Math.floor((currentDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+                    if (dayDiff === 1) {
+                        tempStreak++;
+                    }
+                    else {
+                        longestStreak = Math.max(longestStreak, tempStreak);
+                        tempStreak = 1;
+                    }
+                }
+                else {
+                    tempStreak = 1;
+                }
+                prevDate = currentDate;
+            }
+            longestStreak = Math.max(longestStreak, tempStreak);
+            // Calculate active days
+            const activeDays = dailyData.size;
+            const activeDaysPercentage = (activeDays / 180) * 100;
+            // Calculate average gap
+            let totalGap = 0;
+            let gapCount = 0;
+            for (let i = 1; i < sortedDates.length; i++) {
+                const prevDate = new Date(sortedDates[i - 1]);
+                const currDate = new Date(sortedDates[i]);
+                const gap = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+                totalGap += gap;
+                gapCount++;
+            }
+            const avgGap = gapCount > 0 ? totalGap / gapCount : 0;
+            return {
+                current_streak: currentStreak,
+                longest_streak: longestStreak,
+                active_days: activeDays,
+                active_days_percentage: Math.round(activeDaysPercentage * 10) / 10,
+                avg_gap_days: Math.round(avgGap * 10) / 10
+            };
+        };
+        // Process data for each user
+        const userDailyActivity = new Map();
+        const friendDailyActivity = new Map();
+        // Define mock user emails (these get random data, real accounts get actual activity count)
+        const mockUserEmails = [
+            'alice@example.com',
+            'bob@example.com',
+            'steve@example.com',
+            'william@example.com',
+            'joe@example.com',
+            'virat@example.com'
+        ];
+        // Check if users are mock users
+        const userEmailResult = await database_1.default.query('SELECT id, email FROM users WHERE id IN ($1, $2)', [userId, friendId]);
+        const emailMap = new Map(userEmailResult.rows.map(u => [u.id, u.email]));
+        const isUserMock = mockUserEmails.includes(emailMap.get(userId) || '');
+        const isFriendMock = mockUserEmails.includes(emailMap.get(friendId) || '');
+        // For real users, fetch from daily_submissions table
+        if (!isUserMock || !isFriendMock) {
+            let dailyQuery = `
+                SELECT user_id, date::text as date_str, SUM(submission_count) as count
+                FROM daily_submissions
+                WHERE user_id IN ($1, $2) AND date >= $3`;
+            const dailyParams = [userId, friendId, sixMonthsAgo];
+            if (platform !== 'overall') {
+                dailyQuery += ` AND platform = $4`;
+                dailyParams.push(platform);
+            }
+            dailyQuery += ` GROUP BY user_id, date ORDER BY date ASC`;
+            const dailyResult = await database_1.default.query(dailyQuery, dailyParams);
+            dailyResult.rows.forEach(row => {
+                const count = parseInt(row.count) || 0;
+                if (row.user_id === userId && !isUserMock) {
+                    userDailyActivity.set(row.date_str, count);
+                }
+                else if (row.user_id === friendId && !isFriendMock) {
+                    friendDailyActivity.set(row.date_str, count);
+                }
+            });
+        }
+        // For mock users, use snapshot-based random generation
+        if (isUserMock || isFriendMock) {
+            const createSeededRandom = (seed) => {
+                let current = seed;
+                return () => {
+                    const x = Math.sin(current++) * 10000;
+                    return x - Math.floor(x);
+                };
+            };
+            if (isUserMock) {
+                if (platform === 'overall') {
+                    // For overall: combine CF and LC with their respective seeds
+                    const cfSeed = userId * 12345 + 3333;
+                    const lcSeed = userId * 12345 + 7777;
+                    const cfRandom = createSeededRandom(cfSeed);
+                    const lcRandom = createSeededRandom(lcSeed);
+                    snapshotsResult.rows.forEach(row => {
+                        if (row.user_id !== userId)
+                            return;
+                        const dateStr = row.date.toISOString().split('T')[0];
+                        // Use platform-specific seed and add to existing count if date already exists
+                        const random = row.platform === 'codeforces' ? cfRandom() : lcRandom();
+                        const count = Math.floor(random * 8) + 1;
+                        const existing = userDailyActivity.get(dateStr) || 0;
+                        userDailyActivity.set(dateStr, existing + count);
+                    });
+                }
+                else {
+                    // Single platform: use platform-specific seed
+                    const platformSeed = userId * 12345 + (platform === 'leetcode' ? 7777 : 3333);
+                    const userRandom = createSeededRandom(platformSeed);
+                    snapshotsResult.rows.forEach(row => {
+                        if (row.user_id !== userId)
+                            return;
+                        const dateStr = row.date.toISOString().split('T')[0];
+                        const count = Math.floor(userRandom() * 8) + 1;
+                        userDailyActivity.set(dateStr, count);
+                    });
+                }
+            }
+            if (isFriendMock) {
+                if (platform === 'overall') {
+                    // For overall: combine CF and LC with their respective seeds
+                    const cfSeed = friendId * 12345 + 3333;
+                    const lcSeed = friendId * 12345 + 7777;
+                    const cfRandom = createSeededRandom(cfSeed);
+                    const lcRandom = createSeededRandom(lcSeed);
+                    snapshotsResult.rows.forEach(row => {
+                        if (row.user_id !== friendId)
+                            return;
+                        const dateStr = row.date.toISOString().split('T')[0];
+                        const random = row.platform === 'codeforces' ? cfRandom() : lcRandom();
+                        const count = Math.floor(random * 8) + 1;
+                        const existing = friendDailyActivity.get(dateStr) || 0;
+                        friendDailyActivity.set(dateStr, existing + count);
+                    });
+                }
+                else {
+                    // Single platform: use platform-specific seed
+                    const platformSeed = friendId * 12345 + (platform === 'leetcode' ? 7777 : 3333);
+                    const friendRandom = createSeededRandom(platformSeed);
+                    snapshotsResult.rows.forEach(row => {
+                        if (row.user_id !== friendId)
+                            return;
+                        const dateStr = row.date.toISOString().split('T')[0];
+                        const count = Math.floor(friendRandom() * 8) + 1;
+                        friendDailyActivity.set(dateStr, count);
+                    });
+                }
+            }
+        }
+        // Calculate metrics for both users
+        const userMetrics = calculateMetrics(userDailyActivity);
+        const friendMetrics = calculateMetrics(friendDailyActivity);
+        // Convert daily activity to array format
+        const userActivityArray = Array.from(userDailyActivity.entries()).map(([date, count]) => ({
+            date,
+            count
+        }));
+        const friendActivityArray = Array.from(friendDailyActivity.entries()).map(([date, count]) => ({
+            date,
+            count
+        }));
+        res.json({
+            success: true,
+            data: {
+                you: {
+                    username: userMap.get(userId),
+                    daily_activity: userActivityArray,
+                    ...userMetrics
+                },
+                friend: {
+                    username: userMap.get(friendId),
+                    daily_activity: friendActivityArray,
+                    ...friendMetrics
+                }
+            }
+        });
+    }
+    catch (error) {
+        console.error('Compare consistency error:', error);
         res.status(500).json({
             success: false,
             error: 'Server error'
