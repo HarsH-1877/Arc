@@ -98,7 +98,7 @@ export default function LoginPage() {
                     {/* Google OAuth Button */}
                     <button
                         type="button"
-                        onClick={() => window.location.href = 'http://localhost:5000/api/auth/google'}
+                        onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth/google`}
                         className="w-full flex items-center justify-center gap-3 rounded-md border border-gray-700 bg-gray-900 px-4 py-2 text-gray-100 font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-950"
                     >
                         <svg className="w-5 h-5" viewBox="0 0 24 24">
