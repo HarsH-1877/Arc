@@ -8,7 +8,12 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 // Use DATABASE_URL if available (Render), otherwise use individual vars (local)
 const pool = new pg_1.Pool(process.env.DATABASE_URL
-    ? { connectionString: process.env.DATABASE_URL }
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: {
+            rejectUnauthorized: false // Required for Render PostgreSQL
+        }
+    }
     : {
         host: process.env.DB_HOST || 'localhost',
         port: parseInt(process.env.DB_PORT || '5432'),
