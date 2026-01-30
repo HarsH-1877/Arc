@@ -942,7 +942,7 @@ export default function ComparePage() {
                                                                 color: '#e5e7eb',
                                                                 font: {
                                                                     size: 12,
-                                                                    weight: '500'
+                                                                    weight: 500
                                                                 },
                                                                 padding: 16,
                                                                 usePointStyle: true,
