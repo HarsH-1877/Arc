@@ -25,16 +25,16 @@ class SnapshotService {
         }
     }
     /**
-     * Backfill Codeforces rating history (last 90 days)
+     * Backfill Codeforces rating history (last 180 days)
      */
     static async backfillCodeforcesHistory(userId, handle) {
         try {
             const ratingHistory = await codeforces_service_1.CodeforcesService.getRatingHistory(handle);
             if (ratingHistory.length === 0)
                 return 0;
-            // Filter last 90 days
-            const ninetyDaysAgo = Date.now() / 1000 - (90 * 24 * 60 * 60);
-            const recentChanges = ratingHistory.filter(change => change.ratingUpdateTimeSeconds >= ninetyDaysAgo);
+            // Filter last 180 days
+            const oneEightyDaysAgo = Date.now() / 1000 - (180 * 24 * 60 * 60);
+            const recentChanges = ratingHistory.filter(change => change.ratingUpdateTimeSeconds >= oneEightyDaysAgo);
             // Get topic breakdown and total solved count
             const topicBreakdown = await codeforces_service_1.CodeforcesService.getTopicBreakdown(handle);
             const submissions = await codeforces_service_1.CodeforcesService.getUserSubmissions(handle, 500);

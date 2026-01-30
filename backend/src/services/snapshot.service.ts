@@ -25,17 +25,17 @@ export class SnapshotService {
     }
 
     /**
-     * Backfill Codeforces rating history (last 90 days)
+     * Backfill Codeforces rating history (last 180 days)
      */
     static async backfillCodeforcesHistory(userId: number, handle: string): Promise<number> {
         try {
             const ratingHistory = await CodeforcesService.getRatingHistory(handle);
             if (ratingHistory.length === 0) return 0;
 
-            // Filter last 90 days
-            const ninetyDaysAgo = Date.now() / 1000 - (90 * 24 * 60 * 60);
+            // Filter last 180 days
+            const oneEightyDaysAgo = Date.now() / 1000 - (180 * 24 * 60 * 60);
             const recentChanges = ratingHistory.filter(
-                change => change.ratingUpdateTimeSeconds >= ninetyDaysAgo
+                change => change.ratingUpdateTimeSeconds >= oneEightyDaysAgo
             );
 
             // Get topic breakdown and total solved count
