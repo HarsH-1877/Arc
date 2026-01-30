@@ -23,6 +23,23 @@ router.post('/link', authenticate, async (req: AuthRequest, res: Response<ApiRes
             });
         }
 
+        // Rate limit: 3 links per day
+        const oneDayAgo = new Date();
+        oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+
+        const linkCountResult = await pool.query(
+            'SELECT COUNT(*) FROM platform_handles WHERE user_id = $1 AND created_at >= $2',
+            [userId, oneDayAgo]
+        );
+
+        const linkCount = parseInt(linkCountResult.rows[0].count);
+        if (linkCount >= 3) {
+            return res.status(429).json({
+                success: false,
+                error: 'You can only link 3 accounts per day. Please try again tomorrow.'
+            });
+        }
+
         if (platform !== 'codeforces' && platform !== 'leetcode') {
             return res.status(400).json({
                 success: false,
@@ -63,7 +80,7 @@ router.post('/link', authenticate, async (req: AuthRequest, res: Response<ApiRes
                 [userId, platform, handle, currentRating]
             );
 
-            // Backfill historical data in the background
+            // Backfill historical data in the background (auto-refresh after link)
             SnapshotService.backfillCodeforcesHistory(userId, handle).catch(err =>
                 console.error('Background backfill error:', err)
             );
@@ -87,7 +104,7 @@ router.post('/link', authenticate, async (req: AuthRequest, res: Response<ApiRes
                 [userId, platform, handle, currentRating]
             );
 
-            // Create initial snapshot in the background
+            // Create initial snapshot in the background (auto-refresh after link)
             SnapshotService.createLeetCodeSnapshot(userId, handle).catch(err =>
                 console.error('Background snapshot error:', err)
             );
@@ -262,8 +279,8 @@ router.post('/refresh', authenticate, async (req: AuthRequest, res: Response<Api
 
         const handle = result.rows[0];
 
-        // Check cooldown - 5 minutes (300 seconds)
-        const COOLDOWN_SECONDS = 300;
+        // Check cooldown - 1 hour (3600 seconds)
+        const COOLDOWN_SECONDS = 3600;
         const lastRefreshResult = await pool.query(
             'SELECT timestamp FROM snapshots WHERE user_id = $1 AND platform = $2 ORDER BY timestamp DESC LIMIT 1',
             [userId, platform]
@@ -276,9 +293,12 @@ router.post('/refresh', authenticate, async (req: AuthRequest, res: Response<Api
 
             if (secondsSinceRefresh < COOLDOWN_SECONDS) {
                 const remainingSeconds = Math.ceil(COOLDOWN_SECONDS - secondsSinceRefresh);
+                const remainingMinutes = Math.ceil(remainingSeconds / 60);
                 return res.status(429).json({
                     success: false,
-                    error: `Please wait ${Math.ceil(remainingSeconds / 60)} minute(s) before refreshing again`
+                    error: remainingMinutes >= 60
+                        ? `Please wait ${Math.ceil(remainingMinutes / 60)} hour(s) before refreshing again`
+                        : `Please wait ${remainingMinutes} minute(s) before refreshing again`
                 });
             }
         }
