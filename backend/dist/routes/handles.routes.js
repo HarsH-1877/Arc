@@ -203,6 +203,21 @@ router.post('/refresh', auth_1.authenticate, async (req, res) => {
             });
         }
         const handle = result.rows[0];
+        // Check cooldown - 5 minutes (300 seconds)
+        const COOLDOWN_SECONDS = 300;
+        const lastRefreshResult = await database_1.default.query('SELECT timestamp FROM snapshots WHERE user_id = $1 AND platform = $2 ORDER BY timestamp DESC LIMIT 1', [userId, platform]);
+        if (lastRefreshResult.rows.length > 0) {
+            const lastRefresh = new Date(lastRefreshResult.rows[0].timestamp);
+            const now = new Date();
+            const secondsSinceRefresh = (now.getTime() - lastRefresh.getTime()) / 1000;
+            if (secondsSinceRefresh < COOLDOWN_SECONDS) {
+                const remainingSeconds = Math.ceil(COOLDOWN_SECONDS - secondsSinceRefresh);
+                return res.status(429).json({
+                    success: false,
+                    error: `Please wait ${Math.ceil(remainingSeconds / 60)} minute(s) before refreshing again`
+                });
+            }
+        }
         // Create new snapshot
         if (platform === 'codeforces') {
             const userInfo = await codeforces_service_1.CodeforcesService.getUserInfo(handle.handle);
