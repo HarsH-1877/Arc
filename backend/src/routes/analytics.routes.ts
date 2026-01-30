@@ -188,20 +188,8 @@ router.get('/rating-history', authenticate, async (req: Request, res: Response) 
             });
         });
 
-        // Find the first index where the main user has valid data
-        let startIndex = 0;
-        for (let i = 0; i < interpolatedData[userId].length; i++) {
-            if (interpolatedData[userId][i].rating !== null) {
-                startIndex = i;
-                break;
-            }
-        }
-
-        // Trim all arrays from startIndex to maintain alignment
-        const trimmedDateList = dateList.slice(startIndex);
-        Object.keys(interpolatedData).forEach(uid => {
-            interpolatedData[Number(uid)] = interpolatedData[Number(uid)].slice(startIndex);
-        });
+        // Don't trim - show all 180 days even if user has gaps at the beginning
+        // This ensures we see historical context and trends properly
 
         // 6. Construct Final Response
         const myHistory = interpolatedData[userId];
