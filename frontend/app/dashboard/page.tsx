@@ -233,6 +233,9 @@ export default function DashboardPage() {
                 if (data.data.friends) {
                     fetchedFriends = data.data.friends;
                     setAvailableFriends(fetchedFriends);
+                    console.log('📊 Updated availableFriends:', fetchedFriends.map(f => ({ id: f.id, name: f.name, historyLength: f.history?.length })));
+                } else {
+                    console.log('⚠️ No friends data in API response');
                 }
 
                 // Format chart data
@@ -264,7 +267,8 @@ export default function DashboardPage() {
                         return dataPoint;
                     });
 
-                console.log('📊 Formatted Chart Data:', formattedData.slice(0, 2));
+                console.log('📊 Formatted Chart Data Sample:', formattedData.slice(0, 2));
+                console.log('📊 Keys in first dataPoint:', Object.keys(formattedData[0] || {}));
                 fetchedRatingHistory = formattedData;
                 setRatingHistory(formattedData);
             }
@@ -445,8 +449,8 @@ export default function DashboardPage() {
                         }}
                         disabled={refreshing}
                         className={`p-2.5 rounded-lg transition-all ${refreshing
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : 'text-gray-300 hover:text-white hover:scale-110 hover:rotate-180'
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-gray-300 hover:text-white hover:scale-110 hover:rotate-180'
                             }`}
                         title="Refresh Data"
                     >
@@ -705,21 +709,26 @@ export default function DashboardPage() {
                                                 />
                                             ) : (
                                                 <>
-                                                    {availableFriends.slice(0, 4).map((friend: any, idx: number) => {
-                                                        const colors = ['#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899'];
-                                                        return (
-                                                            <Line
-                                                                key={friend.id}
-                                                                type="monotone"
-                                                                dataKey={`friend_${friend.id}`}
-                                                                stroke={colors[idx]}
-                                                                strokeWidth={2}
-                                                                dot={false}
-                                                                name={friend.name}
-                                                                connectNulls={true}
-                                                            />
-                                                        );
-                                                    })}
+                                                    {(() => {
+                                                        console.log('🎨 Rendering friend lines. availableFriends count:', availableFriends?.length);
+                                                        console.log('🎨 Friend IDs:', availableFriends?.slice(0, 4).map(f => f.id));
+                                                        return availableFriends.slice(0, 4).map((friend: any, idx: number) => {
+                                                            const colors = ['#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899'];
+                                                            console.log(`🎨 Creating Line for ${friend.name} with dataKey: friend_${friend.id}`);
+                                                            return (
+                                                                <Line
+                                                                    key={friend.id}
+                                                                    type="monotone"
+                                                                    dataKey={`friend_${friend.id}`}
+                                                                    stroke={colors[idx]}
+                                                                    strokeWidth={2}
+                                                                    dot={false}
+                                                                    name={friend.name}
+                                                                    connectNulls={true}
+                                                                />
+                                                            );
+                                                        });
+                                                    })()}
                                                 </>
                                             )}
                                         </LineChart>
