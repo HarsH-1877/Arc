@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Arc
 
-## Getting Started
+**Your coding journey, unified.**
 
-First, run the development server:
+Competitive programming analytics — Codeforces + LeetCode stats, head-to-head compare, friends, and streaks.
+
+## Stack
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | Next.js 14, TypeScript, Tailwind, Framer Motion, GSAP, Recharts |
+| Auth | Firebase (Google, GitHub, email/password) + `arc-session` cookie |
+| Database | **Neon PostgreSQL** + Prisma |
+| Cache | Upstash Redis (optional) |
+
+Avatars come from Firebase OAuth profile photos (UI Avatars fallback when none). No external file storage.
+
+## Setup
+
+### Quick start (mock mode — no database required)
+
+Explore the full UI with sample data:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.local.example .env.local   # USE_MOCK_DATA=true is already set
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000/dashboard](http://localhost:3000/dashboard) — auth is bypassed when mock mode is on.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Production setup (Neon + Firebase)
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+```bash
+pnpm install
+cp .env.local.example .env.local   # fill Neon + Firebase keys
+# Set USE_MOCK_DATA=false
+pnpm db:push                       # or db:migrate against Neon
+pnpm dev
+```
 
-## Learn More
+### Neon
 
-To learn more about Next.js, take a look at the following resources:
+1. Create a project at [neon.tech](https://neon.tech)
+2. Copy the **pooled** connection string → `DATABASE_URL`
+3. Copy the **direct** connection string → `DIRECT_URL`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Firebase
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+Enable **Google**, **GitHub**, and **Email/Password** in Firebase Console → Authentication → Sign-in method.
 
-## Deploy on Vercel
+Add your Firebase web config and Admin SDK service account to `.env.local`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Development server |
+| `pnpm build` | Production build |
+| `pnpm db:push` | Push schema to Neon |
+| `pnpm db:migrate` | Run migrations |
+| `pnpm db:studio` | Prisma Studio |
+
+## Local Redis (optional)
+
+For BullMQ sync jobs in dev:
+
+```bash
+docker compose up -d redis
+```
+
+Postgres in `docker-compose.yml` is optional — production uses Neon.
+
+## Roadmap
+
+See **[ROADMAP.txt](./ROADMAP.txt)** for the full end-to-end blueprint: architecture, phase status, mock vs. real mode, API reference, and remaining tasks for backend integration.

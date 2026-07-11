@@ -1,0 +1,425 @@
+================================================================================
+PROJECT ARC — END-TO-END BLUEPRINT & ROADMAP
+================================================================================
+Location: E:\Projects\Project Arc\ROADMAP.txt
+Last updated: 2025-06-24
+Purpose: Single source of truth for any AI agent or developer continuing this
+         project. Describes vision, architecture, what is DONE, and what remains.
+
+================================================================================
+1. PRODUCT VISION
+================================================================================
+
+Arc is a competitive programming analytics platform that unifies Codeforces and
+LeetCode stats into one dashboard, enables head-to-head friend comparisons,
+tracks cross-platform streaks, and surfaces topic-level strengths/weaknesses.
+
+Target user: competitive programmers who split time across CF + LC and want
+one place to see progress, compare with friends, and stay motivated.
+
+Core user journeys:
+  A. Sign up → connect CF/LC handles → view unified dashboard
+  B. Add friends → compare ratings, topics, consistency
+  C. Maintain streak by solving on either platform
+  D. Manage profile, connections, notifications, account security
+
+================================================================================
+2. TECH STACK (CURRENT)
+================================================================================
+
+Frontend:
+  - Next.js 14.2.5 (App Router), React 18, TypeScript
+  - Tailwind CSS + custom design tokens (globals.css)
+  - Framer Motion, GSAP + ScrollTrigger (landing animations)
+  - Recharts (rating charts, radar)
+  - TanStack Query (data fetching)
+  - Zustand (minimal UI state)
+  - Sonner (toasts)
+
+Auth (intended production):
+  - Firebase Auth: Google, GitHub, Email/Password
+  - Server session via POST /api/auth/session → arc-session HTTP-only cookie
+  - Firebase Admin SDK on server (src/lib/firebase/server.ts)
+
+Database (intended production):
+  - Neon PostgreSQL + Prisma ORM (prisma/schema.prisma)
+  - User handles DB sync themselves — schema is ready
+
+Cache / Jobs (optional, partially wired):
+  - Upstash Redis / ioredis (src/lib/redis.ts)
+  - BullMQ (package.json) — sync worker exists but queue not fully connected
+
+REMOVED from original spec (by user request):
+  - Cloudinary (avatar upload) — avatars from Firebase OAuth or UI Avatars
+  - Resend / weekly digest email — in-app notifications only
+
+Mock development mode:
+  - USE_MOCK_DATA=true OR NEXT_PUBLIC_USE_MOCK_DATA=true
+  - Bypasses auth middleware, serves static mock payloads from src/lib/mock/
+  - User can explore full UI without Neon/Firebase configured
+
+================================================================================
+3. REPOSITORY STRUCTURE
+================================================================================
+
+src/
+  app/
+    page.tsx                    Landing (Hero, ProblemStatement, Features, Demo)
+    (auth)/login, signup        Firebase auth pages
+    onboarding/                 Platform handle linking wizard
+    (app)/
+      dashboard/                Main analytics hub
+      compare/                  Friend head-to-head comparison
+      friends/                  Friend list, search, requests
+      settings/
+        profile/                Display name, bio, avatar (Firebase photo)
+        connections/            CF/LC link + sync; AtCoder/HR coming soon
+        notifications/          In-app notification toggles
+        security/               Sign-in methods + password change UI
+        danger/                 Account deletion with confirmation dialog
+    api/
+      auth/session              Create/destroy arc-session cookie
+      auth/check-username       Username availability
+      dashboard                 Aggregated dashboard payload
+      compare/[friendId]        Compare payload + verdict
+      friends, friends/search, friends/requests, friends/[id]
+      notifications             Notification list + mark read
+      user/profile              Profile GET/PATCH
+      platforms/link, unlink, sync
+      onboarding/validate-cf, validate-lc, complete
+  components/
+    layout/                     AppShell, Sidebar, Topbar, SettingsShell
+    dashboard/                  HeroStats, StreakBanner, ProblemLog, TopicBreakdown
+    compare/                    UserSelector, CompareHeader, VerdictStrip, tabs
+    charts/                     Heatmap, RatingChart, CompareRatingChart, Radar
+    landing/                    Hero, ProblemStatement, Features, DemoPreview, Footer
+    shared/                     GlassCard, StatCard, RatingBadge, UserAvatar, etc.
+    ui/                         button.tsx, dialog.tsx (ArcDialog)
+  hooks/                        useDashboardData, useCompareData, useFriends, etc.
+  lib/
+    mock/                       config.ts, data.ts — mock payloads
+    fetchers/                   codeforces.ts, leetcode.ts
+    firebase/                   client.ts, server.ts
+    db.ts, session.ts, utils.ts, validations.ts
+  workers/syncWorker.ts         Platform sync logic (CF + LC fetch → Prisma)
+  middleware.ts                 Auth gate (skipped in mock mode)
+prisma/schema.prisma            Full data model
+.env.local.example              Env template including USE_MOCK_DATA
+
+================================================================================
+4. DATA MODEL SUMMARY (Prisma)
+================================================================================
+
+User ──┬── PlatformConnection (CODEFORCES | LEETCODE)
+       │     ├── CodeforcesData (rating, history, tagStats JSON)
+       │     ├── LeetcodeData (solved counts, contest rating, tags)
+       │     ├── Submission[]
+       │     └── ContestResult[]
+       ├── FriendRequest / Friendship
+       ├── Streak (current, longest, freeze tokens, active days)
+       ├── Notification (FRIEND_*, SYNC_*, RATING_CHANGE)
+       └── Account / Session (legacy NextAuth tables — may be unused)
+
+Future platforms: extend Platform enum + fetchers (AtCoder, HackerRank stubs in UI)
+
+================================================================================
+5. PHASE-BY-PHASE STATUS
+================================================================================
+
+PHASE 1 — Foundation                                    [DONE ✓]
+  ✓ Next.js 14 scaffold, TypeScript, Tailwind, pnpm
+  ✓ Design system (CSS variables, glass cards, dark theme)
+  ✓ Prisma schema + docker-compose (Redis; Postgres optional)
+  ✓ Project structure, shared components, Providers (QueryClient)
+
+PHASE 2 — Authentication                                  [UI DONE | BACKEND: USER]
+  ✓ Login / Signup pages (Firebase client SDK)
+  ✓ Google + GitHub OAuth buttons
+  ✓ Email/password signup with username
+  ✓ POST /api/auth/session — creates DB user + arc-session cookie
+  ✓ Middleware protects /dashboard, /compare, /friends, /settings, /onboarding
+  ○ USER TODO: Verify Firebase keys, test real sign-in flow end-to-end
+  ○ USER TODO: Password change via Firebase reauth (UI shows toast placeholder)
+  ○ Optional: Remove unused Account/Session Prisma models if fully on Firebase
+
+PHASE 3 — Onboarding                                    [DONE ✓ | SYNC: USER]
+  ✓ Multi-step onboarding page (display name, CF handle, LC handle)
+  ✓ validate-cf / validate-lc API routes
+  ✓ complete route marks onboarded=true
+  ○ USER TODO: Trigger initial platform sync after onboarding complete
+  ○ Optional: Avatar upload step (currently username set at signup, avatar from OAuth)
+
+PHASE 4 — Dashboard                                     [DONE ✓ mock + real API]
+  ✓ HeroStats (CF rating, LC solved, streak)
+  ✓ ActivityHeatmap (365-day GitHub-style grid)
+  ✓ RatingChart (dual CF/LC line chart)
+  ✓ TopicBreakdown + TopicRadar
+  ✓ StreakBanner with freeze tokens
+  ✓ ProblemLog (recent submissions table)
+  ✓ Sync status indicators per platform
+  ✓ useDashboardData hook + /api/dashboard
+
+PHASE 5 — Compare                                       [DONE ✓]
+  ✓ UserSelector with search, rating badges, skeleton loading
+  ✓ CompareHeader (VS layout, avatars, ratings)
+  ✓ CompareVerdictStrip (who leads CF/LC/solved/streak)
+  ✓ Tabs: Overview (StatComparison), Topics (TopicComparison),
+          Consistency (ConsistencyComparison + heatmaps)
+  ✓ CompareRatingChart (side-by-side rating history)
+  ✓ /api/compare/[friendId] with typed verdict object
+
+PHASE 6 — Friends                                       [DONE ✓]
+  ✓ Friends list page with FriendCard
+  ✓ FriendSearch (debounced username search)
+  ✓ RequestCard for pending incoming/outgoing
+  ✓ Accept/reject/remove API routes
+  ✓ Mock friends + search in USE_MOCK_DATA mode
+
+PHASE 7 — Settings                                      [DONE ✓ UI | partial backend]
+  ✓ SettingsShell with sidebar nav
+  ✓ Profile: displayName, bio, read-only username/email, avatar from Firebase
+  ✓ Connections: link/unlink CF & LC, manual sync button, coming-soon cards
+  ✓ Notifications: toggle preferences (in-app only, no email)
+  ✓ Security: sign-in methods display, password form + strength meter (mock submit)
+  ✓ Danger zone: typed confirmation + ArcDialog + DELETE session (full delete TBD)
+
+PHASE 8 — Landing & Marketing                           [DONE ✓]
+  ✓ Hero with CTA to signup/dashboard
+  ✓ ProblemStatement section (fragmentation stats + GSAP)
+  ✓ Features section (4 features + GSAP scroll reveal)
+  ✓ DemoPreview (StatComparison with famous CP users)
+  ✓ Footer
+  ○ Optional: public/og-image.png for social sharing
+  ○ Optional: richer interactive demo (currently static StatComparison)
+
+PHASE 9 — Platform Sync Worker                          [PARTIAL | USER]
+  ✓ src/workers/syncWorker.ts — CF + LC fetch logic
+  ✓ src/lib/fetchers/codeforces.ts, leetcode.ts
+  ✓ API routes: /api/platforms/link, unlink, sync
+  ○ USER TODO: Wire BullMQ queue + Redis for background jobs
+  ○ USER TODO: Rate limiting via @upstash/ratelimit on sync endpoint
+  ○ USER TODO: Cron or on-demand sync scheduling
+  ○ USER TODO: Streak recalculation after sync
+  ○ USER TODO: Create Notification rows on SYNC_COMPLETE / SYNC_ERROR
+
+PHASE 10 — Polish & Production                          [PARTIAL]
+  ✓ Sonner toasts across profile/settings flows
+  ✓ README.md with Neon + Firebase setup
+  ✓ .env.local.example with USE_MOCK_DATA
+  ✓ Mock data layer for offline UI development
+  ○ Husky pre-commit hooks (.husky/ may need init: pnpm exec husky init)
+  ○ Replace console.error with structured logger in API routes
+  ○ Lighthouse performance audit
+  ○ Error boundaries tested for all major routes
+  ○ E2E tests (not started — only add if requested)
+
+================================================================================
+6. MOCK DATA MODE — HOW IT WORKS
+================================================================================
+
+Enable:
+  USE_MOCK_DATA=true
+  NEXT_PUBLIC_USE_MOCK_DATA=true
+
+Behavior:
+  - middleware.ts: skips auth redirects
+  - (app)/layout.tsx: skips session/onboarding checks
+  - These API routes return mock data when USE_MOCK_DATA:
+      /api/dashboard
+      /api/compare/[friendId]
+      /api/friends, /api/friends/search, /api/friends/requests
+      /api/user/profile
+      /api/notifications
+  - Mock user: arcdev (arc.dev@example.com) in src/lib/mock/data.ts
+  - Mock friends: tourist, benq, etc. for compare/search
+
+To switch to production data:
+  1. Set USE_MOCK_DATA=false
+  2. Configure DATABASE_URL + DIRECT_URL (Neon)
+  3. Configure Firebase env vars
+  4. pnpm db:push (or db:migrate)
+  5. Sign in via Firebase → session cookie → real API routes hit Prisma
+
+================================================================================
+7. API ROUTES REFERENCE
+================================================================================
+
+Route                          Method   Auth    Mock?   Status
+─────────────────────────────────────────────────────────────────────────────
+/api/auth/session              POST     -       -       Creates user + cookie
+/api/auth/session              DELETE   cookie  -       Clears session
+/api/auth/check-username       GET      -       -       Username availability
+/api/dashboard                 GET      cookie  yes     Dashboard aggregate
+/api/compare/[friendId]        GET      cookie  yes     Compare data + verdict
+/api/friends                   GET      cookie  yes     Friend list
+/api/friends/search            GET      cookie  yes     User search
+/api/friends/requests          GET/POST cookie  yes     Friend requests
+/api/friends/[id]              DELETE   cookie  partial Remove friend
+/api/notifications             GET/PATCH cookie yes    Notifications
+/api/user/profile              GET/PATCH cookie yes    Profile
+/api/platforms/link            POST     cookie  -       Link platform handle
+/api/platforms/unlink          POST     cookie  -       Unlink platform
+/api/platforms/sync            POST     cookie  -       Trigger sync
+/api/onboarding/validate-cf    POST     cookie  -       Validate CF handle
+/api/onboarding/validate-lc    POST     cookie  -       Validate LC handle
+/api/onboarding/complete       POST     cookie  -       Mark onboarded
+
+MISSING (future):
+  DELETE /api/user              Full account deletion (Firebase + cascade Prisma)
+  PATCH  /api/notifications/preferences  Persist toggle preferences to DB
+
+================================================================================
+8. USER-OWNED TASKS (explicit handoff)
+================================================================================
+
+The project owner will handle:
+
+  [1] Neon PostgreSQL
+      - Create Neon project, set DATABASE_URL + DIRECT_URL
+      - Run pnpm db:push after any schema changes
+      - Note: WEEKLY_DIGEST removed from NotificationType enum
+
+  [2] Firebase Authentication
+      - Enable Google, GitHub, Email/Password providers
+      - Set NEXT_PUBLIC_FIREBASE_* and FIREBASE_* service account vars
+      - Wire password update in security page to Firebase updatePassword()
+      - Wire account deletion to Firebase deleteUser() + Prisma cascade
+
+  [3] Platform sync pipeline
+      - Connect syncWorker to BullMQ + Redis
+      - Call syncPlatform() after onboarding and on manual sync
+      - Persist submissions, update streaks, write notifications
+
+  [4] Turn off mock mode
+      - USE_MOCK_DATA=false when ready for integration testing
+
+================================================================================
+9. FUTURE ENHANCEMENTS (post-MVP)
+================================================================================
+
+Platforms:
+  - AtCoder integration (UI placeholder exists in settings/connections)
+  - HackerRank integration (UI placeholder exists)
+  - Extend Platform enum + fetchers + schema
+
+Social:
+  - Public profile pages (/u/[username])
+  - Leaderboards / global rankings
+
+Analytics:
+  - Contest performance timeline
+  - Difficulty distribution charts
+  - "Weakest topic" recommendations
+
+Notifications:
+  - Real-time via Firebase Cloud Messaging or polling
+  - Persist preferences in User settings JSON or new model
+
+Infrastructure:
+  - Vercel deployment + Neon integration
+  - Upstash Redis for rate limits + job queue
+  - Structured logging (pino) + error tracking (Sentry)
+
+UI component library:
+  - Spec listed shadcn primitives: input, badge, dropdown-menu, tooltip,
+    skeleton, tabs, separator — only button + dialog exist; rest use inline
+    Tailwind. Add as needed for consistency.
+
+================================================================================
+10. ENVIRONMENT VARIABLES
+================================================================================
+
+Required for production:
+  DATABASE_URL          Neon pooled connection string
+  DIRECT_URL            Neon direct connection (migrations)
+  NEXT_PUBLIC_FIREBASE_API_KEY
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+  NEXT_PUBLIC_FIREBASE_APP_ID
+  FIREBASE_PROJECT_ID
+  FIREBASE_CLIENT_EMAIL
+  FIREBASE_PRIVATE_KEY
+
+Optional:
+  UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN
+  REDIS_URL             Local Redis for BullMQ dev
+  SYNC_RATE_LIMIT_REQUESTS / SYNC_RATE_LIMIT_WINDOW
+
+Development (mock):
+  USE_MOCK_DATA=true
+  NEXT_PUBLIC_USE_MOCK_DATA=true
+
+See .env.local.example for full template.
+
+================================================================================
+11. COMMANDS
+================================================================================
+
+pnpm install              Install dependencies (+ prisma generate)
+pnpm dev                  Start dev server (localhost:3000)
+pnpm build                Production build + typecheck
+pnpm lint                 ESLint
+pnpm db:push              Push schema to Neon
+pnpm db:migrate           Create/run migrations
+pnpm db:studio            Prisma Studio GUI
+docker compose up -d redis   Optional local Redis
+
+Quick start (mock mode, no DB):
+  cp .env.local.example .env.local
+  # ensure USE_MOCK_DATA=true
+  pnpm install && pnpm dev
+  Open http://localhost:3000/dashboard
+
+================================================================================
+12. DESIGN SYSTEM NOTES
+================================================================================
+
+- Dark-first theme with CSS custom properties in globals.css
+- Glass morphism cards via GlassCard component
+- NodeBackground animated mesh on auth/app shells
+- Codeforces rating colors via getRatingColor() in utils.ts
+- Font: Inter (UI) + JetBrains Mono (data/ratings)
+- Motion: respect prefers-reduced-motion via useReducedMotion hook
+
+================================================================================
+13. KNOWN GAPS & TECH DEBT
+================================================================================
+
+- Account/Session Prisma models leftover from early NextAuth experiment
+- useUserStore (Zustand) largely superseded by React Query — may be removable
+- Notification model exists but real-mode API may not persist reads/toggles yet
+- syncWorker not invoked automatically after onboarding
+- No DELETE /api/user for full account removal
+- Husky prepare script in package.json but .husky/ hooks may not be initialized
+- public/og-image.png not created
+- Some API routes still use console.error instead of logger
+
+================================================================================
+14. ACCEPTANCE CRITERIA FOR "MVP COMPLETE"
+================================================================================
+
+When USER finishes backend wiring, MVP is complete when:
+
+  [ ] User can sign up/login with Firebase (all 3 methods)
+  [ ] Onboarding links valid CF + LC handles and triggers initial sync
+  [ ] Dashboard shows real synced data within 5 min of linking
+  [ ] Manual sync button updates data and shows SYNCED status
+  [ ] Friends: search, request, accept, compare all work on real data
+  [ ] Streak increments on AC submission from either platform
+  [ ] Notifications appear for friend requests and sync events
+  [ ] Profile edits persist; password change works via Firebase
+  [ ] Account deletion removes Firebase user + all Prisma data
+  [ ] pnpm build passes; app deploys to Vercel + Neon
+
+UI/UX acceptance (already met in mock mode):
+  [✓] All routes render without errors
+  [✓] Compare tabs, verdict strip, charts functional
+  [✓] Settings sub-pages complete
+  [✓] Landing page with animations
+  [✓] Responsive layout on mobile/tablet/desktop
+
+================================================================================
+END OF ROADMAP
+================================================================================

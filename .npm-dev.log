@@ -1,0 +1,52 @@
+
+> arc@0.1.0 dev
+> next dev --hostname localhost --port 3000
+
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3000
+  - Network:      http://[::1]:3000
+  - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Ready in 1795ms
+ ○ Compiling / ...
+ ✓ Compiled / in 4.1s (860 modules)
+ ✓ Compiled in 453ms (387 modules)
+ GET / 200 in 4542ms
+ ○ Compiling /favicon.ico ...
+ ✓ Compiled /favicon.ico in 2.6s (485 modules)
+ GET /favicon.ico 200 in 2708ms
+ ✓ Compiled /src/middleware in 289ms (116 modules)
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 4s (2655 modules)
+ GET /dashboard 200 in 4671ms
+ ✓ Compiled /api/notifications in 401ms (1420 modules)
+ ✓ Compiled in 1ms (1428 modules)
+ ✓ Compiled in 0ms (1428 modules)
+ ✓ Compiled in 0ms (1428 modules)
+ GET /api/friends/requests 200 in 1251ms
+ GET /api/notifications 200 in 1520ms
+ GET /api/user/profile 200 in 1520ms
+ GET /api/friends 200 in 1523ms
+ GET /api/dashboard 200 in 1525ms
+ GET /api/user/profile 200 in 19ms
+ GET /api/friends/requests 200 in 35ms
+ GET /api/notifications 200 in 39ms
+ GET /api/friends 200 in 43ms
+ GET /api/dashboard 200 in 48ms
+ GET /api/user/profile 200 in 70ms
+ GET /api/notifications 200 in 75ms
+ GET /api/friends/requests 200 in 81ms
+ GET /api/friends 200 in 88ms
+ GET /api/dashboard 200 in 94ms
+ GET /api/user/profile 200 in 1122ms
+ GET /api/friends/requests 200 in 646ms
+ GET /api/notifications 200 in 710ms
+ GET /api/friends 200 in 728ms
+ GET /api/dashboard 200 in 750ms
+ GET /api/dashboard 200 in 80ms
+ GET /api/notifications 200 in 86ms
+ GET /api/user/profile 200 in 93ms
+ GET /api/friends/requests 200 in 102ms
+ GET /api/friends 200 in 106ms
+ GET /api/notifications 200 in 63ms

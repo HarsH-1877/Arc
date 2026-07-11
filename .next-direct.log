@@ -1,0 +1,57 @@
+  ▲ Next.js 14.2.5
+  - Local:        http://127.0.0.1:3000
+  - Network:      http://127.0.0.1:3000
+  - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Ready in 1831ms
+ ○ Compiling / ...
+ ✓ Compiled / in 3.9s (860 modules)
+ ✓ Compiled in 277ms (387 modules)
+ GET / 200 in 57ms
+ ✓ Compiled /favicon.ico in 347ms (485 modules)
+ GET /favicon.ico 200 in 426ms
+ ✓ Compiled /src/middleware in 290ms (116 modules)
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 4.6s (2655 modules)
+ GET /dashboard 200 in 5136ms
+ ✓ Compiled /api/notifications in 281ms (1420 modules)
+ ✓ Compiled in 1ms (1428 modules)
+ ✓ Compiled in 0ms (1428 modules)
+ ✓ Compiled in 1ms (1428 modules)
+ GET /api/friends/requests 200 in 901ms
+ GET /api/user/profile 200 in 1072ms
+ GET /api/notifications 200 in 1073ms
+ GET /api/dashboard 200 in 1077ms
+ GET /api/friends 200 in 1076ms
+ GET /api/notifications 200 in 14ms
+ GET /api/user/profile 200 in 20ms
+ GET /api/notifications 200 in 25ms
+ GET /api/friends/requests 200 in 33ms
+ GET /api/friends 200 in 38ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 840ms (2660 modules)
+ GET /api/notifications 404 in 1031ms
+ ✓ Compiled /api/dashboard in 476ms (1403 modules)
+ GET /api/dashboard 200 in 685ms
+ ✓ Compiled /api/friends/[id] in 195ms (1405 modules)
+ GET /api/user/profile 404 in 1215ms
+ GET /api/friends 404 in 1215ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 1134ms (2887 modules)
+ GET /api/friends/requests 500 in 2759ms
+ GET /_next/static/css/app/layout.css?v=1782814723564 404 in 69ms
+ GET /api/notifications 404 in 43ms
+ ✓ Compiled in 642ms (2862 modules)
+ ✓ Compiled /_not-found in 166ms (1408 modules)
+ GET /_next/static/css/app/layout.css?v=1782814804850 404 in 318ms
+ ✓ Compiled /api/notifications in 307ms (1434 modules)
+ ✓ Compiled in 0ms (1440 modules)
+ ✓ Compiled in 0ms (1440 modules)
+ ✓ Compiled in 1ms (1440 modules)
+ GET /api/friends/requests 200 in 926ms
+ GET /api/user/profile 200 in 1087ms
+ GET /api/notifications 200 in 1087ms
+ GET /api/friends 200 in 1089ms
+ GET /_next/static/css/app/layout.css?v=1782814806117 404 in 71ms
+[?25h

@@ -1,0 +1,10 @@
+=true : The term '=true' is not recognized as the name of a cmdlet, function, script file, or operable program. Check 
+the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ ='true'; pnpm dev --hostname 127.0.0.1 --port 3000
++ ~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (=true:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+$ prisma generate
+$ husky

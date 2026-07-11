@@ -1,0 +1,113 @@
+:root {
+  /* Backgrounds - layered depth */
+  --bg-page: #04050a;
+  --bg-card: #090b12;
+  --bg-card-hover: #0d1019;
+  --bg-elevated: #11131d;
+  --bg-input: #141725;
+  --bg-shell: #06080d;
+  --bg-sidebar: var(--bg-card);
+  --bg-surface: var(--bg-card);
+  --bg-raised: var(--bg-elevated);
+  --bg-overlay: #1b1e2c;
+
+  /* Accent palette */
+  --accent-blue: #4f8ef7;
+  --accent-blue-dim: rgba(79,142,247,0.12);
+  --accent-cyan: #22d3ee;
+  --accent-purple: #a78bfa;
+  --accent-green: #34d399;
+  --accent-amber: #fbbf24;
+  --accent-rose: #fb7185;
+
+  /* Friend line colours for the rating chart */
+  --line-you: #4f8ef7;
+  --line-f1: #a78bfa;
+  --line-f2: #34d399;
+  --line-f3: #fbbf24;
+  --line-f4: #fb7185;
+
+  /* Text */
+  --text-primary: #f0f0f8;
+  --text-secondary: #9395a5;
+  --text-muted: #4a4d62;
+  --text-tertiary: var(--text-muted);
+
+  /* Borders */
+  --border-subtle: rgba(255,255,255,0.05);
+  --border-default: rgba(255,255,255,0.09);
+  --border-strong: rgba(255,255,255,0.15);
+
+  /* Compatibility aliases for existing components */
+  --border-dim: var(--border-subtle);
+  --border-base: var(--border-default);
+  --border-blue: rgba(79,142,247,0.25);
+  --border-teal: rgba(52,211,153,0.28);
+  --blue: var(--accent-blue);
+  --blue-bright: var(--accent-blue);
+  --blue-glow: rgba(79,142,247,0.2);
+  --blue-dim: var(--accent-blue-dim);
+  --blue-tint: rgba(79,142,247,0.07);
+  --teal: var(--accent-green);
+  --teal-bright: var(--accent-green);
+  --teal-glow: rgba(52,211,153,0.18);
+  --teal-dim: rgba(52,211,153,0.12);
+  --yellow: var(--accent-amber);
+  --yellow-dim: rgba(251,191,36,0.14);
+  --accent-primary: var(--accent-blue);
+  --accent-green-light: #86efac;
+  --danger: #ef4444;
+  --danger-dim: rgba(239,68,68,0.08);
+  --success: var(--accent-green);
+  --color-danger: var(--danger);
+  --color-danger-dim: var(--danger-dim);
+  --text-1: var(--text-primary);
+  --text-2: var(--text-secondary);
+  --text-3: var(--text-muted);
+
+  /* Rating + heatmap */
+  --rating-newbie: #9395a5;
+  --rating-pupil: #34d399;
+  --rating-specialist: #22d3ee;
+  --rating-expert: #4f8ef7;
+  --rating-cm: #a78bfa;
+  --rating-master: #fbbf24;
+  --rating-gm: #fb7185;
+  --heatmap-0: var(--bg-elevated);
+  --heatmap-1: rgba(79,142,247,0.18);
+  --heatmap-2: rgba(79,142,247,0.34);
+  --heatmap-3: rgba(79,142,247,0.52);
+  --heatmap-4: rgba(79,142,247,0.75);
+  --heatmap-5: var(--accent-blue);
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Radius */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+  --radius-shell: 20px;
+  --radius-full: 9999px;
+
+  /* Type scale */
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 20px;
+  --text-xl: 28px;
+  --text-2xl: 38px;
+}

@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  displayName  String?
+  avatarUrl    String?
+  bio          String?
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  onboarded    Boolean  @default(false)
+
+  accounts         Account[]
+  sessions         Session[]
+  platforms        PlatformConnection[]
+  sentRequests     FriendRequest[]      @relation("Sender")
+  receivedRequests FriendRequest[]      @relation("Receiver")
+  friendsA         Friendship[]           @relation("UserA")
+  friendsB         Friendship[]           @relation("UserB")
+  notifications    Notification[]
+  streaks          Streak?
+
+  @@index([email])
+  @@index([username])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PlatformConnection {
+  id           String     @id @default(cuid())
+  userId       String
+  platform     Platform
+  handle       String
+  lastSyncedAt DateTime?
+  syncStatus   SyncStatus @default(PENDING)
+  syncError    String?
+  isPublic     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeforcesData CodeforcesData?
+  leetcodeData   LeetcodeData?
+  submissions    Submission[]
+  contests       ContestResult[]
+
+  @@unique([userId, platform])
+  @@index([userId])
+  @@index([handle])
+}
+
+enum Platform {
+  CODEFORCES
+  LEETCODE
+}
+
+enum SyncStatus {
+  PENDING
+  SYNCING
+  SYNCED
+  ERROR
+}
+
+model CodeforcesData {
+  id              String @id @default(cuid())
+  connectionId    String @unique
+  currentRating   Int?
+  maxRating       Int?
+  rank            String?
+  maxRank         String?
+  contribution    Int    @default(0)
+  friendOfCount   Int    @default(0)
+  titlePhoto      String?
+  ratingHistory   Json    @default("[]")
+  tagStats        Json    @default("{}")
+  difficultyStats Json    @default("{}")
+
+  connection PlatformConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+}
+
+model LeetcodeData {
+  id               String @id @default(cuid())
+  connectionId     String @unique
+  totalSolved      Int    @default(0)
+  easySolved       Int    @default(0)
+  mediumSolved     Int    @default(0)
+  hardSolved       Int    @default(0)
+  acceptanceRate   Float  @default(0)
+  ranking          Int?
+  contestRating    Float?
+  contestsAttended Int    @default(0)
+  topPercentage    Float?
+  tagStats         Json    @default("{}")
+  streakData       Json?
+
+  connection PlatformConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+}
+
+model Submission {
+  id           String   @id @default(cuid())
+  connectionId String
+  externalId   String
+  problemName  String
+  problemSlug  String?
+  platform     Platform
+  verdict      String
+  language     String
+  timestamp    DateTime
+  contestId    String?
+  difficulty   String?
+  tags         String[]
+
+  connection PlatformConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, externalId])
+  @@index([connectionId])
+  @@index([timestamp])
+  @@index([verdict])
+}
+
+model ContestResult {
+  id           String   @id @default(cuid())
+  connectionId String
+  platform     Platform
+  contestId    String
+  contestName  String
+  rank         Int?
+  ratingChange Int?
+  newRating    Int?
+  timestamp    DateTime
+
+  connection PlatformConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, contestId, platform])
+  @@index([connectionId])
+  @@index([timestamp])
+}
+
+model FriendRequest {
+  id         String              @id @default(cuid())
+  senderId   String
+  receiverId String
+  status     FriendRequestStatus @default(PENDING)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  sender   User @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId, status])
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Friendship {
+  id        String   @id @default(cuid())
+  userAId   String
+  userBId   String
+  createdAt DateTime @default(now())
+
+  userA User @relation("UserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB User @relation("UserB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  @@unique([userAId, userBId])
+  @@index([userAId])
+  @@index([userBId])
+}
+
+model Streak {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  currentStreak   Int       @default(0)
+  longestStreak   Int       @default(0)
+  lastActiveDate  DateTime?
+  freezeTokens    Int       @default(2)
+  totalActiveDays Int       @default(0)
+  updatedAt       DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  read      Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  FRIEND_REQUEST
+  FRIEND_ACCEPTED
+  SYNC_COMPLETE
+  SYNC_ERROR
+  RATING_CHANGE
+}

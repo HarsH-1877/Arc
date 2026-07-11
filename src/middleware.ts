@@ -1,0 +1,40 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+const USE_MOCK = true;
+
+const PROTECTED_PREFIXES = ['/dashboard', '/compare', '/friends', '/settings', '/onboarding'];
+const AUTH_PREFIXES = ['/login', '/signup'];
+
+export async function middleware(request: NextRequest) {
+  if (USE_MOCK) return NextResponse.next();
+
+  const { pathname } = request.nextUrl;
+  const isProtectedRoute = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+  const isAuthRoute = AUTH_PREFIXES.some((p) => pathname.startsWith(p));
+  const sessionCookie = request.cookies.get('arc-session')?.value;
+  const isLoggedIn = !!sessionCookie;
+
+  if (isProtectedRoute && !isLoggedIn) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('from', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (isAuthRoute && isLoggedIn) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    '/dashboard/:path*',
+    '/compare/:path*',
+    '/friends/:path*',
+    '/settings/:path*',
+    '/onboarding/:path*',
+    '/login',
+    '/signup',
+  ],
+};

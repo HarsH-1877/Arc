@@ -1,0 +1,34 @@
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry+api@1.9.1.js'
+Require stack:
+- E:\Projects\Project Arc\.next\server\webpack-runtime.js
+- E:\Projects\Project Arc\.next\server\app\api\friends\[id]\route.js
+- E:\Projects\Project Arc\node_modules\.pnpm\next@14.2.5_@opentelemetry+_ae4ad63fa8d64bee46712d9b6b35c5ae\node_modules\next\dist\server\require.js
+- E:\Projects\Project Arc\node_modules\.pnpm\next@14.2.5_@opentelemetry+_ae4ad63fa8d64bee46712d9b6b35c5ae\node_modules\next\dist\server\load-components.js
+- E:\Projects\Project Arc\node_modules\.pnpm\next@14.2.5_@opentelemetry+_ae4ad63fa8d64bee46712d9b6b35c5ae\node_modules\next\dist\build\utils.js
+- E:\Projects\Project Arc\node_modules\.pnpm\next@14.2.5_@opentelemetry+_ae4ad63fa8d64bee46712d9b6b35c5ae\node_modules\next\dist\server\dev\static-paths-worker.js
+- E:\Projects\Project Arc\node_modules\.pnpm\next@14.2.5_@opentelemetry+_ae4ad63fa8d64bee46712d9b6b35c5ae\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1383:15)
+    at E:\Projects\Project Arc\node_modules\.pnpm\next@14.2.5_@opentelemetry+_ae4ad63fa8d64bee46712d9b6b35c5ae\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Function._load (node:internal/modules/cjs/loader:1192:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1463:12)
+    at mod.require (E:\Projects\Project Arc\node_modules\.pnpm\next@14.2.5_@opentelemetry+_ae4ad63fa8d64bee46712d9b6b35c5ae\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:147:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'E:\\Projects\\Project Arc\\.next\\server\\webpack-runtime.js',
+    'E:\\Projects\\Project Arc\\.next\\server\\app\\api\\friends\\[id]\\route.js',
+    'E:\\Projects\\Project Arc\\node_modules\\.pnpm\\next@14.2.5_@opentelemetry+_ae4ad63fa8d64bee46712d9b6b35c5ae\\node_modules\\next\\dist\\server\\require.js',
+    'E:\\Projects\\Project Arc\\node_modules\\.pnpm\\next@14.2.5_@opentelemetry+_ae4ad63fa8d64bee46712d9b6b35c5ae\\node_modules\\next\\dist\\server\\load-components.js',
+    'E:\\Projects\\Project Arc\\node_modules\\.pnpm\\next@14.2.5_@opentelemetry+_ae4ad63fa8d64bee46712d9b6b35c5ae\\node_modules\\next\\dist\\build\\utils.js',
+    'E:\\Projects\\Project Arc\\node_modules\\.pnpm\\next@14.2.5_@opentelemetry+_ae4ad63fa8d64bee46712d9b6b35c5ae\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'E:\\Projects\\Project Arc\\node_modules\\.pnpm\\next@14.2.5_@opentelemetry+_ae4ad63fa8d64bee46712d9b6b35c5ae\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/api/friends/requests'
+}
+ ⨯ Module not found: SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: E:\Projects\Project Arc\package.json (directory description file): SyntaxError: Unexpected token '﻿', "﻿{
+    "n"... is not valid JSON

@@ -1,0 +1,145 @@
+import { NextResponse } from 'next/server';
+import { getSession } from '@/lib/session';
+import { db } from '@/lib/db';
+import { getHeatmapLevel } from '@/lib/utils';
+import { USE_MOCK_DATA, MOCK_DASHBOARD } from '@/lib/mock';
+
+// GET /api/dashboard
+export async function GET() {
+  if (USE_MOCK_DATA) return NextResponse.json(MOCK_DASHBOARD);
+
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+
+  const user = await db.user.findUnique({
+    where: { id: session.id },
+    include: {
+      platforms: {
+        include: { codeforcesData: true, leetcodeData: true },
+      },
+      streaks: true,
+    },
+  });
+
+  if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  const cf = user.platforms.find((p) => p.platform === 'CODEFORCES');
+  const lc = user.platforms.find((p) => p.platform === 'LEETCODE');
+
+  // Recent submissions (last 50 AC)
+  const connectionIds = user.platforms.map((p) => p.id);
+  const recentSubmissions = await db.submission.findMany({
+    where: { connectionId: { in: connectionIds } },
+    orderBy: { timestamp: 'desc' },
+    take: 100,
+  });
+
+  // Build heatmap data (last 365 days)
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+  const heatmapSubs = await db.submission.findMany({
+    where: {
+      connectionId: { in: connectionIds },
+      verdict: { in: ['OK', 'Accepted', 'AC'] },
+      timestamp: { gte: oneYearAgo },
+    },
+    select: { timestamp: true },
+  });
+
+  const heatmapMap: Record<string, number> = {};
+  for (const sub of heatmapSubs) {
+    const day = sub.timestamp.toISOString().slice(0, 10);
+    heatmapMap[day] = (heatmapMap[day] ?? 0) + 1;
+  }
+  const heatmapData = Object.entries(heatmapMap).map(([date, count]) => ({ date, count }));
+
+  // Build merged rating history for chart
+  const cfRatingHistory = (cf?.codeforcesData?.ratingHistory ?? []) as {
+    date: string;
+    rating: number;
+    contestId: number;
+  }[];
+  const lcContestRating = lc?.leetcodeData?.contestRating;
+
+  // Merge CF rating history with static LC rating for chart display
+  const ratingChartData = cfRatingHistory.map((r) => ({
+    date: r.date,
+    cfRating: r.rating,
+    lcRating: lcContestRating ?? undefined,
+  }));
+
+  // Build topic stats (merged CF + LC tags)
+  const cfTags = (cf?.codeforcesData?.tagStats ?? {}) as Record<string, number>;
+  const lcTags = (lc?.leetcodeData?.tagStats ?? {}) as Record<string, number>;
+  const allTags: Record<string, number> = { ...cfTags };
+  for (const [tag, count] of Object.entries(lcTags)) {
+    allTags[tag] = (allTags[tag] ?? 0) + count;
+  }
+
+  // Normalize to 0-100
+  const maxCount = Math.max(...Object.values(allTags), 1);
+  const topicStats = Object.entries(allTags)
+    .map(([topic, rawCount]) => ({
+      topic,
+      rawCount,
+      value: Math.round((rawCount / maxCount) * 100),
+    }))
+    .sort((a, b) => b.rawCount - a.rawCount)
+    .slice(0, 8);
+
+  return NextResponse.json({
+    user: {
+      id: user.id,
+      username: user.username,
+      displayName: user.displayName,
+      avatarUrl: user.avatarUrl,
+    },
+    platforms: {
+      codeforces: cf
+        ? {
+            handle: cf.handle,
+            syncStatus: cf.syncStatus,
+            lastSyncedAt: cf.lastSyncedAt,
+            syncError: cf.syncError,
+            currentRating: cf.codeforcesData?.currentRating ?? null,
+            maxRating: cf.codeforcesData?.maxRating ?? null,
+            rank: cf.codeforcesData?.rank ?? null,
+          }
+        : null,
+      leetcode: lc
+        ? {
+            handle: lc.handle,
+            syncStatus: lc.syncStatus,
+            lastSyncedAt: lc.lastSyncedAt,
+            syncError: lc.syncError,
+            totalSolved: lc.leetcodeData?.totalSolved ?? 0,
+            easySolved: lc.leetcodeData?.easySolved ?? 0,
+            mediumSolved: lc.leetcodeData?.mediumSolved ?? 0,
+            hardSolved: lc.leetcodeData?.hardSolved ?? 0,
+            contestRating: lc.leetcodeData?.contestRating ?? null,
+          }
+        : null,
+    },
+    streak: user.streaks
+      ? {
+          currentStreak: user.streaks.currentStreak,
+          longestStreak: user.streaks.longestStreak,
+          freezeTokens: user.streaks.freezeTokens,
+          totalActiveDays: user.streaks.totalActiveDays,
+        }
+      : { currentStreak: 0, longestStreak: 0, freezeTokens: 2, totalActiveDays: 0 },
+    heatmapData,
+    ratingChartData,
+    topicStats,
+    recentSubmissions: recentSubmissions.map((s) => ({
+      id: s.id,
+      problemName: s.problemName,
+      platform: s.platform,
+      verdict: s.verdict,
+      difficulty: s.difficulty,
+      tags: s.tags,
+      timestamp: s.timestamp.toISOString(),
+    })),
+  });
+}

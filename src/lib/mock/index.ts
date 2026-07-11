@@ -1,0 +1,11 @@
+export { USE_MOCK_DATA } from './config';
+export {
+  MOCK_SESSION_USER,
+  MOCK_PROFILE,
+  MOCK_DASHBOARD,
+  MOCK_FRIENDS,
+  MOCK_FRIEND_REQUESTS,
+  MOCK_SEARCH_USERS,
+  MOCK_NOTIFICATIONS,
+  getMockCompare,
+} from './data';

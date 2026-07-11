@@ -1,0 +1,41 @@
+# Optional local services — production uses Neon (Postgres) and Upstash (Redis).
+# Start Redis only:  docker compose up -d redis
+# Start both:       docker compose up -d
+
+services:
+  postgres:
+    profiles: ['local-db']
+    image: postgres:16-alpine
+    container_name: arc-postgres
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: arc
+      POSTGRES_PASSWORD: arc_dev_password
+      POSTGRES_DB: arc
+    volumes:
+      - arc_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U arc -d arc']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: arc-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - arc_redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  arc_postgres_data:
+  arc_redis_data:
