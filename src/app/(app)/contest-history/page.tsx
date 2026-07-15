@@ -60,7 +60,7 @@ function ContestRow({ contest, upcoming = false }: { contest: ContestItem; upcom
               <span className="truncate">{contest.name}</span>
               <ExternalLink size={12} style={{ color: 'var(--text-muted)' }} />
             </p>
-            {!upcoming && <SolvedMarkers solved={contest.solved} total={contest.total} positive={positive} />}
+            {!upcoming && <SolvedMarkers solved={contest.solved} total={contest.total} />}
           </div>
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(contest.date)} at {contest.time}</p>
         </div>
@@ -72,10 +72,10 @@ function ContestRow({ contest, upcoming = false }: { contest: ContestItem; upcom
           <>
             <div className="flex items-center justify-end gap-2">
               <span className="font-mono-data text-xs" style={{ color: 'var(--text-muted)' }}>{contest.before}</span>
-              {positive ? <ArrowUpRight size={16} style={{ color: 'var(--accent-green)' }} /> : <ArrowDownRight size={16} style={{ color: 'var(--accent-rose)' }} />}
+              {positive ? <ArrowUpRight size={16} style={{ color: 'var(--success)' }} /> : <ArrowDownRight size={16} style={{ color: 'var(--text-muted)' }} />}
               <span className="font-mono-data text-xs" style={{ color: 'var(--text-primary)' }}>{contest.after}</span>
             </div>
-            <p className="mt-1 font-mono-data text-sm font-bold" style={{ color: positive ? 'var(--accent-green)' : 'var(--accent-rose)' }}>{positive ? '+' : ''}{delta}</p>
+            <p className="mt-1 font-mono-data text-sm font-bold" style={{ color: positive ? 'var(--success)' : 'var(--text-muted)' }}>{positive ? '+' : ''}{delta}</p>
           </>
         )}
       </div>
@@ -83,21 +83,18 @@ function ContestRow({ contest, upcoming = false }: { contest: ContestItem; upcom
   );
 }
 
-function SolvedMarkers({ solved, total, positive }: { solved: number; total: number; positive: boolean }) {
-  const activeColor = positive ? 'var(--accent-green)' : 'var(--accent-rose)';
+function SolvedMarkers({ solved, total }: { solved: number; total: number }) {
   return (
-    <div className="hidden shrink-0 items-center gap-1.5 sm:flex" title={`${solved}/${total} solved`}>
-      {Array.from({ length: total }).map((_, index) => (
-        <span
-          key={index}
-          className="h-2 w-2 rounded-full"
-          style={{
-            background: index < solved ? activeColor : 'var(--bg-input)',
-            border: index < solved ? '1px solid rgba(255,255,255,0.18)' : '1px solid var(--border-default)',
-            boxShadow: index < solved ? `0 0 8px ${positive ? 'rgba(52,211,153,0.26)' : 'rgba(251,113,133,0.24)'}` : 'none',
-          }}
-        />
-      ))}
+    <div className="hidden shrink-0 items-center gap-2 sm:flex" title={`${solved}/${total} solved`}>
+      <div className="flex gap-[2px]">
+        {Array.from({ length: total }).map((_, index) => (
+          <div
+            key={index}
+            className="h-1.5 w-3 rounded-[1px]"
+            style={{ background: index < solved ? 'var(--success)' : 'var(--bg-elevated)' }}
+          />
+        ))}
+      </div>
       <span className="font-mono-data text-[10px]" style={{ color: 'var(--text-muted)' }}>{solved}/{total}</span>
     </div>
   );
@@ -114,12 +111,12 @@ function BestContestRow({ contest }: { contest: ContestItem }) {
           <p className="truncate text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{contest.name}</p>
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(contest.date)} at {contest.time}</p>
           <div className="mt-2">
-            <SolvedMarkers solved={contest.solved} total={contest.total} positive={positive} />
+            <SolvedMarkers solved={contest.solved} total={contest.total} />
           </div>
         </div>
       </div>
       <div className="shrink-0 text-right">
-        <p className="font-mono-data text-2xl font-bold" style={{ color: positive ? 'var(--accent-green)' : 'var(--accent-rose)' }}>{positive ? '+' : ''}{delta}</p>
+        <p className="font-mono-data text-2xl font-bold" style={{ color: positive ? 'var(--success)' : 'var(--text-muted)' }}>{positive ? '+' : ''}{delta}</p>
         <p className="font-mono-data text-xs" style={{ color: 'var(--text-secondary)' }}>{contest.before} to {contest.after}</p>
       </div>
     </a>
