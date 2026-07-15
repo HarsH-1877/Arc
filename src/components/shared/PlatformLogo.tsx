@@ -15,7 +15,7 @@ const LOGO_SRC = {
   LEETCODE: '/lc-logo.png',
 } as const;
 
-export function PlatformLogo({ platform, size = 24, className }: PlatformLogoProps) {
+export function PlatformLogo({ platform, size = 24, className, active = true }: PlatformLogoProps) {
   const [failed, setFailed] = useState(false);
   const isCodeforces = platform === 'CODEFORCES';
 
