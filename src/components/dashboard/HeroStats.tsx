@@ -42,7 +42,7 @@ export function HeroStats({ data, loading }: HeroStatsProps) {
     <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
       <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3 xl:h-full xl:grid-rows-[minmax(128px,1fr)_104px]">
         <Card variant="raised" className="min-h-[128px] overflow-hidden" padding="20px 24px">
-          <AccentStreak color="var(--accent-blue)" />
+          <AccentStreak color="var(--brand)" />
           <div className="relative z-10 flex h-full flex-col justify-between gap-5">
             <div className="flex items-center justify-between gap-3">
               <span style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
@@ -63,15 +63,15 @@ export function HeroStats({ data, loading }: HeroStatsProps) {
                   <span className="font-mono-data" style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.045em', lineHeight: 0.9 }}>
                     {rating != null ? Math.round(rating).toLocaleString() : '-'}
                   </span>
-                  {rating && <span className="mb-0.5 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: 'rgba(52,211,153,0.10)', border: '1px solid rgba(52,211,153,0.3)', color: 'var(--accent-green)' }}>+12</span>}
+                  {rating && <span className="mb-0.5 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: 'var(--success-dim)', border: '1px solid var(--border-default)', color: 'var(--success)' }}>+12</span>}
                 </div>
                 <div className="grid grid-cols-2 divide-x rounded-[20px] px-5 py-4" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--border-default)', borderColor: 'var(--border-default)' }}>
                   <div className="pr-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--accent-blue)' }}>Max Rating</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--gray-400)' }}>Max Rating</p>
                     <p className="mt-1 font-mono-data text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{maxRating ? Math.round(maxRating).toLocaleString() : '-'}</p>
                   </div>
                   <div className="pl-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--accent-purple)' }}>Contests</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--gray-400)' }}>Contests</p>
                     <p className="mt-1 font-mono-data text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{contestCount}</p>
                   </div>
                 </div>
@@ -81,17 +81,17 @@ export function HeroStats({ data, loading }: HeroStatsProps) {
         </Card>
 
         <ProblemDistributionCard data={data} platform={selectedPlatform} loading={loading}>
-          <AccentStreak color="var(--accent-green)" />
+          <AccentStreak color="var(--gray-400)" />
         </ProblemDistributionCard>
 
         <Card variant="base" className="min-h-[128px] overflow-hidden" padding="20px 24px">
-          <AccentStreak color="var(--accent-amber)" />
+          <AccentStreak color="var(--gray-400)" />
           <div className="relative z-10 flex h-full flex-col justify-between gap-5">
             <div className="flex items-center justify-between gap-3">
               <span style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
                 Growth Insight
               </span>
-              {isGrowing ? <TrendingUp size={18} style={{ color: 'var(--accent-green)' }} /> : <Minus size={18} style={{ color: 'var(--text-muted)' }} />}
+              {isGrowing ? <TrendingUp size={18} style={{ color: 'var(--success)' }} /> : <Minus size={18} style={{ color: 'var(--text-muted)' }} />}
             </div>
             {loading ? (
               <div className="flex flex-col gap-2">

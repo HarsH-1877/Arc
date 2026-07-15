@@ -14,7 +14,7 @@ export function ActivityCheckupRow({ data, loading, className }: { data?: Dashbo
   return (
     <div className={cn('grid grid-cols-1 gap-4 sm:grid-cols-3', className)}>
       <Card variant="base" padding="14px 16px" className="relative min-h-[104px] overflow-hidden">
-        <Calendar size={20} className="absolute top-4 right-4" style={{ color: 'var(--blue-bright)' }} />
+        <Calendar size={20} className="absolute top-4 right-4" style={{ color: 'var(--text-secondary)' }} />
         <span
           className="font-mono-data"
           style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, color: 'var(--text-1)', lineHeight: 1 }}
@@ -27,7 +27,7 @@ export function ActivityCheckupRow({ data, loading, className }: { data?: Dashbo
       </Card>
 
       <Card variant="base" padding="14px 16px" className="relative min-h-[104px] overflow-hidden">
-        <Zap size={20} className="absolute top-4 right-4" style={{ color: 'var(--teal)' }} />
+        <Zap size={20} className="absolute top-4 right-4" style={{ color: 'var(--text-secondary)' }} />
         <span
           className="font-mono-data"
           style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, color: 'var(--text-1)', lineHeight: 1 }}
@@ -40,7 +40,7 @@ export function ActivityCheckupRow({ data, loading, className }: { data?: Dashbo
       </Card>
 
       <Card variant="base" padding="14px 16px" className="relative min-h-[104px] overflow-hidden">
-        <Clock size={20} className="absolute top-4 right-4" style={{ color: 'var(--text-2)' }} />
+        <Clock size={20} className="absolute top-4 right-4" style={{ color: 'var(--text-secondary)' }} />
         <span
           className="font-mono-data flex items-baseline gap-1"
           style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, color: 'var(--text-1)', lineHeight: 1 }}

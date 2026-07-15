@@ -72,21 +72,19 @@ export function FriendsLeaderboard({ compact = false }: FriendsLeaderboardProps)
               key={user.id}
               className="group flex items-center gap-3 rounded-xl px-2.5 py-2.5"
               style={{
-                background: user.isYou
-                  ? 'linear-gradient(135deg, rgba(79,142,247,0.18), rgba(167,139,250,0.08))'
-                  : 'linear-gradient(135deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012))',
-                border: user.isYou ? '1px solid rgba(79,142,247,0.28)' : '1px solid var(--border-subtle)',
-                boxShadow: user.isYou ? '0 0 24px rgba(79,142,247,0.08)' : 'none',
+                background: user.isYou ? 'var(--brand-dim)' : 'var(--bg-elevated)',
+                border: user.isYou ? '1px solid var(--brand)' : '1px solid var(--border-subtle)',
+                borderLeft: user.isYou ? '3px solid var(--brand)' : undefined,
               }}
             >
               <span className={rankClass(rank)}>{rank}</span>
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ background: user.isYou ? 'linear-gradient(135deg, var(--accent-blue), var(--accent-purple))' : 'var(--bg-input)', color: user.isYou ? '#fff' : 'var(--text-secondary)', fontSize: '11px', fontWeight: 700 }}>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ background: user.isYou ? 'var(--brand)' : 'var(--bg-input)', color: user.isYou ? '#fff' : 'var(--text-secondary)', fontSize: '11px', fontWeight: 700 }}>
                 {getInitials(user.name)}
               </div>
               <span className="min-w-0 flex-1 truncate text-sm" style={{ color: user.isYou ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: user.isYou ? 700 : 500 }}>
                 {user.name}
               </span>
-              <span className="font-mono-data flex items-center gap-1 rounded-full px-2 py-1 text-xs" style={{ color: user.isYou ? 'var(--accent-blue)' : 'var(--text-secondary)', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
+              <span className="font-mono-data flex items-center gap-1 rounded-full px-2 py-1 text-xs" style={{ color: user.isYou ? 'var(--brand)' : 'var(--text-secondary)', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
                 <ArrowUpRight size={12} style={{ color: 'var(--text-muted)' }} />
                 {user.rating.toLocaleString()}
               </span>

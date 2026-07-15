@@ -117,7 +117,7 @@ export function ContestCalendar({ data = [], loading = false }: ContestCalendarP
         </div>
         <span
           className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-semibold"
-          style={{ background: isLive ? 'rgba(52,211,153,0.12)' : 'var(--accent-blue-dim)', color: isLive ? 'var(--accent-green)' : 'var(--accent-blue)', border: isLive ? '1px solid rgba(52,211,153,0.24)' : '1px solid rgba(79,142,247,0.22)' }}
+          style={{ background: isLive ? 'rgba(52,211,153,0.12)' : 'var(--bg-elevated)', color: isLive ? 'var(--success)' : 'var(--text-secondary)', border: isLive ? '1px solid rgba(52,211,153,0.24)' : '1px solid var(--border-default)' }}
         >
           <Clock3 size={13} />
           {countdown}
