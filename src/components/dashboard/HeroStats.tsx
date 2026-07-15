@@ -8,6 +8,8 @@ import { PlatformLogo } from '@/components/shared/PlatformLogo';
 import { ActivityCheckupRow } from '@/components/dashboard/ActivityCheckupRow';
 import { ProblemDistributionCard } from '@/components/dashboard/ProblemDistributionCard';
 import { useUIStore } from '@/store/useUIStore';
+import { motion, useSpring, useTransform } from 'framer-motion';
+import { useEffect } from 'react';
 
 interface HeroStatsProps {
   data?: DashboardApiData;
@@ -38,6 +40,15 @@ export function HeroStats({ data, loading }: HeroStatsProps) {
   const maxRating = selectedPlatform === 'CODEFORCES' ? cf?.maxRating ?? null : lc?.contestRating ?? null;
   const isGrowing = selectedPlatform === 'CODEFORCES' ? (cf?.currentRating ?? 0) > 1200 : (lc?.contestRating ?? 0) > 1500;
 
+  const spring = useSpring(0, { bounce: 0, duration: 800 });
+  const displayRating = useTransform(spring, (val) => Math.round(val).toLocaleString());
+
+  useEffect(() => {
+    if (rating != null) {
+      spring.set(rating);
+    }
+  }, [rating, spring]);
+
   return (
     <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
       <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3 xl:h-full xl:grid-rows-[minmax(128px,1fr)_104px]">
@@ -60,9 +71,9 @@ export function HeroStats({ data, loading }: HeroStatsProps) {
             ) : (
               <>
                 <div className="flex items-end gap-3">
-                  <span className="font-mono-data" style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.045em', lineHeight: 0.9 }}>
-                    {rating != null ? Math.round(rating).toLocaleString() : '-'}
-                  </span>
+                  <motion.span className="font-mono-data" style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.045em', lineHeight: 0.9 }}>
+                    {rating != null ? displayRating : '-'}
+                  </motion.span>
                   {rating && <span className="mb-0.5 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: 'var(--success-dim)', border: '1px solid var(--border-default)', color: 'var(--success)' }}>+12</span>}
                 </div>
                 <div className="grid grid-cols-2 divide-x rounded-[20px] px-5 py-4" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--border-default)', borderColor: 'var(--border-default)' }}>
