@@ -55,11 +55,11 @@ const LC_MILESTONES = [
 
 const SERIES = [
   { key: 'userRating', name: 'You', color: 'var(--line-you)', primary: true },
-  { key: 'friend1', name: 'Friend 1', color: 'var(--line-f1)', primary: false },
-  { key: 'friend2', name: 'Friend 2', color: 'var(--line-f2)', primary: false },
-  { key: 'friend3', name: 'Friend 3', color: 'var(--line-f3)', primary: false },
-  { key: 'friend4', name: 'Friend 4', color: 'var(--line-f4)', primary: false },
-  { key: 'avgTop4', name: 'Avg Top 4', color: 'var(--accent-cyan)', primary: false },
+  { key: 'friend1', name: 'Friend 1', color: 'var(--line-friend)', primary: false },
+  { key: 'friend2', name: 'Friend 2', color: 'var(--line-friend)', primary: false },
+  { key: 'friend3', name: 'Friend 3', color: 'var(--line-friend)', primary: false },
+  { key: 'friend4', name: 'Friend 4', color: 'var(--line-friend)', primary: false },
+  { key: 'avgTop4', name: 'Avg Top 4', color: 'var(--line-friend)', primary: false },
 ] as const;
 
 function CustomTooltip({ active, payload, label }: any) {
@@ -222,13 +222,13 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
           )}
           {friendMode === 'top4' && visibleSeries.some((series) => !series.primary) && (
             <div className="flex items-center gap-2">
-              <span className="h-[3px] w-9 rounded-full" style={{ background: 'linear-gradient(90deg, var(--line-f1) 0 25%, var(--line-f2) 25% 50%, var(--line-f3) 50% 75%, var(--line-f4) 75% 100%)', boxShadow: '0 0 8px rgba(167,139,250,0.25)' }} />
+              <span className="h-[3px] w-4 rounded-full" style={{ background: 'var(--line-friend)' }} />
               <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', fontWeight: 600 }}>Friends</span>
             </div>
           )}
           {friendMode === 'avg' && visibleSeries.some((series) => series.key === 'avgTop4') && (
             <div className="flex items-center gap-2">
-              <span className="h-[3px] w-8 rounded-full" style={{ background: 'var(--accent-cyan)', boxShadow: '0 0 8px rgba(34,211,238,0.35)' }} />
+              <span className="h-[3px] w-4 rounded-full" style={{ background: 'var(--line-friend)' }} />
               <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', fontWeight: 600 }}>Avg Friends</span>
             </div>
           )}
@@ -240,8 +240,8 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
           <ComposedChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
             <defs>
               <linearGradient id="grad-you" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#4f8ef7" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="#4f8ef7" stopOpacity={0} />
+                <stop offset="0%" stopColor="var(--brand)" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="var(--brand)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="4 4" stroke="var(--border-subtle)" vertical={false} />
@@ -272,7 +272,7 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
             ))}
 
             {visibleSeries.some((series) => series.primary) && (
-              <Area type="monotone" dataKey="userRating" name="You" stroke="var(--line-you)" strokeWidth={3} fill="url(#grad-you)" fillOpacity={0.12} dot={false} activeDot={{ r: 5, stroke: '#fff', strokeWidth: 2, fill: 'var(--line-you)', style: { filter: 'drop-shadow(0 0 6px #4f8ef7)' } }} isAnimationActive animationDuration={800} connectNulls />
+              <Area type="monotone" dataKey="userRating" name="You" stroke="var(--line-you)" strokeWidth={3} fill="url(#grad-you)" fillOpacity={0.12} dot={false} activeDot={{ r: 5, stroke: '#fff', strokeWidth: 2, fill: 'var(--line-you)', style: { filter: 'drop-shadow(0 0 6px var(--brand))' } }} isAnimationActive animationDuration={800} connectNulls />
             )}
             {bestPoint && typeof bestPoint.userRating === 'number' && (
               <ReferenceDot
