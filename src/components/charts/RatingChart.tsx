@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
   Area,
   ReferenceDot,
+  ReferenceLine,
 } from 'recharts';
 import { format } from 'date-fns';
 import { Card } from '@/components/shared/Card';
@@ -236,7 +237,7 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
 
       <div style={{ width: '100%', height: compact ? '250px' : '240px' }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -22 }}>
+          <ComposedChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
             <defs>
               <linearGradient id="grad-you" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#4f8ef7" stopOpacity={0.3} />
@@ -244,8 +245,27 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="4 4" stroke="var(--border-subtle)" vertical={false} />
-            <XAxis dataKey="date" tickFormatter={(val) => format(new Date(val), 'MMM yy')} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={compact ? 28 : 20} />
-            <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} width={48} />
+            <XAxis
+              dataKey="date"
+              tickFormatter={(val) => {
+                const d = new Date(val);
+                return d.toLocaleDateString('en', { month: 'short', year: '2-digit' });
+              }}
+              tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+              minTickGap={60}
+              interval="preserveStartEnd"
+            />
+            <YAxis
+              tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+              width={52}
+              domain={['auto', 'auto']}
+              allowDecimals={false}
+              tickCount={5}
+            />
             <Tooltip content={<CustomTooltip />} />
             {visibleSeries.filter((series) => !series.primary).map((series) => (
               <Line key={series.key} type="monotone" dataKey={series.key} name={series.name} stroke={series.color} strokeWidth={series.key === 'avgTop4' ? 2.25 : 1.5} strokeDasharray={series.key === 'avgTop4' ? undefined : '4 2'} dot={false} isAnimationActive animationDuration={700} connectNulls />
@@ -258,23 +278,33 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
               <ReferenceDot
                 x={bestPoint.date}
                 y={bestPoint.userRating}
-                r={5}
-                fill="var(--accent-amber)"
+                r={4}
+                fill="var(--warning)"
                 stroke="rgba(255,255,255,0.85)"
                 strokeWidth={2}
-                label={{ value: 'Best', position: 'top', fill: 'var(--accent-amber)', fontSize: 11, fontWeight: 700 }}
+                label={{
+                  value: 'Best',
+                  position: 'top',
+                  offset: 12,
+                  fill: 'var(--warning)',
+                  fontSize: 10,
+                  fontWeight: 700,
+                }}
               />
             )}
-            {reachedMilestones.map((milestone) => (
-              <ReferenceDot
+            {milestones.map((milestone) => (
+              <ReferenceLine
                 key={milestone.label}
-                x={milestone.point.date}
                 y={milestone.value}
-                r={4}
-                fill={milestone.color}
-                stroke="rgba(255,255,255,0.82)"
-                strokeWidth={1.5}
-                label={{ value: milestone.label, position: 'bottom', fill: milestone.color, fontSize: 10, fontWeight: 700 }}
+                stroke="var(--border-default)"
+                strokeDasharray="3 3"
+                label={{
+                  value: milestone.label,
+                  position: 'right',
+                  fill: 'var(--text-muted)',
+                  fontSize: 9,
+                  fontWeight: 600,
+                }}
               />
             ))}
           </ComposedChart>
