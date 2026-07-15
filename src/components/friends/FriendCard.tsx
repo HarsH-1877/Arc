@@ -26,9 +26,8 @@ function gradientForName(name: string) {
 }
 
 function PlatformBadge({ platform, value }: { platform: 'CODEFORCES' | 'LEETCODE'; value: number }) {
-  const isCf = platform === 'CODEFORCES';
   return (
-    <span className="font-mono-data inline-flex items-center gap-2" style={{ background: isCf ? 'rgba(255,70,70,0.12)' : 'rgba(251,191,36,0.12)', color: isCf ? '#ff6b6b' : 'var(--accent-amber)', border: isCf ? '1px solid rgba(255,70,70,0.2)' : '1px solid rgba(251,191,36,0.2)', borderRadius: '999px', padding: '3px 9px 3px 5px', fontSize: '12px', fontWeight: 700 }}>
+    <span className="font-mono-data inline-flex items-center gap-2" style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)', borderRadius: '999px', padding: '3px 9px 3px 5px', fontSize: '12px', fontWeight: 700 }}>
       <PlatformLogo platform={platform} size={22} />
       {Math.round(value)}
     </span>
@@ -40,7 +39,7 @@ export function FriendCard({ friend, onUnfriend, isUnfriending }: FriendCardProp
 
   return (
     <div className="friend-card group grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto] items-center gap-3 rounded-lg px-4 py-2.5" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01))', border: '1px solid var(--border-subtle)', transition: 'all 0.2s ease' }}>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm" style={{ background: gradientForName(name), color: '#fff', fontWeight: 700 }}>
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm" style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', fontWeight: 700 }}>
         {getInitials(name)}
       </div>
 

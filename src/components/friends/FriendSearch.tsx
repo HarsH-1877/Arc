@@ -38,8 +38,8 @@ export function FriendSearch() {
           onChange={(e) => setQuery(e.target.value)}
           className="h-10 w-full rounded-lg border pl-10 pr-4 text-sm outline-none transition-colors focus:border-accent-primary"
           style={{
-            background: '#11131d',
-            borderColor: 'rgba(255,255,255,0.14)',
+            background: 'var(--bg-card)',
+            borderColor: 'var(--border-default)',
             color: 'var(--text-primary)',
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
           }}
@@ -55,9 +55,9 @@ export function FriendSearch() {
           transition={{ duration: 0.16, ease: [0.4, 0, 0.2, 1] }}
           className="absolute top-full left-0 right-0 mt-2 z-50 overflow-hidden rounded-xl border shadow-xl"
           style={{
-            background: '#11131d',
-            borderColor: 'rgba(255,255,255,0.16)',
-            boxShadow: '0 18px 48px rgba(0,0,0,0.62), inset 0 1px 0 rgba(255,255,255,0.05)',
+            background: 'var(--bg-card)',
+            borderColor: 'var(--border-default)',
+            boxShadow: '0 18px 48px rgba(0,0,0,0.62)',
           }}
         >
           {isLoading ? (
@@ -77,7 +77,7 @@ export function FriendSearch() {
                 return (
                   <li
                     key={user.id}
-                    className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
+                    className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-[var(--bg-card-hover)]"
                   >
                     <div className="flex items-center gap-3 overflow-hidden">
                       <UserAvatar
@@ -113,7 +113,7 @@ export function FriendSearch() {
                           onClick={() => handleSendRequest(user.id)}
                           disabled={isSending}
                           className="flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors hover:opacity-80 disabled:opacity-50"
-                          style={{ background: 'var(--bg-surface-3)', color: 'var(--text-primary)' }}
+                          style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}
                         >
                           <UserPlus size={14} /> Add
                         </button>
