@@ -25,13 +25,13 @@ function getDotConfig(
   switch (status) {
     case 'SYNCING':
       return {
-        color: 'var(--accent-primary)',
+        color: 'var(--text-secondary)',
         label: 'Syncing…',
         pulsing: true,
       };
     case 'SYNCED':
       return {
-        color: 'var(--accent-green)',
+        color: 'var(--text-secondary)',
         label: lastSyncedAt
           ? `Last synced ${formatRelativeTime(lastSyncedAt)}`
           : 'Synced',
@@ -39,14 +39,14 @@ function getDotConfig(
       };
     case 'ERROR':
       return {
-        color: 'var(--color-danger)',
+        color: 'var(--text-secondary)',
         label: errorMessage ?? 'Sync error',
         pulsing: false,
       };
     case 'PENDING':
     default:
       return {
-        color: 'var(--color-warning)',
+        color: 'var(--text-muted)',
         label: 'Sync pending',
         pulsing: false,
       };

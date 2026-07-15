@@ -138,9 +138,9 @@ export default function ConnectionsSettingsPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           {['AtCoder', 'HackerRank'].map((name) => (
             <div key={name} className="relative cursor-not-allowed rounded-lg border p-4 opacity-50" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
-              <span className="absolute right-4 top-4" style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.2)', color: 'var(--accent-amber)', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: 'var(--radius-full)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                Coming soon
-              </span>
+              <button type="button" className="absolute right-4 top-4" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-default)', color: 'var(--text-secondary)', fontSize: '10px', fontWeight: 700, padding: '3px 10px', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}>
+                Notify me
+              </button>
               <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{name}</p>
               <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>Platform integration planned</p>
             </div>
@@ -201,7 +201,7 @@ function PlatformCard({
         <div className="border-t pt-4" style={{ borderColor: 'var(--border-subtle)' }}>
           <div className="flex items-center justify-between gap-3">
             <div>
-              <button onClick={() => onSync(platform)} disabled={syncing} className="flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold disabled:opacity-50" style={{ background: 'transparent', border: '1px solid rgba(79,142,247,0.35)', color: 'var(--accent-blue)', cursor: 'pointer' }}>
+              <button onClick={() => onSync(platform)} disabled={syncing} className="flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold disabled:opacity-50" style={{ background: 'transparent', border: '1px solid var(--border-default)', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                 <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
                 {syncing ? 'Syncing...' : 'Sync Now'}
               </button>
@@ -215,7 +215,7 @@ function PlatformCard({
       ) : (
         <div className="flex items-center gap-2 border-t pt-4" style={{ borderColor: 'var(--border-subtle)' }}>
           <input type="text" placeholder={name + ' handle'} value={handle} onChange={(e) => setHandle(e.target.value)} className="h-9 min-w-0 flex-1 rounded-md px-3 text-xs outline-none" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-default)', color: 'var(--text-primary)' }} />
-          <button onClick={() => onLink(platform, handle)} disabled={isLinking || !handle} className="flex h-9 items-center justify-center gap-1.5 rounded-md px-3 text-xs font-semibold disabled:opacity-50" style={{ background: 'var(--accent-blue-dim)', border: '1px solid rgba(79,142,247,0.25)', color: 'var(--accent-blue)' }}>
+          <button onClick={() => onLink(platform, handle)} disabled={isLinking || !handle} className="flex h-9 items-center justify-center gap-1.5 rounded-md px-3 text-xs font-semibold disabled:opacity-50" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}>
             {isLinking ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Link
           </button>
         </div>
