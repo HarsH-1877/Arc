@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 import { useCompareData } from '@/hooks/useCompareData';
@@ -18,7 +18,7 @@ import { GitCompare } from 'lucide-react';
 const TABS = ['Overview', 'Topics', 'Consistency'] as const;
 type Tab = (typeof TABS)[number];
 
-export default function ComparePage() {
+function ComparePageContent() {
   const searchParams = useSearchParams();
   const friendId = searchParams.get('friend');
   const reducedMotion = useReducedMotion();
@@ -97,5 +97,13 @@ export default function ComparePage() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+export default function ComparePage() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-6xl space-y-6"><div className="skeleton h-40 w-full" /></div>}>
+      <ComparePageContent />
+    </Suspense>
   );
 }
