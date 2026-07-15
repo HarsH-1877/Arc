@@ -7,6 +7,7 @@ interface PlatformLogoProps {
   platform: 'CODEFORCES' | 'LEETCODE';
   size?: number;
   className?: string;
+  active?: boolean;
 }
 
 const LOGO_SRC = {
@@ -20,7 +21,7 @@ export function PlatformLogo({ platform, size = 24, className }: PlatformLogoPro
 
   return (
     <span
-      className={cn('inline-flex shrink-0 items-center justify-center overflow-hidden', className)}
+      className={cn('group inline-flex shrink-0 items-center justify-center overflow-hidden', className)}
       style={{
         width: size,
         height: size,
@@ -35,7 +36,7 @@ export function PlatformLogo({ platform, size = 24, className }: PlatformLogoPro
           alt=""
           width={size}
           height={size}
-          className="h-full w-full object-contain"
+          className={cn('h-full w-full object-contain transition-all duration-200', !active && 'opacity-60 grayscale group-hover:opacity-100 group-hover:grayscale-0')}
           onError={() => setFailed(true)}
         />
       ) : (

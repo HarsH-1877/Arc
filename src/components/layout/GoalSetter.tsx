@@ -88,7 +88,7 @@ export function GoalSetter({ platform }: { platform: Platform }) {
           color: 'var(--text-primary)',
         }}
       >
-        <Target size={18} style={{ color: achieved ? 'var(--accent-green)' : 'var(--accent-blue)' }} />
+        <Target size={18} style={{ color: achieved ? 'var(--success)' : 'var(--brand)' }} />
         <div className="min-w-0 flex-1 text-left">
           <div className="flex items-center justify-between gap-3">
             <span className="truncate text-sm font-semibold">{achieved ? 'Goal achieved' : active.label}</span>
@@ -101,7 +101,7 @@ export function GoalSetter({ platform }: { platform: Platform }) {
               className="h-full rounded-full"
               style={{
                 width: progress + '%',
-                background: achieved ? 'var(--accent-green)' : 'var(--accent-blue)',
+                background: achieved ? 'var(--success)' : 'var(--brand)',
               }}
             />
           </div>
@@ -117,7 +117,7 @@ export function GoalSetter({ platform }: { platform: Platform }) {
           transition={{ duration: 0.17, ease: [0.4, 0, 0.2, 1] }}
           className="absolute left-0 top-14 z-50 w-[360px] rounded-xl p-4"
           style={{
-            background: 'rgba(22,24,36,0.98)',
+            background: 'var(--bg-card)',
             border: '1px solid var(--border-default)',
             boxShadow: '0 18px 50px rgba(0,0,0,0.55)',
           }}
@@ -154,9 +154,9 @@ export function GoalSetter({ platform }: { platform: Platform }) {
                   onClick={() => setGoalType(item.type)}
                   className="rounded-lg px-3 py-2 text-xs font-semibold"
                   style={{
-                    background: selected ? 'var(--accent-blue-dim)' : 'var(--bg-card)',
-                    border: selected ? '1px solid rgba(79,142,247,0.3)' : '1px solid var(--border-subtle)',
-                    color: selected ? 'var(--accent-blue)' : 'var(--text-secondary)',
+                    background: selected ? 'var(--brand-dim)' : 'var(--bg-card)',
+                    border: selected ? '1px solid var(--brand)' : '1px solid var(--border-subtle)',
+                    color: selected ? 'var(--brand)' : 'var(--text-secondary)',
                   }}
                 >
                   {item.label}
@@ -183,7 +183,7 @@ export function GoalSetter({ platform }: { platform: Platform }) {
                   type="button"
                   onClick={() => setRankOpen((value) => !value)}
                   className="flex h-10 w-full items-center justify-between rounded-lg px-3 text-sm font-semibold"
-                  style={{ background: 'linear-gradient(135deg, rgba(79,142,247,0.12), rgba(167,139,250,0.08))', border: '1px solid rgba(79,142,247,0.24)', color: 'var(--text-primary)' }}
+                  style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', color: 'var(--text-primary)' }}
                 >
                   <span>{rankGoal.label}</span>
                   <span className="flex items-center gap-2 font-mono-data text-xs" style={{ color: 'var(--text-secondary)' }}>
@@ -199,7 +199,7 @@ export function GoalSetter({ platform }: { platform: Platform }) {
                     exit={{ opacity: 0, y: -4, scale: 0.98 }}
                     transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
                     className="absolute left-0 right-0 top-12 z-50 rounded-xl p-1.5"
-                    style={{ background: 'rgba(17,19,29,0.98)', border: '1px solid var(--border-default)', boxShadow: '0 18px 44px rgba(0,0,0,0.54)', backdropFilter: 'blur(16px)' }}
+                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', boxShadow: '0 18px 44px rgba(0,0,0,0.54)' }}
                   >
                     {ranks.map((rank) => {
                       const selected = rank.label === rankGoal.label;
@@ -214,12 +214,12 @@ export function GoalSetter({ platform }: { platform: Platform }) {
                           }}
                           className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold"
                           style={{
-                            background: selected ? 'var(--accent-blue-dim)' : 'transparent',
+                            background: selected ? 'var(--brand-dim)' : 'transparent',
                             color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
                           }}
                         >
                           <span>{rank.label}</span>
-                          <span className="font-mono-data" style={{ color: selected ? 'var(--accent-blue)' : 'var(--text-muted)' }}>{rank.target}</span>
+                          <span className="font-mono-data" style={{ color: selected ? 'var(--brand)' : 'var(--text-muted)' }}>{rank.target}</span>
                         </button>
                       );
                     })}
@@ -240,7 +240,7 @@ export function GoalSetter({ platform }: { platform: Platform }) {
                 className="h-full rounded-full"
                 style={{
                   width: progress + '%',
-                  background: achieved ? 'var(--accent-green)' : 'var(--accent-blue)',
+                  background: achieved ? 'var(--success)' : 'var(--brand)',
                 }}
               />
             </div>

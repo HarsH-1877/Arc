@@ -63,7 +63,7 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
       <div className="min-h-0 flex-1 overflow-hidden">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex shrink-0 items-center justify-center rounded-full p-[1.5px]" style={{ background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-purple))' }}>
+            <div className="flex shrink-0 items-center justify-center rounded-full p-[1.5px]" style={{ background: 'var(--brand)' }}>
               <div className="flex items-center justify-center rounded-full" style={{ width: '37px', height: '37px', background: 'var(--bg-elevated)' }}>
                 <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{initials}</span>
               </div>
@@ -98,7 +98,7 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
               <Link
                 key={item.href}
                 href={item.href}
-                className="group relative flex items-center gap-3 overflow-hidden rounded-md px-3 py-[11px] hover:bg-white/[0.04]"
+                className="group relative flex items-center gap-3 overflow-hidden rounded-md px-3 py-[11px] hover:bg-[var(--bg-card-hover)]"
                 style={{
                   color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
                   fontWeight: active ? 600 : 400,
@@ -110,9 +110,9 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
                     layoutId={mobile ? 'mobile-sidebar-active' : 'sidebar-active'}
                     className="absolute inset-0"
                     style={{
-                      borderLeft: '2px solid var(--accent-blue)',
-                      background: 'linear-gradient(90deg, rgba(79,142,247,0.18) 0%, transparent 100%)',
-                      boxShadow: '-2px 0 12px rgba(79,142,247,0.2)',
+                      borderLeft: '2px solid var(--brand)',
+                      background: 'linear-gradient(90deg, var(--brand-dim) 0%, transparent 100%)',
+                      boxShadow: '-2px 0 12px var(--brand-dim)',
                     }}
                     transition={{ type: 'spring', stiffness: 520, damping: 42, mass: 0.8 }}
                   />
@@ -131,12 +131,12 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
             <Edit2 size={12} style={{ color: 'var(--text-muted)' }} />
           </div>
 
-          <Link href="/friends" className="flex items-center justify-between rounded-md px-3 py-[11px] hover:bg-white/[0.04]" style={{ textDecoration: 'none', color: 'var(--text-secondary)' }}>
+          <Link href="/friends" className="flex items-center justify-between rounded-md px-3 py-[11px] hover:bg-[var(--bg-card-hover)]" style={{ textDecoration: 'none', color: 'var(--text-secondary)' }}>
             <div className="flex items-center gap-3">
               <Inbox size={18} />
               <span className="text-sm">Inbox</span>
             </div>
-            <span className="font-mono-data flex items-center justify-center" style={{ background: 'var(--accent-blue-dim)', border: '1px solid rgba(79,142,247,0.25)', color: 'var(--accent-blue)', fontSize: '10px', fontWeight: 700, padding: '1px 7px', borderRadius: 'var(--radius-full)' }}>
+            <span className="font-mono-data flex items-center justify-center" style={{ background: 'var(--brand-dim)', border: '1px solid rgba(79,142,247,0.25)', color: 'var(--brand)', fontSize: '10px', fontWeight: 700, padding: '1px 7px', borderRadius: 'var(--radius-full)' }}>
               {pendingCount}
             </span>
           </Link>

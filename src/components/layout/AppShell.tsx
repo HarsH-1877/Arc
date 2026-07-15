@@ -58,11 +58,10 @@ export function AppShell({ children }: AppShellProps) {
       <div
         className="relative flex min-h-screen w-full overflow-hidden"
         style={{
-          background: 'rgba(11,13,20,0.92)',
+          background: 'var(--bg-page)',
           borderRadius: 0,
           boxShadow: 'none',
           maxWidth: 'none',
-          backdropFilter: 'blur(14px)',
         }}
       >
         <div
@@ -73,7 +72,7 @@ export function AppShell({ children }: AppShellProps) {
             left: 0,
             right: 0,
             height: '1px',
-            background: 'linear-gradient(90deg, transparent 0%, var(--accent-cyan) 20%, var(--accent-blue) 55%, var(--accent-purple) 82%, transparent 100%)',
+            background: 'linear-gradient(90deg, transparent 0%, var(--brand) 20%, var(--brand) 82%, transparent 100%)',
             backgroundSize: '200% 100%',
             zIndex: 2,
             pointerEvents: 'none',

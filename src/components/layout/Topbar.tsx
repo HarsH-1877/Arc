@@ -41,8 +41,8 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
         <button className="relative flex items-center justify-center rounded-full" style={{ width: '32px', height: '32px', background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', color: 'var(--text-secondary)' }} aria-label={notificationCount + ' unread notifications'}>
           <Bell size={16} />
           {notificationCount > 0 && (
-            <span className="absolute right-0 top-0 h-2 w-2 rounded-full" style={{ background: 'var(--accent-rose)' }}>
-              <span className="absolute inset-0 rounded-full" style={{ background: 'var(--accent-rose)', animation: 'notificationPulse 1.5s infinite' }} />
+            <span className="absolute right-0 top-0 h-2 w-2 rounded-full" style={{ background: 'var(--danger)' }}>
+              <span className="absolute inset-0 rounded-full" style={{ background: 'var(--danger)', animation: 'notificationPulse 1.5s infinite' }} />
             </span>
           )}
         </button>
@@ -63,9 +63,9 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
             type="button"
             onClick={() => setPlatformOpen((value) => !value)}
             className="flex items-center gap-2 rounded-full"
-            style={{ background: 'var(--accent-blue-dim)', border: '1px solid rgba(79,142,247,0.25)', padding: '7px 13px', fontSize: 'var(--text-sm)', color: 'var(--accent-blue)', cursor: 'pointer' }}
+            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: '7px 13px', fontSize: 'var(--text-sm)', color: 'var(--text-primary)', cursor: 'pointer' }}
           >
-            <PlatformLogo platform={selectedPlatform} size={24} />
+            <PlatformLogo platform={selectedPlatform} size={24} active={true} />
             {selectedPlatform === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
             <ChevronDown size={14} />
           </button>
@@ -87,10 +87,10 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
                     setSelectedPlatform(item);
                     setPlatformOpen(false);
                   }}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm"
-                  style={{ background: selectedPlatform === item ? 'var(--accent-blue-dim)' : 'transparent', color: selectedPlatform === item ? 'var(--text-primary)' : 'var(--text-secondary)' }}
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-[var(--bg-card-hover)]"
+                  style={{ background: selectedPlatform === item ? 'var(--bg-elevated)' : 'transparent', color: selectedPlatform === item ? 'var(--text-primary)' : 'var(--text-secondary)' }}
                 >
-                  <PlatformLogo platform={item} size={22} />
+                  <PlatformLogo platform={item} size={22} active={selectedPlatform === item} />
                   {item === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
                 </button>
               ))}
