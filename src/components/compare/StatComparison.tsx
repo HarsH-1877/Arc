@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import type { CompareUser } from '@/hooks/useCompareData';
 
@@ -66,8 +66,8 @@ export function StatComparison({ user, friend }: StatComparisonProps) {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <MetricSide label="You" value={formatValue(userValue)} unit={stat.unit} won={userWins} accent="var(--accent-blue)" />
-              <MetricSide label="Friend" value={formatValue(friendValue)} unit={stat.unit} won={friendWins} accent="var(--accent-purple)" />
+              <MetricSide label="You" value={formatValue(userValue)} unit={stat.unit} won={userWins} accent="var(--brand)" />
+              <MetricSide label="Friend" value={formatValue(friendValue)} unit={stat.unit} won={friendWins} accent="var(--gray-400)" />
             </div>
           </div>
         );

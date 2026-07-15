@@ -76,7 +76,7 @@ export default function ComparePage() {
             {TABS.map((tab) => {
               const active = activeTab === tab;
               return (
-                <button key={tab} type="button" onClick={() => setActiveTab(tab)} className="relative text-sm font-semibold" style={{ color: active ? 'var(--text-primary)' : 'var(--text-muted)', borderBottom: active ? '2px solid var(--accent-blue)' : '2px solid transparent', paddingBottom: '8px', background: 'transparent', borderTop: 'none', borderLeft: 'none', borderRight: 'none', cursor: 'pointer' }}>
+                <button key={tab} type="button" onClick={() => setActiveTab(tab)} className="relative text-sm font-semibold" style={{ color: active ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: active ? '2px solid var(--brand)' : '2px solid transparent', paddingBottom: '8px', background: 'transparent', borderTop: 'none', borderLeft: 'none', borderRight: 'none', cursor: 'pointer' }}>
                   {tab}
                 </button>
               );
