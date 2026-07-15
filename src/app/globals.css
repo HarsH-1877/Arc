@@ -28,18 +28,7 @@
     margin: 0;
   }
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    background: radial-gradient(
-      ellipse 60% 40% at 70% -10%,
-      rgba(79,142,247,0.06) 0%,
-      transparent 70%
-    );
-    pointer-events: none;
-  }
+
 
   ::selection {
     background-color: var(--accent-blue-dim);
@@ -77,7 +66,8 @@
   }
 
   .font-mono-data {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-family: 'Inter', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
   }
 
   .topic-pill {
@@ -125,10 +115,10 @@
     flex-shrink: 0;
   }
 
-  .rank-badge-1 { background: #f59e0b; color: #78350f; }
-  .rank-badge-2 { background: #9ca3af; color: #1f2937; }
-  .rank-badge-3 { background: #b45309; color: #fff; }
-  .rank-badge-default { background: var(--bg-input); color: var(--text-secondary); }
+  .rank-badge-1 { background: var(--rank-gold-bg);    color: var(--rank-gold-text); }
+  .rank-badge-2 { background: var(--rank-silver-bg);  color: var(--rank-silver-text); }
+  .rank-badge-3 { background: var(--rank-bronze-bg);  color: var(--rank-bronze-text); }
+  .rank-badge-default { background: var(--rank-default-bg); color: var(--rank-default-text); }
 
   .friend-card:hover {
     border-color: var(--border-default);
