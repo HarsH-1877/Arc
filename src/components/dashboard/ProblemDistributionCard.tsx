@@ -13,14 +13,14 @@ interface ProblemDistributionCardProps {
 
 const PIE_COLORS = ['var(--accent-green)', 'var(--accent-amber)', 'var(--accent-rose)'];
 const CF_RANGES = ['800-999', '1000-1199', '1200-1399', '1400-1599', '1600-1799', '1800-1999', '2000+'];
-const CF_COLORS = ['#6b7280', '#22d3ee', '#4f8ef7', '#34d399', '#a78bfa', '#fbbf24', '#fb7185'];
+const CF_COLORS = ['#4f8ef7', '#4f8ef7', '#4f8ef7', '#4f8ef7', '#4f8ef7', '#4f8ef7', '#4f8ef7'];
 
 function cfHistogramData(data?: DashboardApiData) {
   const solvedCf = data?.recentSubmissions.filter((submission) => submission.platform === 'CODEFORCES' && ['OK', 'Accepted', 'AC'].includes(submission.verdict)).length ?? 0;
   const seed = Math.max(solvedCf, 8);
   return CF_RANGES.map((range, index) => ({
     range,
-    count: Math.max(1, Math.round(seed * [1.7, 1.45, 1.18, 0.88, 0.58, 0.34, 0.18][index])),
+    count: Math.max(1, Math.round(seed * [1.7, 1.45, 1.8, 1.07, 0.58, 0.9, 0.3][index])),
     fill: CF_COLORS[index],
   }));
 }
@@ -65,39 +65,37 @@ export function ProblemDistributionCard({ data, platform, loading, children }: P
   const cfTotal = histogram.reduce((sum, bucket) => sum + bucket.count, 0);
 
   return (
-    <Card variant="base" className="min-h-[128px] overflow-hidden" padding="16px 18px">
+    <Card variant="base" className="min-h-[128px] overflow-hidden" padding="20px 24px">
       {children}
-      <div className="relative z-10 flex h-full flex-col gap-3">
+      <div className="relative z-10 flex h-full flex-col gap-4">
         <div className="flex items-center justify-between">
-          <span style={{ fontSize: '10px', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+          <span style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
             Questions Solved
           </span>
-          <span className="font-mono-data text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
-            {platform === 'LEETCODE' ? total.toLocaleString() : cfTotal.toLocaleString()}
-          </span>
+    
         </div>
 
         {loading ? (
           <div className="skeleton h-[78px] w-full" />
         ) : platform === 'LEETCODE' ? (
           <div className="flex min-h-0 flex-1 flex-col pt-1">
-            <div className="relative mx-auto mt-1 h-[94px] w-[120px] min-w-0">
+            <div className="relative mx-auto mt-1 h-[124px] w-[156px] min-w-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={pieData} dataKey="value" innerRadius={31} outerRadius={45} paddingAngle={3} stroke="transparent">
+                  <Pie data={pieData} dataKey="value" innerRadius={40} outerRadius={58} paddingAngle={3} stroke="transparent">
                     {pieData.map((entry, index) => <Cell key={entry.name} fill={PIE_COLORS[index]} />)}
                   </Pie>
                   <Tooltip content={<PieTooltip />} wrapperStyle={{ transform: 'translate(28px, -36px)', pointerEvents: 'none' }} allowEscapeViewBox={{ x: true, y: true }} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-mono-data text-lg font-bold leading-none" style={{ color: 'var(--text-primary)' }}>{total}</span>
+                <span className="font-mono-data text-xl font-bold leading-none" style={{ color: 'var(--text-primary)' }}>{total}</span>
                 <span className="text-[9px] uppercase tracking-[0.08em]" style={{ color: 'var(--text-muted)' }}>Solved</span>
               </div>
             </div>
-            <div className="mt-2 grid grid-cols-3 gap-1">
+            <div className="mt-3 grid grid-cols-3 gap-2">
               {pieData.map((entry, index) => (
-                <div key={entry.name} className="rounded-md px-1.5 py-1 text-center" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
+                <div key={entry.name} className="px-1 text-center">
                   <span className="flex items-center justify-center gap-1 text-[10px]" style={{ color: 'var(--text-secondary)' }}>
                     <i className="h-1.5 w-1.5 rounded-full" style={{ background: PIE_COLORS[index] }} />
                     {entry.name}
@@ -109,7 +107,7 @@ export function ProblemDistributionCard({ data, platform, loading, children }: P
           </div>
         ) : (
           <div className="grid min-h-0 flex-1 grid-cols-[78px_minmax(0,1fr)] gap-3">
-            <div className="flex flex-col justify-center rounded-xl px-3 py-2" style={{ background: 'rgba(79,142,247,0.10)', border: '1px solid rgba(79,142,247,0.18)' }}>
+            <div className="flex flex-col justify-center rounded-[20px] px-4 py-3" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--border-default)' }}>
               <span className="text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--accent-blue)' }}>Total</span>
               <span className="font-mono-data text-2xl font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>{cfTotal}</span>
               <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>solved</span>

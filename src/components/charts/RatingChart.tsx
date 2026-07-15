@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { Card } from '@/components/shared/Card';
 import { ChevronDown, Layers3 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useUIStore } from '@/store/useUIStore';
 
 export interface RatingPoint {
   date: string;
@@ -39,12 +40,16 @@ type FriendMode = 'top4' | 'avg';
 
 const TIME_FILTERS = ['Today', '7d', '2w', '1m', '3m', '1y'];
 const FRIEND_KEYS = ['friend1', 'friend2', 'friend3', 'friend4'] as const;
-const MILESTONES = [
+const CF_MILESTONES = [
+  { value: 1200, label: 'Specialist', color: 'var(--accent-cyan)' },
   { value: 1600, label: 'Expert', color: 'var(--accent-blue)' },
-  { value: 1850, label: 'Knight', color: 'var(--accent-cyan)' },
   { value: 1900, label: 'Candidate Master', color: 'var(--accent-purple)' },
-  { value: 2200, label: 'Guardian', color: 'var(--accent-amber)' },
-  { value: 2400, label: 'Grandmaster', color: 'var(--accent-rose)' },
+  { value: 2100, label: 'Master', color: 'var(--accent-amber)' },
+];
+const LC_MILESTONES = [
+  { value: 1600, label: 'Knight', color: 'var(--accent-cyan)' },
+  { value: 2000, label: 'Guardian', color: 'var(--accent-purple)' },
+  { value: 2300, label: 'Champion', color: 'var(--accent-amber)' },
 ];
 
 const SERIES = [
@@ -79,18 +84,20 @@ function CustomTooltip({ active, payload, label }: any) {
 export function RatingChart({ data, loading, compact = false }: RatingChartProps) {
   const [friendMode, setFriendMode] = useState<FriendMode>('top4');
   const [modeOpen, setModeOpen] = useState(false);
+  const { selectedPlatform } = useUIStore();
+  const milestones = selectedPlatform === 'CODEFORCES' ? CF_MILESTONES : LC_MILESTONES;
 
   const chartData = useMemo(() => data.map((d) => {
     const point = {
       ...d,
-      userRating: d.userRating ?? d.cfRating ?? d.lcRating,
+      userRating: d.userRating ?? (selectedPlatform === 'CODEFORCES' ? d.cfRating : d.lcRating),
       friend1: d.friend1 ?? d.friendRating,
       avgTop4: undefined as number | undefined,
     };
     const friendValues = FRIEND_KEYS.map((key) => point[key]).filter((value): value is number => typeof value === 'number');
     point.avgTop4 = friendValues.length ? friendValues.reduce((sum, value) => sum + value, 0) / friendValues.length : undefined;
     return point;
-  }), [data]);
+  }), [data, selectedPlatform]);
 
   const activeFriendKeys = friendMode === 'avg' ? ['avgTop4'] : FRIEND_KEYS;
   const visibleSeries = SERIES.filter((series) => {
@@ -103,10 +110,10 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
     if (!best || (point.userRating ?? 0) > (best.userRating ?? 0)) return point;
     return best;
   }, null);
-  const reachedMilestones = MILESTONES.map((milestone) => {
+  const reachedMilestones = milestones.map((milestone) => {
     const point = chartData.find((item) => typeof item.userRating === 'number' && item.userRating >= milestone.value);
     return point ? { ...milestone, point } : null;
-  }).filter((item): item is typeof MILESTONES[number] & { point: (typeof chartData)[number] } => Boolean(item));
+  }).filter((item): item is typeof milestones[number] & { point: (typeof chartData)[number] } => Boolean(item));
 
   if (loading) {
     return (
@@ -162,7 +169,7 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
             >
               <span className="flex items-center gap-2">
                 <Layers3 size={14} style={{ color: 'var(--accent-blue)' }} />
-                {friendMode === 'top4' ? 'Top 4 lines' : 'Avg of top 4'}
+                {friendMode === 'top4' ? 'Top 4 Friends' : 'Avg of top 4'}
               </span>
               <ChevronDown size={14} style={{ color: 'var(--text-secondary)' }} />
             </button>
@@ -182,7 +189,7 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
                 }}
               >
                 {[
-                  { value: 'top4' as const, label: 'Top 4 lines' },
+                  { value: 'top4' as const, label: 'Top 4 Friends' },
                   { value: 'avg' as const, label: 'Avg of top 4' },
                 ].map((item) => (
                   <button
