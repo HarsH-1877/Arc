@@ -38,14 +38,6 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-3">
-        <button className="relative flex items-center justify-center rounded-full" style={{ width: '32px', height: '32px', background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', color: 'var(--text-secondary)' }} aria-label={notificationCount + ' unread notifications'}>
-          <Bell size={16} />
-          {notificationCount > 0 && (
-            <span className="absolute right-0 top-0 h-2 w-2 rounded-full" style={{ background: 'var(--danger)' }}>
-              <span className="absolute inset-0 rounded-full" style={{ background: 'var(--danger)', animation: 'notificationPulse 1.5s infinite' }} />
-            </span>
-          )}
-        </button>
 
         <div className="relative">
           <button
@@ -87,6 +79,15 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
           )}
           </AnimatePresence>
         </div>
+
+        <button className="relative flex items-center justify-center rounded-full" style={{ width: '32px', height: '32px', background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', color: 'var(--text-secondary)' }} aria-label={notificationCount + ' unread notifications'}>
+          <Bell size={16} />
+          {notificationCount > 0 && (
+            <span className="absolute right-0 top-0 h-2 w-2 rounded-full" style={{ background: 'var(--danger)' }}>
+              <span className="absolute inset-0 rounded-full" style={{ background: 'var(--danger)', animation: 'notificationPulse 1.5s infinite' }} />
+            </span>
+          )}
+        </button>
 
         <button className="hidden items-center justify-center rounded-full sm:flex" style={{ width: '32px', height: '32px', background: 'transparent', border: 'none', color: 'var(--text-secondary)' }} aria-label="Theme">
           <Sun size={18} />

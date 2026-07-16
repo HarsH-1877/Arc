@@ -126,31 +126,6 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
             );
           })}
 
-          <div className="mb-2 mt-4 flex items-center justify-between px-3 overflow-hidden">
-            <div className="flex min-w-0 items-center gap-2">
-              <FolderOpen size={14} className="shrink-0" style={{ color: 'var(--text-muted)' }} />
-              {!sidebarCollapsed && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>Schedule</span>}
-            </div>
-            {!sidebarCollapsed && <Edit2 size={12} style={{ color: 'var(--text-muted)' }} />}
-          </div>
-
-          <Link href="/friends" className="group relative flex items-center justify-between overflow-visible rounded-md px-3 py-[11px] hover:bg-[var(--bg-card-hover)]" style={{ textDecoration: 'none', color: 'var(--text-secondary)' }}>
-            <div className="flex items-center gap-3">
-              <Inbox size={18} className="shrink-0 transition-transform duration-200 group-hover:scale-110" />
-              {!sidebarCollapsed && <span className="text-sm">Inbox</span>}
-            </div>
-            {!sidebarCollapsed && (
-              <span className="font-mono-data flex shrink-0 items-center justify-center" style={{ background: 'var(--brand-dim)', border: '1px solid rgba(79,142,247,0.25)', color: 'var(--brand)', fontSize: '10px', fontWeight: 700, padding: '1px 7px', borderRadius: 'var(--radius-full)' }}>
-                {pendingCount}
-              </span>
-            )}
-            {sidebarCollapsed && (
-              <div className="pointer-events-none absolute left-full ml-4 flex items-center gap-2 opacity-0 transition-all group-hover:ml-3 group-hover:opacity-100 z-50 rounded-md px-3 py-1.5 text-xs font-semibold shadow-xl" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-                Inbox
-                <span className="font-mono-data rounded-full px-1.5 text-[9px] text-[var(--brand)]" style={{ background: 'var(--brand-dim)' }}>{pendingCount}</span>
-              </div>
-            )}
-          </Link>
         </nav>
       </div>
 
@@ -175,9 +150,8 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
           )}
         </button>
 
-        <button onClick={toggleSidebar} className="group flex w-full items-center justify-center gap-3 rounded-md border-0 bg-transparent px-3 py-[11px] text-left hover:bg-white/[0.04] hover:text-[var(--text-primary)] hidden lg:flex" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
+        <button onClick={toggleSidebar} className="group flex w-full items-center justify-center rounded-md border-0 bg-transparent py-[11px] hover:bg-white/[0.04] hover:text-[var(--text-primary)] hidden lg:flex" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
           {sidebarCollapsed ? <PanelLeftOpen size={18} className="shrink-0 transition-transform duration-200 group-hover:scale-110" /> : <PanelLeftClose size={18} className="shrink-0 transition-transform duration-200 group-hover:scale-110" />}
-          {!sidebarCollapsed && <span className="text-sm flex-1">Collapse menu</span>}
         </button>
       </div>
     </motion.aside>
