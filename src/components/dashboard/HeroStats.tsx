@@ -78,7 +78,7 @@ export function HeroStats({ data, loading }: HeroStatsProps) {
                 </div>
                 <div className="grid grid-cols-2 divide-x rounded-[20px] px-5 py-4" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--border-default)', borderColor: 'var(--border-default)' }}>
                   <div className="pr-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--gray-400)' }}>Max Rating</p>
+                    <p className="text-[10.4px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--gray-400)' }}>Max Rating</p>
                     <p className="mt-1 font-mono-data text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{maxRating ? Math.round(maxRating).toLocaleString() : '-'}</p>
                   </div>
                   <div className="pl-5">
