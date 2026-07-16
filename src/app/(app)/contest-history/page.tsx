@@ -3,6 +3,7 @@
 import { Card } from '@/components/shared/Card';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
 import { ArrowDownRight, ArrowUpRight, CalendarClock, ExternalLink, TrendingUp, Trophy } from 'lucide-react';
+import { UpcomingContestCard } from '@/components/contest-history/UpcomingContestCard';
 
 type Platform = 'CODEFORCES' | 'LEETCODE';
 
@@ -51,31 +52,31 @@ function ContestRow({ contest, upcoming = false }: { contest: ContestItem; upcom
   const positive = delta >= 0;
 
   return (
-    <a href={contest.href} target="_blank" rel="noreferrer" className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-xl px-4 py-3" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.036), rgba(255,255,255,0.012))', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}>
+    <a href={contest.href} target="_blank" rel="noreferrer" className="grid grid-cols-[minmax(0,1fr)_8rem_auto] items-center gap-6 rounded-xl px-4 py-3 transition-colors hover:bg-[var(--bg-card-hover)]" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.036), rgba(255,255,255,0.012))', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}>
       <div className="flex min-w-0 items-center gap-3">
         <PlatformLogo platform={contest.platform} size={28} />
         <div className="min-w-0">
-          <div className="flex min-w-0 items-center gap-3">
-            <p className="flex min-w-0 items-center gap-2 truncate text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-              <span className="truncate">{contest.name}</span>
-              <ExternalLink size={12} style={{ color: 'var(--text-muted)' }} />
-            </p>
-            {!upcoming && <SolvedMarkers solved={contest.solved} total={contest.total} />}
-          </div>
+          <p className="flex min-w-0 items-center gap-2 truncate text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            <span className="truncate">{contest.name}</span>
+            <ExternalLink size={12} style={{ color: 'var(--text-muted)' }} />
+          </p>
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(contest.date)} at {contest.time}</p>
         </div>
       </div>
-      <div className="text-right">
+      <div className="hidden shrink-0 items-center sm:flex">
+        {!upcoming && <SolvedMarkers solved={contest.solved} total={contest.total} />}
+      </div>
+      <div className="shrink-0 text-right">
         {upcoming ? (
           <span className="rounded-full px-2.5 py-1 text-xs font-semibold" style={{ color: 'var(--accent-amber)', background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.2)' }}>Upcoming</span>
         ) : (
           <>
             <div className="flex items-center justify-end gap-2">
               <span className="font-mono-data text-xs" style={{ color: 'var(--text-muted)' }}>{contest.before}</span>
-              {positive ? <ArrowUpRight size={16} style={{ color: 'var(--success)' }} /> : <ArrowDownRight size={16} style={{ color: 'var(--text-muted)' }} />}
+              {positive ? <ArrowUpRight size={16} style={{ color: 'var(--success)' }} /> : <ArrowDownRight size={16} style={{ color: 'var(--danger)' }} />}
               <span className="font-mono-data text-xs" style={{ color: 'var(--text-primary)' }}>{contest.after}</span>
             </div>
-            <p className="mt-1 font-mono-data text-sm font-bold" style={{ color: positive ? 'var(--success)' : 'var(--text-muted)' }}>{positive ? '+' : ''}{delta}</p>
+            <p className="mt-1 font-mono-data text-sm font-bold" style={{ color: positive ? 'var(--success)' : 'var(--danger)' }}>{positive ? '+' : ''}{delta}</p>
           </>
         )}
       </div>
@@ -156,15 +157,15 @@ export default function ContestHistoryPage() {
             </div>
           </Card>
 
-          <Card padding="18px" className="gap-3">
-            <div className="flex items-center justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-1">
               <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Upcoming Contests</span>
               <TrendingUp size={18} style={{ color: 'var(--accent-purple)' }} />
             </div>
-            <div className="space-y-2">
-              {UPCOMING.map((contest) => <ContestRow key={contest.id} contest={contest} upcoming />)}
+            <div className="space-y-4">
+              {UPCOMING.map((contest) => <UpcomingContestCard key={contest.id} contest={contest} />)}
             </div>
-          </Card>
+          </div>
         </div>
       </div>
     </div>

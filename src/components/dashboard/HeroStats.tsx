@@ -115,12 +115,6 @@ export function HeroStats({ data, loading }: HeroStatsProps) {
                   {isGrowing ? 'Consistent practice is lifting your rating trend this month.' : 'Focus on targeted practice sets to unlock the next jump.'}
                 </p>
                 <div className="grid grid-cols-2 gap-3 border-t pt-4" style={{ borderColor: 'var(--border-subtle)' }}>
-                  <span className="rounded-full px-3 py-2 text-center text-[12px] font-semibold" style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.38)', color: 'var(--accent-amber)' }}>
-                    {isGrowing ? 'On pace' : 'Focus block'}
-                  </span>
-                  <span className="rounded-full px-3 py-2 text-center text-[12px] font-semibold" style={{ background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.34)', color: 'var(--accent-green)' }}>
-                    {selectedPlatform === 'CODEFORCES' ? 'Rating +35' : 'Contest +29'}
-                  </span>
                 </div>
               </>
             )}

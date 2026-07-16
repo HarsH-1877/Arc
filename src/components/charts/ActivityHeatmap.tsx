@@ -84,46 +84,40 @@ export function ActivityHeatmap({ data, loading, accentColor = 'blue', compact =
   return (
     <div className="relative w-full min-w-0 overflow-hidden">
       <div className="grid" style={{ gridTemplateColumns: '28px minmax(0, 1fr)', columnGap: 8 }}>
-        <span />
-        <div className="mb-2 grid" style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))`, columnGap: gap }}>
-          {monthLabels.map((label) => (
-            <span
-              key={label.week + label.month}
-              className="truncate text-center text-[10px] font-medium"
-              style={{
-                gridColumn: `${label.week + 1} / ${label.endWeek + 2}`,
-                color: 'var(--text-muted)',
-              }}
-            >
-              {label.month}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid" style={{ gridTemplateColumns: '28px minmax(0, 1fr)', columnGap: 8 }}>
-        <div className="grid" style={{ gridTemplateRows: 'repeat(7, minmax(0, 1fr))', rowGap: gap }}>
+        <div className="grid pt-[22px]" style={{ gridTemplateRows: 'repeat(7, minmax(0, 1fr))', rowGap: gap }}>
           {DAY_LABELS.map((label, index) => (
-            <span key={index} className="text-[9px] leading-none" style={{ color: 'var(--text-muted)' }}>{label}</span>
+            <span key={index} className="text-[9px] leading-none flex items-center" style={{ color: 'var(--text-muted)' }}>{label}</span>
           ))}
         </div>
-        <div className="grid min-w-0" style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))`, columnGap: gap }}>
-          {weeks.map((week, weekIndex) => (
-            <div key={weekIndex} className="grid" style={{ gridTemplateRows: 'repeat(7, minmax(0, 1fr))', rowGap: gap }}>
-              {week.map((day) => (
-                <div
-                  key={day.iso}
-                  className="aspect-square w-full cursor-pointer hover:opacity-80"
-                  style={{ borderRadius: 2, background: colorFor(day.count, accentColor), minWidth: 0 }}
-                  onMouseEnter={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setTooltip({ x: rect.left, y: rect.top, date: day.iso, count: day.count });
-                  }}
-                  onMouseLeave={() => setTooltip(null)}
-                />
-              ))}
-            </div>
-          ))}
+        <div className="flex min-w-0 justify-between" style={{ gap: compact ? 8 : 12 }}>
+          {monthLabels.map((label, labelIndex) => {
+            const monthWeeks = weeks.slice(label.week, label.endWeek + 1);
+            return (
+              <div key={labelIndex} className="flex min-w-0 flex-1 flex-col">
+                <span className="mb-1.5 truncate text-center text-[10px] font-medium" style={{ color: 'var(--text-muted)', lineHeight: '14px' }}>
+                  {label.month}
+                </span>
+                <div className="flex min-w-0 flex-1 justify-between" style={{ gap: gap }}>
+                  {monthWeeks.map((week, weekIndex) => (
+                    <div key={weekIndex} className="grid flex-1" style={{ gridTemplateRows: 'repeat(7, minmax(0, 1fr))', rowGap: gap }}>
+                      {week.map((day) => (
+                        <div
+                          key={day.iso}
+                          className="aspect-square w-full cursor-pointer hover:opacity-80"
+                          style={{ borderRadius: 2, background: colorFor(day.count, accentColor), minWidth: 0 }}
+                          onMouseEnter={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setTooltip({ x: rect.left, y: rect.top, date: day.iso, count: day.count });
+                          }}
+                          onMouseLeave={() => setTooltip(null)}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
