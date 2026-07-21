@@ -43,7 +43,7 @@ function ComparePageContent() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div className="sticky top-0 z-20 space-y-4 pb-2" style={{ background: 'rgba(11,13,20,0.78)', backdropFilter: 'blur(8px)' }}>
+      <div className="space-y-4 pb-2">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <h1 style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Compare</h1>

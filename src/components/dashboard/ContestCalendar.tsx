@@ -16,11 +16,14 @@ interface ContestCalendarProps {
   loading?: boolean;
 }
 
+import { PlatformLogo } from '@/components/shared/PlatformLogo';
+
 interface ContestDay {
   date: Date;
   label: string;
   delta?: number;
-  type: 'given' | 'upcoming';
+  type: 'given' | 'upcoming' | 'missed';
+  platforms: ('CODEFORCES' | 'LEETCODE')[];
 }
 
 function buildContestDays(data: RatingPoint[] = []): ContestDay[] {
@@ -34,15 +37,27 @@ function buildContestDays(data: RatingPoint[] = []): ContestDay[] {
 
   const previous = history.map((point, index) => {
     const previousRating = history[index - 1]?.rating ?? point.rating - 12;
+    const platform = index % 2 === 0 ? 'CODEFORCES' : 'LEETCODE';
     return {
       date: point.date,
-      label: index % 2 === 0 ? 'Codeforces Round' : 'Weekly Contest',
+      label: platform === 'CODEFORCES' ? 'Codeforces Round' : 'Weekly Contest',
       delta: Math.round(point.rating - previousRating),
       type: 'given' as const,
+      platforms: [platform as 'CODEFORCES' | 'LEETCODE'],
     };
   });
 
   const today = new Date();
+  
+  const missedDate = new Date(today);
+  missedDate.setDate(today.getDate() - 3);
+  const missed = [{
+    date: missedDate,
+    label: 'Codeforces Round 999',
+    type: 'missed' as const,
+    platforms: ['CODEFORCES' as const],
+  }];
+
   const upcoming = [6, 13, 21].map((offset, index) => {
     const date = new Date(today);
     date.setDate(today.getDate() + offset);
@@ -50,10 +65,25 @@ function buildContestDays(data: RatingPoint[] = []): ContestDay[] {
       date,
       label: index === 1 ? 'LeetCode Weekly' : 'Codeforces Round',
       type: 'upcoming' as const,
+      platforms: [index === 1 ? 'LEETCODE' as const : 'CODEFORCES' as const],
     };
   });
 
-  return [...previous, ...upcoming].sort((a, b) => a.date.getTime() - b.date.getTime());
+  // Group by date to handle multiple platforms on the same day
+  const allDays = [...previous, ...missed, ...upcoming];
+  const grouped = new Map<string, ContestDay>();
+  allDays.forEach(day => {
+    const key = day.date.toDateString();
+    if (grouped.has(key)) {
+      const existing = grouped.get(key)!;
+      existing.platforms = [...new Set([...existing.platforms, ...day.platforms])];
+      existing.label += ` & ${day.label}`;
+    } else {
+      grouped.set(key, { ...day });
+    }
+  });
+
+  return Array.from(grouped.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
 export function ContestCalendar({ data = [], loading = false }: ContestCalendarProps) {
@@ -146,19 +176,34 @@ export function ContestCalendar({ data = [], loading = false }: ContestCalendarP
                 background: event
                   ? event.type === 'given'
                     ? 'linear-gradient(135deg, rgba(79,142,247,0.18), rgba(52,211,153,0.08))'
-                    : 'linear-gradient(135deg, rgba(251,191,36,0.12), rgba(167,139,250,0.08))'
+                    : event.type === 'missed'
+                      ? 'linear-gradient(135deg, rgba(244,63,94,0.12), rgba(244,63,94,0.04))'
+                      : 'linear-gradient(135deg, rgba(251,191,36,0.12), rgba(167,139,250,0.08))'
                   : 'var(--bg-input)',
                 border: today
                   ? '1px solid var(--accent-blue)'
                   : event
-                    ? '1px solid rgba(79,142,247,0.24)'
+                    ? event.type === 'missed'
+                      ? '1px solid rgba(244,63,94,0.25)'
+                      : '1px solid rgba(79,142,247,0.24)'
                     : '1px solid var(--border-subtle)',
                 opacity: inMonth ? 1 : 0.36,
               }}
             >
-              <span className="text-[11px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
-                {date.getDate()}
-              </span>
+              <div className="flex justify-between items-start">
+                <span className="text-[11px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                  {date.getDate()}
+                </span>
+                {event && event.platforms && (
+                  <div className="flex -space-x-1.5">
+                    {event.platforms.map((platform, i) => (
+                      <div key={platform + i} className="rounded-full bg-[var(--bg-elevated)] p-[1px] shadow-sm">
+                        <PlatformLogo platform={platform} size={10} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               {event?.type === 'given' && (
                 <span className="font-mono-data text-[10px] font-bold" style={{ color: positive ? 'var(--accent-green)' : 'var(--accent-rose)' }}>
                   {positive ? '+' : ''}
@@ -175,6 +220,10 @@ export function ContestCalendar({ data = [], loading = false }: ContestCalendarP
         <span className="flex items-center gap-1.5">
           <i className="h-2 w-2 rounded-full" style={{ background: 'var(--accent-blue)' }} />
           Given
+        </span>
+        <span className="flex items-center gap-1.5">
+          <i className="h-2 w-2 rounded-full" style={{ background: 'var(--accent-rose)' }} />
+          Missed
         </span>
         <span className="flex items-center gap-1.5">
           <i className="h-2 w-2 rounded-full" style={{ background: 'var(--accent-amber)' }} />

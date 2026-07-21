@@ -48,23 +48,30 @@ export function UpcomingContestCard({ contest }: { contest: ContestItem }) {
     return () => clearInterval(interval);
   }, [contest.date, contest.time]);
 
-  const idMatch = contest.name.match(/\b\d{3,4}\b/);
-  const displayId = idMatch ? `#${idMatch[0]}` : null;
+  let displayId: string | null = null;
+  if (contest.platform === 'CODEFORCES') {
+    const divMatch = contest.name.match(/(Div\.?\s*\d)/i);
+    const eduMatch = contest.name.match(/(Educational)/i);
+    if (divMatch) {
+      displayId = divMatch[0];
+    } else if (eduMatch) {
+      displayId = 'Edu';
+    }
+  }
 
   return (
     <div className="flex flex-col overflow-hidden rounded-[24px]" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
       <div className="flex flex-col p-4">
-        <div className="mb-4 flex items-center justify-end">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <h3 className="text-[18px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
+            {contest.name}
+          </h3>
           {displayId && (
-            <span className="rounded-full px-3.5 py-1.5 text-[10px] font-bold tracking-widest" style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}>
+            <span className="shrink-0 rounded-full px-3 py-1 text-[10px] font-bold tracking-widest" style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}>
               {displayId}
             </span>
           )}
         </div>
-
-        <h3 className="mb-4 text-[18px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
-          {contest.name}
-        </h3>
 
         <div className="flex items-center justify-between gap-3 rounded-[16px] p-3 shadow-inner" style={{ background: 'var(--gray-950)', border: '1px solid var(--border-subtle)' }}>
           {timeLeft ? (
@@ -107,7 +114,7 @@ export function UpcomingContestCard({ contest }: { contest: ContestItem }) {
         className="flex w-full items-center justify-center gap-2 py-3 text-[11px] font-bold tracking-[0.2em] transition-opacity hover:opacity-90"
         style={{ background: 'var(--text-primary)', color: 'var(--bg-card)', textDecoration: 'none' }}
       >
-        SECURE ACCESS <ChevronRight size={14} strokeWidth={3} />
+        REGISTER <ChevronRight size={14} strokeWidth={3} />
       </a>
     </div>
   );

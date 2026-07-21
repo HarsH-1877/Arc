@@ -47,10 +47,10 @@ export function GoalSetter({ platform }: { platform: Platform }) {
   const active = useMemo(() => {
     if (goalType === 'questions') {
       return {
-        label: 'Question goal',
+        label: `Solve ${questionTarget} Q's`,
         current: currentQuestions,
         target: questionTarget,
-        remainingLabel: 'questions left',
+        remainingLabel: 'left',
       };
     }
 
@@ -64,7 +64,7 @@ export function GoalSetter({ platform }: { platform: Platform }) {
     }
 
     return {
-      label: 'Rating goal',
+      label: `Reach ${customRatingTarget}`,
       current: currentRating,
       target: customRatingTarget,
       remainingLabel: 'pts left',
@@ -91,9 +91,9 @@ export function GoalSetter({ platform }: { platform: Platform }) {
         <Target size={18} style={{ color: achieved ? 'var(--success)' : 'var(--brand)' }} />
         <div className="min-w-0 flex-1 text-left">
           <div className="flex items-center justify-between gap-3">
-            <span className="truncate text-sm font-semibold">{achieved ? 'Goal achieved' : active.label}</span>
+            <span className="truncate text-sm font-semibold">{achieved ? 'Set Goal' : active.label}</span>
             <span className="font-mono-data shrink-0 text-[11px]" style={{ color: achieved ? 'var(--accent-green)' : 'var(--text-secondary)' }}>
-              {achieved ? '0 left' : remaining.toLocaleString() + ' ' + active.remainingLabel}
+              {achieved ? '' : remaining.toLocaleString() + ' ' + active.remainingLabel}
             </span>
           </div>
           <div className="mt-2 h-1.5 overflow-hidden rounded-full" style={{ background: 'var(--border-subtle)' }}>
@@ -232,7 +232,7 @@ export function GoalSetter({ platform }: { platform: Platform }) {
 
           <div className="mt-4 rounded-lg p-3" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
             <div className="flex justify-between text-xs" style={{ color: 'var(--text-secondary)' }}>
-              <span>{achieved ? 'Goal achieved' : remaining.toLocaleString() + ' ' + active.remainingLabel}</span>
+              <span>{achieved ? 'Set Goal' : remaining.toLocaleString() + ' ' + active.remainingLabel}</span>
               <span className="font-mono-data">{Math.round(active.current).toLocaleString()} / {active.target.toLocaleString()}</span>
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full" style={{ background: 'var(--border-subtle)' }}>

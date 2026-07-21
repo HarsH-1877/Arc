@@ -34,9 +34,9 @@ const HISTORY: ContestItem[] = [
 ];
 
 const UPCOMING: ContestItem[] = [
-  { id: 'u1', name: 'Codeforces Round 1040', platform: 'CODEFORCES', date: '2026-07-12', time: '20:05', before: 1823, after: 1823, solved: 0, total: 7, href: 'https://codeforces.com/contests' },
+  { id: 'u1', name: 'Codeforces Round 1040 (Div. 2)', platform: 'CODEFORCES', date: '2026-07-12', time: '20:05', before: 1823, after: 1823, solved: 0, total: 7, href: 'https://codeforces.com/contests' },
   { id: 'u2', name: 'LeetCode Weekly Contest 459', platform: 'LEETCODE', date: '2026-07-14', time: '08:00', before: 1848, after: 1848, solved: 0, total: 4, href: 'https://leetcode.com/contest/' },
-  { id: 'u3', name: 'Codeforces Educational Round 181', platform: 'CODEFORCES', date: '2026-07-18', time: '19:35', before: 1823, after: 1823, solved: 0, total: 8, href: 'https://codeforces.com/contests' },
+  { id: 'u3', name: 'Educational Codeforces Round 181', platform: 'CODEFORCES', date: '2026-07-18', time: '19:35', before: 1823, after: 1823, solved: 0, total: 8, href: 'https://codeforces.com/contests' },
 ];
 
 const BEST_BY_PLATFORM = (['CODEFORCES', 'LEETCODE'] as const).map((platform) => (
@@ -52,20 +52,20 @@ function ContestRow({ contest, upcoming = false }: { contest: ContestItem; upcom
   const positive = delta >= 0;
 
   return (
-    <a href={contest.href} target="_blank" rel="noreferrer" className="grid grid-cols-[minmax(0,1fr)_8rem_auto] items-center gap-6 rounded-[24px] px-5 py-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:bg-[var(--bg-card-hover)]" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}>
-      <div className="flex min-w-0 items-center gap-4">
-        <div className="flex shrink-0 items-center justify-center rounded-full p-3.5" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)' }}>
+    <a href={contest.href} target="_blank" rel="noreferrer" className="grid grid-cols-[minmax(0,1fr)_150px_minmax(0,1fr)] items-center gap-6 rounded-[24px] px-5 py-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:bg-[var(--bg-card-hover)]" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}>
+      <div className="flex min-w-0 items-start gap-4">
+        <div className="flex shrink-0 items-center justify-center rounded-full p-3.5 mt-1" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)' }}>
           <PlatformLogo platform={contest.platform} size={20} />
         </div>
         <div className="min-w-0">
-          <p className="flex min-w-0 items-center gap-2 truncate text-[18px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
-            <span className="truncate">{contest.name}</span>
-            <ExternalLink size={12} style={{ color: 'var(--text-muted)' }} />
+          <p className="flex flex-wrap items-center gap-2 text-[18px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
+            <span>{contest.name}</span>
+            <ExternalLink size={12} className="shrink-0" style={{ color: 'var(--text-muted)' }} />
           </p>
           <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(contest.date)} at {contest.time}</p>
         </div>
       </div>
-      <div className="hidden shrink-0 items-center sm:flex">
+      <div className="hidden shrink-0 items-center justify-start sm:flex w-[150px]">
         {!upcoming && <SolvedMarkers solved={contest.solved} total={contest.total} />}
       </div>
       <div className="shrink-0 text-right">

@@ -113,7 +113,7 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
                     transition={{ type: 'spring', stiffness: 520, damping: 42, mass: 0.8 }}
                   />
                 )}
-                <Icon size={22} className="relative z-10 shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:text-[var(--text-primary)]" />
+                <Icon size={22} className={`relative z-10 shrink-0 origin-center transition-transform duration-300 group-hover:text-[var(--text-primary)] ${item.label === 'Settings' ? 'group-hover:rotate-90' : 'group-hover:scale-110'}`} />
                 {!sidebarCollapsed && <span className="relative z-10 text-[15px] group-hover:text-[var(--text-primary)]">{item.label}</span>}
                 
                 {sidebarCollapsed && (

@@ -49,16 +49,16 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
               <PlatformLogo platform={selectedPlatform} size={24} active={true} />
               {selectedPlatform === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
             </div>
-            <ChevronDown size={14} className="opacity-50" />
+            <ChevronDown size={14} className={cn('opacity-50 transition-transform duration-200', platformOpen && 'rotate-180')} />
           </button>
           <AnimatePresence>
           {platformOpen && (
             <motion.div
-              initial={{ opacity: 0, y: -4, scale: 0.99 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -2, scale: 0.99 }}
-              transition={{ duration: 0.1, ease: 'easeOut' }}
-              className="absolute right-0 top-[calc(100%+6px)] z-50 w-full rounded-[14px] p-1.5"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              className="absolute right-0 top-[calc(100%+4px)] z-50 w-full origin-top rounded-[18px] p-1.5"
               style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', boxShadow: '0 18px 48px rgba(0,0,0,0.56)' }}
             >
               {(['CODEFORCES', 'LEETCODE'] as const).filter(item => item !== selectedPlatform).map((item) => (

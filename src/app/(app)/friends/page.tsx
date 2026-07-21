@@ -48,7 +48,7 @@ export default function FriendsPage() {
               All Friends {friends && <span style={{ color: 'var(--text-muted)' }}>({friends.length})</span>}
             </h2>
             <div className="flex w-full flex-wrap items-center justify-end gap-3 sm:w-auto">
-              <div className="relative z-10 w-full sm:w-[340px]">
+              <div className="relative z-10 w-full sm:w-[260px]">
                 <FriendSearch />
               </div>
               <div className="flex rounded-full p-1" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-default)' }}>

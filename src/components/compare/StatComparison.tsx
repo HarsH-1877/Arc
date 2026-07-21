@@ -80,9 +80,9 @@ function MetricSide({ label, value, unit, won, accent }: { label: string; value:
   return (
     <div className="rounded-lg p-3" style={{ background: won ? 'rgba(255,255,255,0.05)' : 'var(--bg-card)', border: won ? '1px solid ' + accent : '1px solid var(--border-subtle)' }}>
       <span className="text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: won ? accent : 'var(--text-muted)' }}>{label}</span>
-      <div className="mt-2 flex items-baseline gap-1">
-        <span className="font-mono-data text-xl font-bold" style={{ color: won ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{value}</span>
-        <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{unit}</span>
+      <div className="mt-2 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 overflow-hidden">
+        <span className="font-mono-data text-xl font-bold truncate" style={{ color: won ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{value}</span>
+        <span className="text-[10px] shrink-0" style={{ color: 'var(--text-muted)' }}>{unit}</span>
       </div>
     </div>
   );

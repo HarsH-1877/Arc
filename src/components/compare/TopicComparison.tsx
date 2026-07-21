@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { Card } from '@/components/shared/Card';
 import type { CompareUser } from '@/hooks/useCompareData';
+import { Hash } from 'lucide-react';
 
 interface TopicComparisonProps {
   user: CompareUser;
@@ -84,62 +85,61 @@ export function TopicComparison({ user, friend }: TopicComparisonProps) {
         </div>
       </Card>
 
-      <Card padding="18px" className="gap-4">
-        <div>
-          <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Topics</h3>
-          <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            Select 3 to 6 topics. Changes update the web graph instantly.
-          </p>
+      <Card padding="18px" className="gap-0">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Topics</h3>
+              <span className="font-mono-data rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: selectedTopics.length < 3 ? 'rgba(244,63,94,0.1)' : 'var(--accent-blue-dim)', color: selectedTopics.length < 3 ? 'var(--accent-rose)' : 'var(--accent-blue)' }}>{selectedTopics.length}/6</span>
+            </div>
+            <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Select 3 to 6 topics to compare.
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-md px-3 py-2" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-default)' }}>
-          <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Selected</span>
-          <span className="font-mono-data text-xs font-bold" style={{ color: selectedTopics.length < 3 ? 'var(--accent-rose)' : 'var(--accent-blue)' }}>{selectedTopics.length}/6</span>
-        </div>
-
-        <div className="max-h-[310px] space-y-2 overflow-y-auto pr-1">
-          {rows.map((row) => {
-            const checked = selectedTopics.includes(row.topic);
-            const disabled = checked ? selectedTopics.length <= 3 : selectedTopics.length >= 6;
-            return (
-              <button
-                key={row.topic}
-                type="button"
-                disabled={disabled}
-                onClick={() => toggleTopic(row.topic)}
-                className="group flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left disabled:cursor-not-allowed"
-                style={{
-                  background: checked
-                    ? 'linear-gradient(135deg, rgba(79,142,247,0.16), rgba(34,211,238,0.06))'
-                    : 'linear-gradient(135deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01))',
-                  border: checked ? '1px solid rgba(79,142,247,0.28)' : '1px solid var(--border-subtle)',
-                  opacity: disabled && !checked ? 0.55 : 1,
-                }}
-              >
-                <span
-                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
+        <div className="relative min-h-0 flex-1">
+          <div className="grid grid-cols-2 gap-2 max-h-[340px] overflow-y-auto pb-4 pr-1 no-scrollbar">
+            {rows.map((row) => {
+              const checked = selectedTopics.includes(row.topic);
+              const disabled = checked ? selectedTopics.length <= 3 : selectedTopics.length >= 6;
+              const total = Math.max(row.uStat + row.fStat, 1);
+              
+              return (
+                <button
+                  key={row.topic}
+                  type="button"
+                  disabled={disabled && !checked}
+                  onClick={() => toggleTopic(row.topic)}
+                  className="group flex flex-col justify-between cursor-pointer rounded-xl p-2.5 text-left transition-all active:scale-[0.97] disabled:cursor-not-allowed hover:bg-white/[0.03]"
                   style={{
-                    background: checked ? 'var(--accent-blue)' : 'var(--bg-input)',
-                    border: checked ? '1px solid rgba(255,255,255,0.25)' : '1px solid var(--border-default)',
+                    background: checked ? 'var(--accent-blue-dim)' : 'transparent',
+                    border: checked ? '1px solid var(--accent-blue)' : '1px solid var(--border-subtle)',
+                    opacity: (disabled && !checked) ? 0.5 : 1,
                   }}
                 >
-                  {checked && <span className="h-2 w-2 rounded-full bg-white" />}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold" style={{ color: checked ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{row.topic}</span>
-                  <span className="mt-0.5 block text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                    You {row.uStat} / Friend {row.fStat}
-                  </span>
-                </span>
-                <span
-                  className="font-mono-data rounded-full px-2 py-1 text-[11px] font-semibold"
-                  style={{ background: 'var(--bg-input)', color: checked ? 'var(--accent-blue)' : 'var(--text-muted)', border: '1px solid var(--border-subtle)' }}
-                >
-                  {Math.max(row.uStat, row.fStat)}
-                </span>
-              </button>
-            );
-          })}
+                  <div className="flex w-full items-center gap-2">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors" style={{ background: checked ? 'var(--accent-blue)' : 'var(--bg-elevated)', color: checked ? '#fff' : 'var(--text-secondary)' }}>
+                      <Hash size={12} strokeWidth={3} />
+                    </div>
+                    <span className="truncate text-xs font-semibold" style={{ color: checked ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                      {row.topic}
+                    </span>
+                  </div>
+                  
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--accent-blue)' }}>{row.uStat}</span>
+                    <div className="flex h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: 'var(--bg-elevated)' }}>
+                      <div className="h-full transition-all duration-500" style={{ width: `${(row.uStat / total) * 100}%`, background: 'var(--accent-blue)' }} />
+                      <div className="h-full transition-all duration-500" style={{ width: `${(row.fStat / total) * 100}%`, background: 'var(--accent-purple)' }} />
+                    </div>
+                    <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--accent-purple)' }}>{row.fStat}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[var(--bg-card)] to-transparent" />
         </div>
       </Card>
     </div>

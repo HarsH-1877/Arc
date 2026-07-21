@@ -42,15 +42,16 @@ type FriendMode = 'top4' | 'avg';
 const TIME_FILTERS = ['Today', '7d', '2w', '1m', '3m', '1y'];
 const FRIEND_KEYS = ['friend1', 'friend2', 'friend3', 'friend4'] as const;
 const CF_MILESTONES = [
-  { value: 1200, label: 'Specialist', color: 'var(--accent-cyan)' },
-  { value: 1600, label: 'Expert', color: 'var(--accent-blue)' },
-  { value: 1900, label: 'Candidate Master', color: 'var(--accent-purple)' },
-  { value: 2100, label: 'Master', color: 'var(--accent-amber)' },
+  { value: 1200, label: 'Pupil' },
+  { value: 1400, label: 'Spec' },
+  { value: 1600, label: 'Expert' },
+  { value: 1900, label: 'CM' },
+  { value: 2100, label: 'Master' },
+  { value: 2400, label: 'GM' },
 ];
 const LC_MILESTONES = [
-  { value: 1600, label: 'Knight', color: 'var(--accent-cyan)' },
-  { value: 2000, label: 'Guardian', color: 'var(--accent-purple)' },
-  { value: 2300, label: 'Champion', color: 'var(--accent-amber)' },
+  { value: 1850, label: 'Knight' },
+  { value: 2200, label: 'Guardian' },
 ];
 
 const SERIES = [
@@ -237,7 +238,7 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
 
       <div style={{ width: '100%', height: compact ? '250px' : '240px' }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+          <ComposedChart data={chartData} margin={{ top: 24, right: 28, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id="grad-you" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="var(--brand)" stopOpacity={0.3} />
@@ -297,13 +298,15 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
                 key={milestone.label}
                 y={milestone.value}
                 stroke="var(--border-default)"
+                strokeOpacity={0.4}
                 strokeDasharray="3 3"
                 label={{
                   value: milestone.label,
-                  position: 'right',
+                  position: 'insideBottomLeft',
                   fill: 'var(--text-muted)',
-                  fontSize: 9,
+                  fontSize: 10,
                   fontWeight: 600,
+                  opacity: 0.6,
                 }}
               />
             ))}
