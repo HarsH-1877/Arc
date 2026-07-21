@@ -125,23 +125,7 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
             );
           })}
 
-          <Link href="/friends" className={`group relative mt-2 flex items-center justify-between overflow-visible rounded-md py-[11px] hover:bg-[var(--bg-card-hover)] ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'}`} style={{ textDecoration: 'none', color: 'var(--text-secondary)' }}>
-            <div className="flex items-center gap-3">
-              <Inbox size={22} className="shrink-0 transition-transform duration-200 group-hover:scale-110" />
-              {!sidebarCollapsed && <span className="text-[15px]">Inbox</span>}
-            </div>
-            {!sidebarCollapsed && (
-              <span className="font-mono-data flex shrink-0 items-center justify-center" style={{ background: 'var(--brand-dim)', border: '1px solid rgba(79,142,247,0.25)', color: 'var(--brand)', fontSize: '10px', fontWeight: 700, padding: '1px 7px', borderRadius: 'var(--radius-full)' }}>
-                {pendingCount}
-              </span>
-            )}
-            {sidebarCollapsed && (
-              <div className="pointer-events-none absolute left-full ml-4 flex items-center gap-2 opacity-0 transition-all group-hover:ml-3 group-hover:opacity-100 z-50 rounded-md px-3 py-1.5 text-xs font-semibold shadow-xl" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-                Inbox
-                <span className="font-mono-data rounded-full px-1.5 text-[9px] text-[var(--brand)]" style={{ background: 'var(--brand-dim)' }}>{pendingCount}</span>
-              </div>
-            )}
-          </Link>
+
         </nav>
       </div>
 
