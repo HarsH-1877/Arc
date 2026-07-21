@@ -27,47 +27,77 @@ function colorFor(count: number, accent: 'blue' | 'purple' | 'cyan') {
   if (count <= 2) return palettes[accent][0];
   if (count <= 5) return palettes[accent][1];
   if (count <= 9) return palettes[accent][2];
-  if (count <= 14) return palettes[accent][3];
   return palettes[accent][4];
 }
 
 export function ActivityHeatmap({ data, loading, accentColor = 'blue', compact = false }: ActivityHeatmapProps) {
   const [tooltip, setTooltip] = useState<{ x: number; y: number; date: string; count: number } | null>(null);
 
-  const { weeks, monthLabels } = useMemo(() => {
+  const monthsData = useMemo(() => {
     const today = new Date();
     const startDate = new Date(today);
-    startDate.setDate(today.getDate() - (compact ? 244 : 364));
-    startDate.setDate(startDate.getDate() - startDate.getDay());
-    const weekCount = compact ? 36 : 53;
+    startDate.setDate(today.getDate() - 364);
+    
     const dataMap = new Map(data.map((d) => [d.date, d.count]));
-    const builtWeeks: { date: Date; iso: string; count: number }[][] = [];
-    const labels: { week: number; endWeek: number; month: string }[] = [];
-    let lastMonth = -1;
+    const builtMonths = [];
 
-    for (let weekIndex = 0; weekIndex < weekCount; weekIndex++) {
-      const week: { date: Date; iso: string; count: number }[] = [];
-      for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-        const date = new Date(startDate);
-        date.setDate(startDate.getDate() + weekIndex * 7 + dayIndex);
-        const iso = date.toISOString().slice(0, 10);
-        week.push({ date, iso, count: dataMap.get(iso) ?? 0 });
+    let curr = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    const endMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    while (curr.getTime() <= endMonth.getTime()) {
+      const y = curr.getFullYear();
+      const m = curr.getMonth();
+      
+      const mStart = new Date(y, m, 1);
+      const mEnd = new Date(y, m + 1, 0);
+      
+      const weeks = [];
+      let currentWeek: ({ iso: string; count: number; date: Date } | null)[] = [];
+      
+      for (let i = 0; i < mStart.getDay(); i++) {
+        currentWeek.push(null);
       }
-      const labelDate = week.find((day) => day.date.getDate() === 1)?.date ?? week[0].date;
-      const month = labelDate.getMonth();
-      if (month !== lastMonth) {
-        labels.push({ week: weekIndex, endWeek: weekIndex, month: MONTHS[month] });
-        lastMonth = month;
+      
+      for (let d = 1; d <= mEnd.getDate(); d++) {
+        const dateObj = new Date(y, m, d);
+        const dateObjMidnight = dateObj.getTime();
+        const startMidnight = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()).getTime();
+        const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+        
+        if (dateObjMidnight >= startMidnight && dateObjMidnight <= todayMidnight) {
+          const yStr = y.toString();
+          const mStr = (m + 1).toString().padStart(2, '0');
+          const dStr = d.toString().padStart(2, '0');
+          const iso = `${yStr}-${mStr}-${dStr}`;
+          
+          currentWeek.push({ iso, count: dataMap.get(iso) ?? 0, date: dateObj });
+        } else {
+          currentWeek.push(null);
+        }
+        
+        if (currentWeek.length === 7) {
+          weeks.push(currentWeek);
+          currentWeek = [];
+        }
       }
-      builtWeeks.push(week);
+      
+      if (currentWeek.length > 0) {
+        while (currentWeek.length < 7) {
+          currentWeek.push(null);
+        }
+        weeks.push(currentWeek);
+      }
+      
+      builtMonths.push({
+        label: MONTHS[m],
+        weeks,
+        id: `${y}-${m}`
+      });
+      
+      curr.setMonth(curr.getMonth() + 1);
     }
 
-    const mergedLabels = labels.map((label, index) => ({
-      ...label,
-      endWeek: (labels[index + 1]?.week ?? weekCount) - 1,
-    }));
-
-    return { weeks: builtWeeks, monthLabels: mergedLabels };
+    return builtMonths;
   }, [compact, data]);
 
   if (loading) {
@@ -79,49 +109,52 @@ export function ActivityHeatmap({ data, loading, accentColor = 'blue', compact =
     );
   }
 
-  const gap = compact ? 3 : 4;
+  const cellGap = 3;
+  const monthGap = 14;
 
   return (
     <div className="relative w-full min-w-0 overflow-hidden">
       <div className="grid" style={{ gridTemplateColumns: '28px minmax(0, 1fr)', columnGap: 8 }}>
-        <span />
-        <div className="mb-2 grid" style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))`, columnGap: gap }}>
-          {monthLabels.map((label) => (
-            <span
-              key={label.week + label.month}
-              className="truncate text-center text-[10px] font-medium"
-              style={{
-                gridColumn: `${label.week + 1} / ${label.endWeek + 2}`,
-                color: 'var(--text-muted)',
-              }}
-            >
-              {label.month}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid" style={{ gridTemplateColumns: '28px minmax(0, 1fr)', columnGap: 8 }}>
-        <div className="grid" style={{ gridTemplateRows: 'repeat(7, minmax(0, 1fr))', rowGap: gap }}>
+        <div className="grid pt-[20px]" style={{ gridTemplateRows: 'repeat(7, minmax(0, 1fr))', rowGap: cellGap }}>
           {DAY_LABELS.map((label, index) => (
-            <span key={index} className="text-[9px] leading-none" style={{ color: 'var(--text-muted)' }}>{label}</span>
+            <span key={index} className="text-[9px] leading-none flex items-center" style={{ color: 'var(--text-muted)' }}>{label}</span>
           ))}
         </div>
-        <div className="grid min-w-0" style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))`, columnGap: gap }}>
-          {weeks.map((week, weekIndex) => (
-            <div key={weekIndex} className="grid" style={{ gridTemplateRows: 'repeat(7, minmax(0, 1fr))', rowGap: gap }}>
-              {week.map((day) => (
-                <div
-                  key={day.iso}
-                  className="aspect-square w-full cursor-pointer hover:opacity-80"
-                  style={{ borderRadius: 2, background: colorFor(day.count, accentColor), minWidth: 0 }}
-                  onMouseEnter={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setTooltip({ x: rect.left, y: rect.top, date: day.iso, count: day.count });
-                  }}
-                  onMouseLeave={() => setTooltip(null)}
-                />
-              ))}
+        <div className="flex min-w-0 flex-1 overflow-x-auto no-scrollbar pb-2" style={{ gap: monthGap }}>
+          {monthsData.map((monthData) => (
+            <div key={monthData.id} className="flex min-w-0 flex-col" style={{ flex: `0 0 auto`, minWidth: 'max-content' }}>
+              <span className="mb-1.5 text-center text-[10px] font-medium" style={{ color: 'var(--text-muted)', lineHeight: '14px' }}>
+                {monthData.label}
+              </span>
+              <div className="flex min-w-0 flex-1" style={{ gap: cellGap }}>
+                {monthData.weeks.map((week, weekIndex) => (
+                  <div key={weekIndex} className="grid flex-1" style={{ gridTemplateRows: 'repeat(7, minmax(0, 1fr))', rowGap: cellGap }}>
+                    {week.map((day, dayIndex) => {
+                      if (!day) {
+                        return (
+                          <div
+                            key={`empty-${dayIndex}`}
+                            className="aspect-square w-3"
+                            style={{ background: 'transparent' }}
+                          />
+                        );
+                      }
+                      return (
+                        <div
+                          key={day.iso}
+                          className="aspect-square w-3 cursor-pointer hover:opacity-80"
+                          style={{ borderRadius: 2, background: colorFor(day.count, accentColor), minWidth: 0 }}
+                          onMouseEnter={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setTooltip({ x: rect.left, y: rect.top, date: day.iso, count: day.count });
+                          }}
+                          onMouseLeave={() => setTooltip(null)}
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
@@ -129,7 +162,7 @@ export function ActivityHeatmap({ data, loading, accentColor = 'blue', compact =
 
       <div className="mt-3 flex items-center justify-end gap-1.5 text-[10px]" style={{ color: 'var(--text-muted)' }}>
         <span>Less</span>
-        {[0, 1, 4, 8, 13].map((count) => (
+        {[0, 1, 3, 6, 10].map((count) => (
           <span key={count} className="h-2.5 w-2.5 rounded-[2px]" style={{ background: colorFor(count, accentColor) }} />
         ))}
         <span>More</span>

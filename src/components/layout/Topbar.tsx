@@ -38,29 +38,30 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-3">
-
         <div className="relative">
           <button
             type="button"
             onClick={() => setPlatformOpen((value) => !value)}
-            className="flex items-center gap-2 rounded-full"
+            className="flex min-w-[140px] items-center justify-between gap-2 rounded-full"
             style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: '7px 13px', fontSize: 'var(--text-sm)', color: 'var(--text-primary)', cursor: 'pointer' }}
           >
-            <PlatformLogo platform={selectedPlatform} size={24} active={true} />
-            {selectedPlatform === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
-            <ChevronDown size={14} />
+            <div className="flex items-center gap-2">
+              <PlatformLogo platform={selectedPlatform} size={24} active={true} />
+              {selectedPlatform === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
+            </div>
+            <ChevronDown size={14} className="opacity-50" />
           </button>
           <AnimatePresence>
           {platformOpen && (
             <motion.div
-              initial={{ opacity: 0, y: -6, scale: 0.98 }}
+              initial={{ opacity: 0, y: -4, scale: 0.99 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -4, scale: 0.98 }}
-              transition={{ duration: 0.16, ease: [0.4, 0, 0.2, 1] }}
-              className="absolute right-0 top-11 z-50 w-44 rounded-lg p-1.5"
-              style={{ background: 'rgba(17,19,29,0.96)', border: '1px solid var(--border-default)', boxShadow: '0 18px 48px rgba(0,0,0,0.56), inset 0 1px 0 rgba(255,255,255,0.04)', backdropFilter: 'blur(16px)' }}
+              exit={{ opacity: 0, y: -2, scale: 0.99 }}
+              transition={{ duration: 0.1, ease: 'easeOut' }}
+              className="absolute right-0 top-[calc(100%+6px)] z-50 w-full rounded-[14px] p-1.5"
+              style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', boxShadow: '0 18px 48px rgba(0,0,0,0.56)' }}
             >
-              {(['CODEFORCES', 'LEETCODE'] as const).map((item) => (
+              {(['CODEFORCES', 'LEETCODE'] as const).filter(item => item !== selectedPlatform).map((item) => (
                 <button
                   key={item}
                   type="button"
@@ -68,10 +69,10 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
                     setSelectedPlatform(item);
                     setPlatformOpen(false);
                   }}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-[var(--bg-card-hover)]"
-                  style={{ background: selectedPlatform === item ? 'var(--bg-elevated)' : 'transparent', color: selectedPlatform === item ? 'var(--text-primary)' : 'var(--text-secondary)' }}
+                  className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-sm hover:bg-[var(--bg-card-hover)] transition-colors"
+                  style={{ background: 'transparent', color: 'var(--text-primary)' }}
                 >
-                  <PlatformLogo platform={item} size={22} active={selectedPlatform === item} />
+                  <PlatformLogo platform={item} size={22} active={true} />
                   {item === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
                 </button>
               ))}

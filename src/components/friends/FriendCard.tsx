@@ -2,7 +2,7 @@
 
 import type { Friend } from '@/hooks/useFriends';
 import Link from 'next/link';
-import { ArrowRight, UserMinus } from 'lucide-react';
+import { BarChart2, UserMinus } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
 
@@ -10,6 +10,7 @@ interface FriendCardProps {
   friend: Friend;
   onUnfriend?: (friendshipId: string) => void;
   isUnfriending?: boolean;
+  rank?: number;
 }
 
 const GRADIENTS = [
@@ -20,26 +21,51 @@ const GRADIENTS = [
   'linear-gradient(135deg, var(--accent-rose), var(--accent-blue))',
 ];
 
-function gradientForName(name: string) {
+function colorForName(name: string) {
   const hash = Array.from(name).reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return GRADIENTS[hash % GRADIENTS.length];
+  const colors = [
+    'rgba(79, 142, 247, 0.15)', // blue
+    'rgba(167, 139, 250, 0.15)', // purple
+    'rgba(52, 211, 153, 0.15)', // green
+    'rgba(251, 191, 36, 0.15)', // amber
+    'rgba(251, 113, 133, 0.15)', // rose
+    'rgba(148, 163, 184, 0.15)', // slate
+  ];
+  return colors[hash % colors.length];
 }
 
 function PlatformBadge({ platform, value }: { platform: 'CODEFORCES' | 'LEETCODE'; value: number }) {
   return (
-    <span className="font-mono-data inline-flex items-center gap-2" style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)', borderRadius: '999px', padding: '3px 9px 3px 5px', fontSize: '12px', fontWeight: 700 }}>
+    <span className="font-mono-data inline-flex w-[76px] items-center gap-2" style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)', borderRadius: '999px', padding: '3px 9px 3px 5px', fontSize: '12px', fontWeight: 700 }}>
       <PlatformLogo platform={platform} size={22} />
       {Math.round(value)}
     </span>
   );
 }
 
-export function FriendCard({ friend, onUnfriend, isUnfriending }: FriendCardProps) {
+export function FriendCard({ friend, onUnfriend, isUnfriending, rank }: FriendCardProps) {
   const name = friend.displayName ?? friend.username;
 
   return (
-    <div className="friend-card group grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto] items-center gap-3 rounded-lg px-4 py-2.5" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01))', border: '1px solid var(--border-subtle)', transition: 'all 0.2s ease' }}>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm" style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', fontWeight: 700 }}>
+    <div className="friend-card group grid grid-cols-[auto_auto_minmax(0,1fr)_auto_auto] items-center gap-4 rounded-xl px-4 py-3 hover:-translate-y-0.5 hover:border-[var(--border-strong)]" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01))', border: '1px solid var(--border-subtle)', transition: 'all 0.2s ease' }}>
+      
+      {rank !== undefined && (
+        <div className="flex w-[24px] shrink-0 items-center justify-center">
+          <span 
+            className="font-mono-data flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold"
+            style={
+              rank === 1 ? { background: 'rgba(251,191,36,0.15)', color: 'var(--accent-amber)', border: '1px solid rgba(251,191,36,0.3)' } :
+              rank === 2 ? { background: 'rgba(148,163,184,0.15)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.3)' } :
+              rank === 3 ? { background: 'rgba(217,119,6,0.15)', color: '#d97706', border: '1px solid rgba(217,119,6,0.3)' } :
+              { color: 'var(--text-muted)' }
+            }
+          >
+            {rank}
+          </span>
+        </div>
+      )}
+
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm" style={{ background: colorForName(name), color: 'var(--text-primary)', fontWeight: 700, border: '1px solid rgba(255,255,255,0.05)' }}>
         {getInitials(name)}
       </div>
 
@@ -53,15 +79,17 @@ export function FriendCard({ friend, onUnfriend, isUnfriending }: FriendCardProp
         {friend.lcRating != null && <PlatformBadge platform="LEETCODE" value={friend.lcRating} />}
       </div>
 
-      <Link href={'/compare?friend=' + friend.id} className="compare-btn hidden items-center gap-1.5 text-xs font-semibold opacity-0 group-hover:opacity-100 md:flex" style={{ color: 'var(--accent-blue)', textDecoration: 'none' }}>
-        Compare <ArrowRight size={14} />
-      </Link>
+      <div className="flex shrink-0 items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+        <Link href={'/compare?friend=' + friend.id} className="flex h-8 w-8 items-center justify-center rounded-md" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', textDecoration: 'none' }} title="Compare">
+          <BarChart2 size={14} />
+        </Link>
 
-      {onUnfriend && friend.friendshipId && (
-        <button onClick={() => onUnfriend(friend.friendshipId!)} disabled={isUnfriending} className="flex h-8 w-8 items-center justify-center rounded-md disabled:opacity-50" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', cursor: 'pointer' }} title="Remove friend" aria-label="Remove friend">
-          <UserMinus size={14} />
-        </button>
-      )}
+        {onUnfriend && friend.friendshipId && (
+          <button onClick={() => onUnfriend(friend.friendshipId!)} disabled={isUnfriending} className="flex h-8 w-8 items-center justify-center rounded-md disabled:opacity-50 transition-colors hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-500/30" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', cursor: 'pointer' }} title="Remove friend" aria-label="Remove friend">
+            <UserMinus size={14} />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

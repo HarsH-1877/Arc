@@ -54,9 +54,9 @@ export function AppShell({ children }: AppShellProps) {
   }, []);
 
   return (
-    <div className="relative z-10 flex min-h-screen w-full overflow-hidden">
+    <div className="relative z-10 flex h-screen w-full overflow-hidden">
       <div
-        className="relative flex min-h-screen w-full overflow-hidden"
+        className="relative flex h-screen w-full overflow-hidden"
         style={{
           background: 'var(--bg-page)',
           borderRadius: 0,

@@ -38,7 +38,7 @@ export function RequestCard({ request, onAccept, onDecline, isProcessing }: Requ
             </button>
           </>
         ) : (
-          <button onClick={() => onDecline?.(request.id)} disabled={isProcessing} className="flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-semibold disabled:opacity-50" style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.22)', color: 'var(--accent-amber)' }}>
+          <button onClick={() => onDecline?.(request.id)} disabled={isProcessing} className="flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-semibold disabled:opacity-50" style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
             <Clock size={13} /> Pending
           </button>
         )}

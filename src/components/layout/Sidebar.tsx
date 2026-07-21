@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Grid, Users, BarChart2, Settings, Plus, LogOut, FolderOpen, Edit2, Inbox, Trophy, Share, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { LayoutDashboard, Users, BarChart2, Settings, Plus, LogOut, FolderOpen, Edit2, Inbox, Trophy, Share, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,7 +15,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: Grid },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Friends', href: '/friends', icon: Users },
   { label: 'Compare', href: '/compare', icon: BarChart2 },
   { label: 'Contest History', href: '/contest-history', icon: Trophy },
@@ -95,7 +95,7 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
               <Link
                 key={item.href}
                 href={item.href}
-                className="group relative flex items-center gap-3 overflow-visible rounded-md px-3 py-[11px] hover:bg-[var(--bg-card-hover)]"
+                className={`group relative flex items-center gap-3 overflow-visible rounded-md py-[11px] hover:bg-[var(--bg-card-hover)] ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'}`}
                 style={{
                   color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
                   fontWeight: active ? 600 : 400,
@@ -105,17 +105,16 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
                 {active && (
                   <motion.span
                     layoutId={mobile ? 'mobile-sidebar-active' : 'sidebar-active'}
-                    className="absolute inset-0"
+                    className="absolute inset-y-0 left-0 w-[2px]"
                     style={{
-                      borderLeft: '2px solid var(--brand)',
-                      background: 'linear-gradient(90deg, var(--brand-dim) 0%, transparent 100%)',
-                      boxShadow: '-2px 0 12px var(--brand-dim)',
+                      background: 'var(--brand)',
+                      boxShadow: '0 0 12px var(--brand-dim)',
                     }}
                     transition={{ type: 'spring', stiffness: 520, damping: 42, mass: 0.8 }}
                   />
                 )}
-                <Icon size={18} className="relative z-10 shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:text-[var(--text-primary)]" />
-                {!sidebarCollapsed && <span className="relative z-10 text-sm group-hover:text-[var(--text-primary)]">{item.label}</span>}
+                <Icon size={22} className="relative z-10 shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:text-[var(--text-primary)]" />
+                {!sidebarCollapsed && <span className="relative z-10 text-[15px] group-hover:text-[var(--text-primary)]">{item.label}</span>}
                 
                 {sidebarCollapsed && (
                   <div className="pointer-events-none absolute left-full ml-4 opacity-0 transition-all group-hover:ml-3 group-hover:opacity-100 z-50 rounded-md px-3 py-1.5 text-xs font-semibold shadow-xl" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
@@ -126,6 +125,23 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
             );
           })}
 
+          <Link href="/friends" className={`group relative mt-2 flex items-center justify-between overflow-visible rounded-md py-[11px] hover:bg-[var(--bg-card-hover)] ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'}`} style={{ textDecoration: 'none', color: 'var(--text-secondary)' }}>
+            <div className="flex items-center gap-3">
+              <Inbox size={22} className="shrink-0 transition-transform duration-200 group-hover:scale-110" />
+              {!sidebarCollapsed && <span className="text-[15px]">Inbox</span>}
+            </div>
+            {!sidebarCollapsed && (
+              <span className="font-mono-data flex shrink-0 items-center justify-center" style={{ background: 'var(--brand-dim)', border: '1px solid rgba(79,142,247,0.25)', color: 'var(--brand)', fontSize: '10px', fontWeight: 700, padding: '1px 7px', borderRadius: 'var(--radius-full)' }}>
+                {pendingCount}
+              </span>
+            )}
+            {sidebarCollapsed && (
+              <div className="pointer-events-none absolute left-full ml-4 flex items-center gap-2 opacity-0 transition-all group-hover:ml-3 group-hover:opacity-100 z-50 rounded-md px-3 py-1.5 text-xs font-semibold shadow-xl" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                Inbox
+                <span className="font-mono-data rounded-full px-1.5 text-[9px] text-[var(--brand)]" style={{ background: 'var(--brand-dim)' }}>{pendingCount}</span>
+              </div>
+            )}
+          </Link>
         </nav>
       </div>
 
@@ -140,9 +156,9 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
           </div>
         )}
 
-        <button onClick={handleSignOut} className="group relative flex w-full items-center gap-3 overflow-visible rounded-md border-0 bg-transparent px-3 py-[11px] text-left hover:bg-white/[0.04] hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
-          <LogOut size={18} className="shrink-0 transition-transform duration-200 group-hover:scale-110" />
-          {!sidebarCollapsed && <span className="text-sm">Sign out</span>}
+        <button onClick={handleSignOut} className={`group relative flex w-full items-center gap-3 overflow-visible rounded-md border-0 bg-transparent py-[11px] text-left hover:bg-white/[0.04] hover:text-[var(--text-primary)] ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'}`} style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
+          <LogOut size={22} className="shrink-0 transition-transform duration-200 group-hover:scale-110" />
+          {!sidebarCollapsed && <span className="text-[15px]">Sign out</span>}
           {sidebarCollapsed && (
             <div className="pointer-events-none absolute left-full ml-4 opacity-0 transition-all group-hover:ml-3 group-hover:opacity-100 z-50 rounded-md px-3 py-1.5 text-xs font-semibold shadow-xl" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
               Sign out
@@ -150,8 +166,9 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
           )}
         </button>
 
-        <button onClick={toggleSidebar} className="group flex w-full items-center justify-center rounded-md border-0 bg-transparent py-[11px] hover:bg-white/[0.04] hover:text-[var(--text-primary)] hidden lg:flex" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
-          {sidebarCollapsed ? <PanelLeftOpen size={18} className="shrink-0 transition-transform duration-200 group-hover:scale-110" /> : <PanelLeftClose size={18} className="shrink-0 transition-transform duration-200 group-hover:scale-110" />}
+        <button onClick={toggleSidebar} className="group hidden w-full items-center justify-center gap-3 rounded-md border-0 bg-transparent px-3 py-[11px] text-left hover:bg-white/[0.04] hover:text-[var(--text-primary)] lg:flex" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
+          {sidebarCollapsed ? <PanelLeftOpen size={22} className="shrink-0 transition-transform duration-200 group-hover:scale-110" /> : <PanelLeftClose size={22} className="shrink-0 transition-transform duration-200 group-hover:scale-110" />}
+          {!sidebarCollapsed && <span className="text-[15px] flex-1">Collapse menu</span>}
         </button>
       </div>
     </motion.aside>

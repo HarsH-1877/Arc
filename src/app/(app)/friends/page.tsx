@@ -63,8 +63,8 @@ export default function FriendsPage() {
                     onClick={() => setSortMode(item.value)}
                     className="rounded-full px-3 py-1.5 text-xs font-semibold"
                     style={{
-                      background: sortMode === item.value ? 'var(--accent-blue-dim)' : 'transparent',
-                      color: sortMode === item.value ? 'var(--accent-blue)' : 'var(--text-secondary)',
+                      background: sortMode === item.value ? 'var(--brand-dim)' : 'transparent',
+                      color: sortMode === item.value ? 'var(--brand)' : 'var(--text-secondary)',
                     }}
                   >
                     {item.label}
@@ -84,15 +84,15 @@ export default function FriendsPage() {
             </Card>
           ) : (
             <div className="space-y-3">
-              {sortedFriends.map((friend) => <FriendCard key={friend.id} friend={friend} onUnfriend={unfriend} isUnfriending={isUnfriending} />)}
+              {sortedFriends.map((friend, index) => <FriendCard key={friend.id} friend={friend} rank={index + 1} onUnfriend={unfriend} isUnfriending={isUnfriending} />)}
             </div>
           )}
         </section>
 
-        <aside className="lg:pt-[52px]">
+        <aside>
           <Card padding="18px" className="gap-4" variant="base">
-            <div className="absolute inset-0 rounded-[var(--r-lg)]" style={{ background: 'linear-gradient(135deg, rgba(251,191,36,0.08), rgba(167,139,250,0.04))', border: '1px solid rgba(251,191,36,0.16)', pointerEvents: 'none' }} />
-            <h2 className="relative z-10 text-sm font-semibold" style={{ color: 'var(--accent-amber)' }}>
+            <div className="absolute inset-0 rounded-[var(--r-lg)]" style={{ background: 'linear-gradient(135deg, rgba(79,142,247,0.08), rgba(167,139,250,0.04))', border: '1px solid rgba(79,142,247,0.16)', pointerEvents: 'none' }} />
+            <h2 className="relative z-10 text-sm font-semibold" style={{ color: 'var(--brand)' }}>
               Requests ({requests?.length ?? 0})
             </h2>
 

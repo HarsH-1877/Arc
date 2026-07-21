@@ -52,15 +52,17 @@ function ContestRow({ contest, upcoming = false }: { contest: ContestItem; upcom
   const positive = delta >= 0;
 
   return (
-    <a href={contest.href} target="_blank" rel="noreferrer" className="grid grid-cols-[minmax(0,1fr)_8rem_auto] items-center gap-6 rounded-xl px-4 py-3 transition-colors hover:bg-[var(--bg-card-hover)]" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.036), rgba(255,255,255,0.012))', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}>
-      <div className="flex min-w-0 items-center gap-3">
-        <PlatformLogo platform={contest.platform} size={28} />
+    <a href={contest.href} target="_blank" rel="noreferrer" className="grid grid-cols-[minmax(0,1fr)_8rem_auto] items-center gap-6 rounded-[24px] px-5 py-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:bg-[var(--bg-card-hover)]" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}>
+      <div className="flex min-w-0 items-center gap-4">
+        <div className="flex shrink-0 items-center justify-center rounded-full p-3.5" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)' }}>
+          <PlatformLogo platform={contest.platform} size={20} />
+        </div>
         <div className="min-w-0">
-          <p className="flex min-w-0 items-center gap-2 truncate text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <p className="flex min-w-0 items-center gap-2 truncate text-[18px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
             <span className="truncate">{contest.name}</span>
             <ExternalLink size={12} style={{ color: 'var(--text-muted)' }} />
           </p>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(contest.date)} at {contest.time}</p>
+          <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(contest.date)} at {contest.time}</p>
         </div>
       </div>
       <div className="hidden shrink-0 items-center sm:flex">
@@ -72,11 +74,15 @@ function ContestRow({ contest, upcoming = false }: { contest: ContestItem; upcom
         ) : (
           <>
             <div className="flex items-center justify-end gap-2">
-              <span className="font-mono-data text-xs" style={{ color: 'var(--text-muted)' }}>{contest.before}</span>
+              <span className="font-mono-data text-xs font-black" style={{ color: 'var(--text-muted)' }}>{contest.before}</span>
               {positive ? <ArrowUpRight size={16} style={{ color: 'var(--success)' }} /> : <ArrowDownRight size={16} style={{ color: 'var(--danger)' }} />}
-              <span className="font-mono-data text-xs" style={{ color: 'var(--text-primary)' }}>{contest.after}</span>
+              <span className="font-mono-data text-xs font-black" style={{ color: 'var(--text-primary)' }}>{contest.after}</span>
             </div>
-            <p className="mt-1 font-mono-data text-sm font-bold" style={{ color: positive ? 'var(--success)' : 'var(--danger)' }}>{positive ? '+' : ''}{delta}</p>
+            <div className="mt-2 flex justify-end">
+              <span className="rounded-md px-2.5 py-1 font-mono-data text-[12px] font-black leading-none" style={{ border: positive ? '1px solid rgba(52,211,153,0.3)' : '1px solid rgba(244,63,94,0.3)', background: positive ? 'rgba(52,211,153,0.1)' : 'rgba(244,63,94,0.1)', color: positive ? 'var(--success)' : 'var(--danger)' }}>
+                {positive ? '+' : ''}{delta}
+              </span>
+            </div>
           </>
         )}
       </div>
@@ -87,16 +93,19 @@ function ContestRow({ contest, upcoming = false }: { contest: ContestItem; upcom
 function SolvedMarkers({ solved, total }: { solved: number; total: number }) {
   return (
     <div className="hidden shrink-0 items-center gap-2 sm:flex" title={`${solved}/${total} solved`}>
-      <div className="flex gap-[2px]">
+      <div className="flex gap-1">
         {Array.from({ length: total }).map((_, index) => (
           <div
             key={index}
-            className="h-1.5 w-3 rounded-[1px]"
-            style={{ background: index < solved ? 'var(--success)' : 'var(--bg-elevated)' }}
+            className="h-1.5 w-3 rounded-sm"
+            style={{ 
+              background: index < solved ? 'var(--success)' : 'var(--bg-elevated)',
+              boxShadow: index < solved ? '0 0 8px rgba(52,211,153,0.4)' : 'none'
+            }}
           />
         ))}
       </div>
-      <span className="font-mono-data text-[10px]" style={{ color: 'var(--text-muted)' }}>{solved}/{total}</span>
+      <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>{solved}/{total}</span>
     </div>
   );
 }
@@ -105,20 +114,28 @@ function BestContestRow({ contest }: { contest: ContestItem }) {
   const delta = contest.after - contest.before;
   const positive = delta >= 0;
   return (
-    <a href={contest.href} target="_blank" rel="noreferrer" className="flex items-center justify-between gap-3 rounded-xl p-3" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-default)', textDecoration: 'none' }}>
-      <div className="flex min-w-0 items-center gap-3">
-        <PlatformLogo platform={contest.platform} size={32} />
-        <div className="min-w-0">
-          <p className="truncate text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{contest.name}</p>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(contest.date)} at {contest.time}</p>
-          <div className="mt-2">
-            <SolvedMarkers solved={contest.solved} total={contest.total} />
+    <a href={contest.href} target="_blank" rel="noreferrer" className="flex items-center justify-between gap-3 rounded-[24px] p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:bg-[var(--bg-card-hover)]" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}>
+      <div className="flex min-w-0 flex-1 flex-col gap-4">
+        <div className="flex min-w-0 items-center gap-4">
+          <div className="flex shrink-0 items-center justify-center rounded-full p-3.5" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)' }}>
+            <PlatformLogo platform={contest.platform} size={20} />
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-[20px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>{contest.name}</p>
+            <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(contest.date)} at {contest.time}</p>
+            <div className="mt-3">
+              <SolvedMarkers solved={contest.solved} total={contest.total} />
+            </div>
           </div>
         </div>
       </div>
       <div className="shrink-0 text-right">
-        <p className="font-mono-data text-2xl font-bold" style={{ color: positive ? 'var(--success)' : 'var(--text-muted)' }}>{positive ? '+' : ''}{delta}</p>
-        <p className="font-mono-data text-xs" style={{ color: 'var(--text-secondary)' }}>{contest.before} to {contest.after}</p>
+        <div className="flex justify-end">
+          <span className="rounded-md px-3 py-1.5 font-mono-data text-[18px] font-black leading-none" style={{ border: positive ? '1px solid rgba(52,211,153,0.3)' : '1px solid rgba(244,63,94,0.3)', background: positive ? 'rgba(52,211,153,0.1)' : 'rgba(244,63,94,0.1)', color: positive ? 'var(--success)' : 'var(--danger)' }}>
+            {positive ? '+' : ''}{delta}
+          </span>
+        </div>
+        <p className="mt-2 font-mono-data text-xs font-black" style={{ color: 'var(--text-secondary)' }}>{contest.before} to {contest.after}</p>
       </div>
     </a>
   );
@@ -134,7 +151,7 @@ export default function ContestHistoryPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
         <Card padding="18px" className="gap-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Last 10 Contests</span>
@@ -145,27 +162,33 @@ export default function ContestHistoryPage() {
           </div>
         </Card>
 
-        <div className="space-y-4">
-          <Card padding="18px" className="gap-4 overflow-hidden">
+        <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden xl:h-auto xl:self-stretch">
+          <div className="flex shrink-0 items-center justify-between px-1">
+            <span className="rounded-full px-3 py-1 text-[10px] font-bold tracking-[0.15em]" style={{ background: 'var(--text-primary)', color: 'var(--bg-card)' }}>
+              UPCOMING CONTESTS
+            </span>
+            <TrendingUp size={18} style={{ color: 'var(--accent-purple)' }} />
+          </div>
+          
+          <div className="relative min-h-0 flex-1">
+            <div className="absolute inset-0 overflow-y-auto no-scrollbar pb-4 pr-1">
+              <div className="space-y-4">
+                {UPCOMING.map((contest) => <UpcomingContestCard key={contest.id} contest={contest} />)}
+              </div>
+            </div>
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[var(--bg-base)] to-transparent" />
+          </div>
+
+          <Card padding="18px" className="shrink-0 gap-4 overflow-hidden mt-2">
             <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(52,211,153,0.10), rgba(79,142,247,0.06))', pointerEvents: 'none' }} />
             <div className="relative z-10 flex items-center justify-between">
               <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Best Contest</span>
               <Trophy size={20} style={{ color: 'var(--accent-amber)' }} />
             </div>
-            <div className="relative z-10 max-h-[230px] space-y-3 overflow-y-auto pr-1">
+            <div className="relative z-10 space-y-3">
               {BEST_BY_PLATFORM.map((contest) => <BestContestRow key={contest.platform} contest={contest} />)}
             </div>
           </Card>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Upcoming Contests</span>
-              <TrendingUp size={18} style={{ color: 'var(--accent-purple)' }} />
-            </div>
-            <div className="space-y-4">
-              {UPCOMING.map((contest) => <UpcomingContestCard key={contest.id} contest={contest} />)}
-            </div>
-          </div>
         </div>
       </div>
     </div>

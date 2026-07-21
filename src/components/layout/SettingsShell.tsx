@@ -17,15 +17,6 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <div className="mb-8">
-        <h1 style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em' }}>
-          Settings
-        </h1>
-        <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-          Manage your account settings and preferences.
-        </p>
-      </div>
-
       <div className="flex flex-col gap-8 md:flex-row">
         <aside className="w-full shrink-0 md:w-56">
           <nav className="flex flex-col gap-1">
@@ -44,15 +35,17 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="flex items-center gap-3 rounded-md px-3 py-[11px] text-sm font-medium hover:bg-white/[0.04]"
+                  className="flex items-center gap-3 rounded-md px-3 py-[11px] text-sm font-medium hover:bg-[var(--bg-card-hover)] transition-colors"
                   style={{
                     color,
                     background: bg,
-                    borderLeft: isActive ? '2px solid var(--accent-blue)' : '2px solid transparent',
-                    boxShadow: isActive ? '-2px 0 12px rgba(79,142,247,0.2)' : 'none',
+                    borderLeft: isActive ? '2px solid var(--brand)' : '2px solid transparent',
+                    boxShadow: isActive && !item.danger ? '-2px 0 12px var(--brand-dim)' : 'none',
                   }}
                 >
-                  <item.icon size={16} />
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full" style={{ background: isActive ? (item.danger ? 'rgba(251,113,133,0.15)' : 'var(--brand-dim)') : 'var(--bg-surface-2)', color: isActive ? (item.danger ? 'var(--accent-rose)' : 'var(--brand)') : 'var(--text-tertiary)' }}>
+                    <item.icon size={14} />
+                  </div>
                   {item.label}
                 </Link>
               );

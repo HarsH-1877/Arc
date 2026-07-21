@@ -62,10 +62,12 @@ export default function NotificationsSettingsPage() {
               className="flex items-center justify-between rounded-lg border px-4 py-3"
               style={{ background: 'var(--bg-surface-2)', borderColor: 'var(--border-subtle)' }}
             >
-              <div className="flex items-start gap-3">
-                <Icon size={18} className="mt-0.5 shrink-0" style={{ color: 'var(--text-tertiary)' }} />
-                <div>
-                  <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+              <div className="flex flex-1 items-center gap-3 pr-4">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--bg-surface-3)', color: 'var(--text-tertiary)' }}>
+                  <Icon size={16} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                     {label}
                   </p>
                   <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
@@ -78,8 +80,8 @@ export default function NotificationsSettingsPage() {
                 role="switch"
                 aria-checked={prefs[id]}
                 onClick={() => toggle(id)}
-                className="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200"
-                style={{ background: prefs[id] ? 'var(--accent-primary)' : 'var(--bg-surface-3)' }}
+                className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200"
+                style={{ background: prefs[id] ? 'var(--brand)' : 'var(--bg-surface-3)' }}
               >
                 <span
                   className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200"

@@ -78,24 +78,31 @@ export default function ProfileSettingsPage() {
         </h2>
 
         <div className="mb-8 flex items-center gap-6">
-          <UserAvatar
-            src={profile?.avatarUrl}
-            name={profile?.displayName ?? profile?.username ?? ''}
-            size={96}
-          />
+          <div className="group relative">
+            <div className="rounded-full bg-[var(--bg-surface-3)] p-1">
+              <UserAvatar
+                src={profile?.avatarUrl}
+                name={profile?.displayName ?? profile?.username ?? ''}
+                size={88}
+              />
+            </div>
+            <div className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/40 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+              <span className="text-xs font-semibold text-white">Edit</span>
+            </div>
+          </div>
           <div>
-            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
               {profile?.displayName ?? profile?.username}
             </p>
             <p className="mt-1 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-              Avatar is synced from your Firebase account (Google/GitHub profile photo).
+              Avatar is synced from your connected account.
             </p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="max-w-md space-y-5">
+        <form onSubmit={handleSubmit} className="max-w-lg space-y-5">
           <div>
-            <label className="mb-1.5 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
               Username
             </label>
             <input
@@ -109,13 +116,10 @@ export default function ProfileSettingsPage() {
                 color: 'var(--text-primary)',
               }}
             />
-            <p className="mt-1.5 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-              Username cannot be changed.
-            </p>
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
               Display Name
             </label>
             <input
@@ -126,7 +130,7 @@ export default function ProfileSettingsPage() {
                 setIsDirty(true);
               }}
               placeholder="e.g. John Doe"
-              className="w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors"
+              className="w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--brand)] hover:border-[var(--border-strong)]"
               style={{
                 background: 'var(--bg-surface-2)',
                 borderColor: 'var(--border-subtle)',
@@ -136,12 +140,12 @@ export default function ProfileSettingsPage() {
           </div>
 
           <div>
-            <div className="mb-1.5 flex justify-between">
-              <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+            <div className="mb-1.5 flex items-end justify-between">
+              <label className="block text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
                 Bio
               </label>
-              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                {bio.length}/160
+              <span className="font-mono-data text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+                {bio.length} / 160
               </span>
             </div>
             <textarea
@@ -153,7 +157,7 @@ export default function ProfileSettingsPage() {
               maxLength={160}
               rows={3}
               placeholder="Tell us a little about yourself"
-              className="w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none transition-colors"
+              className="w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--brand)] hover:border-[var(--border-strong)]"
               style={{
                 background: 'var(--bg-surface-2)',
                 borderColor: 'var(--border-subtle)',
