@@ -52,20 +52,20 @@ function ContestRow({ contest, upcoming = false }: { contest: ContestItem; upcom
   const positive = delta >= 0;
 
   return (
-    <a href={contest.href} target="_blank" rel="noreferrer" className="grid grid-cols-[minmax(0,1fr)_150px_minmax(0,1fr)] items-center gap-6 rounded-[24px] px-5 py-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:bg-[var(--bg-card-hover)]" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}>
-      <div className="flex min-w-0 items-start gap-4">
-        <div className="flex shrink-0 items-center justify-center rounded-full p-3.5 mt-1" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)' }}>
+    <a href={contest.href} target="_blank" rel="noreferrer" className="grid grid-cols-[1fr_130px_130px] items-center gap-6 rounded-[24px] px-5 py-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:bg-[var(--bg-card-hover)]" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}>
+      <div className="flex min-w-0 items-center gap-4">
+        <div className="flex shrink-0 items-center justify-center rounded-full p-3.5" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)' }}>
           <PlatformLogo platform={contest.platform} size={20} />
         </div>
-        <div className="min-w-0">
-          <p className="flex flex-wrap items-center gap-2 text-[18px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
-            <span>{contest.name}</span>
+        <div className="min-w-0 overflow-x-auto no-scrollbar pb-1">
+          <p className="flex flex-nowrap items-center gap-2 text-[17px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
+            <span className="whitespace-nowrap">{contest.name}</span>
             <ExternalLink size={12} className="shrink-0" style={{ color: 'var(--text-muted)' }} />
           </p>
           <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(contest.date)} at {contest.time}</p>
         </div>
       </div>
-      <div className="hidden shrink-0 items-center justify-start sm:flex w-[150px]">
+      <div className="hidden shrink-0 items-center justify-start sm:flex w-[130px]">
         {!upcoming && <SolvedMarkers solved={contest.solved} total={contest.total} />}
       </div>
       <div className="shrink-0 text-right">
@@ -99,8 +99,8 @@ function SolvedMarkers({ solved, total }: { solved: number; total: number }) {
             key={index}
             className="h-1.5 w-3 rounded-sm"
             style={{ 
-              background: index < solved ? 'var(--success)' : 'var(--bg-elevated)',
-              boxShadow: index < solved ? '0 0 8px rgba(52,211,153,0.4)' : 'none'
+              background: index < solved ? '#10b981' : 'var(--bg-elevated)',
+              boxShadow: index < solved ? '0 0 8px rgba(16,185,129,0.4)' : 'none'
             }}
           />
         ))}

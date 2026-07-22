@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { Card } from '@/components/shared/Card';
 import type { CompareUser } from '@/hooks/useCompareData';
-import { Hash } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 interface TopicComparisonProps {
   user: CompareUser;
@@ -67,7 +67,7 @@ export function TopicComparison({ user, friend }: TopicComparisonProps) {
           </div>
           <div className="flex items-center gap-4 text-xs">
             <span className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}><i className="h-2 w-2 rounded-full" style={{ background: 'var(--accent-blue)' }} />You</span>
-            <span className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}><i className="h-2 w-2 rounded-full" style={{ background: 'var(--accent-purple)' }} />Friend</span>
+            <span className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}><i className="h-2 w-2 rounded-full" style={{ background: 'var(--accent-amber)' }} />Friend</span>
           </div>
         </div>
 
@@ -79,7 +79,7 @@ export function TopicComparison({ user, friend }: TopicComparisonProps) {
               <PolarRadiusAxis angle={90} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
               <Tooltip content={<TopicTooltip />} />
               <Radar name="You" dataKey="you" stroke="var(--accent-blue)" fill="var(--accent-blue)" fillOpacity={0.18} strokeWidth={2.5} />
-              <Radar name="Friend" dataKey="friend" stroke="var(--accent-purple)" fill="var(--accent-purple)" fillOpacity={0.16} strokeWidth={2.5} />
+              <Radar name="Friend" dataKey="friend" stroke="var(--accent-amber)" fill="var(--accent-amber)" fillOpacity={0.16} strokeWidth={2.5} />
             </RadarChart>
           </ResponsiveContainer>
         </div>
@@ -120,7 +120,7 @@ export function TopicComparison({ user, friend }: TopicComparisonProps) {
                 >
                   <div className="flex w-full items-center gap-2">
                     <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors" style={{ background: checked ? 'var(--accent-blue)' : 'var(--bg-elevated)', color: checked ? '#fff' : 'var(--text-secondary)' }}>
-                      <Hash size={12} strokeWidth={3} />
+                      <Check size={12} strokeWidth={3} />
                     </div>
                     <span className="truncate text-xs font-semibold" style={{ color: checked ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                       {row.topic}
@@ -131,9 +131,9 @@ export function TopicComparison({ user, friend }: TopicComparisonProps) {
                     <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--accent-blue)' }}>{row.uStat}</span>
                     <div className="flex h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: 'var(--bg-elevated)' }}>
                       <div className="h-full transition-all duration-500" style={{ width: `${(row.uStat / total) * 100}%`, background: 'var(--accent-blue)' }} />
-                      <div className="h-full transition-all duration-500" style={{ width: `${(row.fStat / total) * 100}%`, background: 'var(--accent-purple)' }} />
+                      <div className="h-full transition-all duration-500" style={{ width: `${(row.fStat / total) * 100}%`, background: 'var(--accent-amber)' }} />
                     </div>
-                    <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--accent-purple)' }}>{row.fStat}</span>
+                    <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--accent-amber)' }}>{row.fStat}</span>
                   </div>
                 </button>
               );

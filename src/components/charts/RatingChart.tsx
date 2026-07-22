@@ -42,16 +42,19 @@ type FriendMode = 'top4' | 'avg';
 const TIME_FILTERS = ['Today', '7d', '2w', '1m', '3m', '1y'];
 const FRIEND_KEYS = ['friend1', 'friend2', 'friend3', 'friend4'] as const;
 const CF_MILESTONES = [
-  { value: 1200, label: 'Pupil' },
-  { value: 1400, label: 'Spec' },
-  { value: 1600, label: 'Expert' },
+  { value: 1200, label: 'PPL' },
+  { value: 1400, label: 'SP' },
+  { value: 1600, label: 'EXP' },
   { value: 1900, label: 'CM' },
-  { value: 2100, label: 'Master' },
+  { value: 2100, label: 'M' },
+  { value: 2300, label: 'IM' },
   { value: 2400, label: 'GM' },
+  { value: 2600, label: 'IGM' },
+  { value: 3000, label: 'LGM' },
 ];
 const LC_MILESTONES = [
-  { value: 1850, label: 'Knight' },
-  { value: 2200, label: 'Guardian' },
+  { value: 1850, label: 'KNT' },
+  { value: 2200, label: 'GRD' },
 ];
 
 const SERIES = [
@@ -112,10 +115,20 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
     if (!best || (point.userRating ?? 0) > (best.userRating ?? 0)) return point;
     return best;
   }, null);
-  const reachedMilestones = milestones.map((milestone) => {
+
+  const maxRating = Math.max(
+    ...chartData.map(d => {
+      const vals = [d.userRating, ...activeFriendKeys.map(k => (d as any)[k])].filter(v => typeof v === 'number') as number[];
+      return vals.length ? Math.max(...vals) : 0;
+    })
+  );
+
+  const activeMilestones = milestones.filter(m => m.value <= Math.max(maxRating + 200, 1200));
+
+  const reachedMilestones = activeMilestones.map((milestone) => {
     const point = chartData.find((item) => typeof item.userRating === 'number' && item.userRating >= milestone.value);
     return point ? { ...milestone, point } : null;
-  }).filter((item): item is typeof milestones[number] & { point: (typeof chartData)[number] } => Boolean(item));
+  }).filter((item): item is typeof activeMilestones[number] & { point: (typeof chartData)[number] } => Boolean(item));
 
   if (loading) {
     return (
@@ -245,7 +258,6 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
                 <stop offset="100%" stopColor="var(--brand)" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="4 4" stroke="var(--border-subtle)" vertical={false} />
             <XAxis
               dataKey="date"
               tickFormatter={(val) => {
@@ -259,24 +271,39 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
               interval="preserveStartEnd"
             />
             <YAxis
+              yAxisId="left"
+              orientation="left"
               tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
               axisLine={false}
               tickLine={false}
-              width={52}
-              domain={['auto', 'auto']}
+              width={36}
+              domain={[(dataMin: number) => Math.min(dataMin, 900), 'auto']}
               allowDecimals={false}
-              tickCount={5}
+              ticks={activeMilestones.map(m => m.value)}
+            />
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 700 }}
+              axisLine={false}
+              tickLine={false}
+              width={32}
+              domain={[(dataMin: number) => Math.min(dataMin, 900), 'auto']}
+              allowDecimals={false}
+              ticks={activeMilestones.map(m => m.value)}
+              tickFormatter={(val) => activeMilestones.find(m => m.value === val)?.label ?? ''}
             />
             <Tooltip content={<CustomTooltip />} />
             {visibleSeries.filter((series) => !series.primary).map((series) => (
-              <Line key={series.key} type="monotone" dataKey={series.key} name={series.name} stroke={series.color} strokeWidth={series.key === 'avgTop4' ? 2.25 : 1.5} strokeDasharray={series.key === 'avgTop4' ? undefined : '4 2'} dot={false} isAnimationActive animationDuration={700} connectNulls />
+              <Line yAxisId="left" key={series.key} type="monotone" dataKey={series.key} name={series.name} stroke={series.color} strokeWidth={series.key === 'avgTop4' ? 2.25 : 1.5} strokeDasharray={series.key === 'avgTop4' ? undefined : '4 2'} dot={false} isAnimationActive animationDuration={700} connectNulls />
             ))}
 
             {visibleSeries.some((series) => series.primary) && (
-              <Area type="monotone" dataKey="userRating" name="You" stroke="var(--line-you)" strokeWidth={3} fill="url(#grad-you)" fillOpacity={0.12} dot={false} activeDot={{ r: 5, stroke: '#fff', strokeWidth: 2, fill: 'var(--line-you)', style: { filter: 'drop-shadow(0 0 6px var(--brand))' } }} isAnimationActive animationDuration={800} connectNulls />
+              <Area yAxisId="left" type="monotone" dataKey="userRating" name="You" stroke="var(--line-you)" strokeWidth={3} fill="url(#grad-you)" fillOpacity={0.12} dot={false} activeDot={{ r: 5, stroke: '#fff', strokeWidth: 2, fill: 'var(--line-you)', style: { filter: 'drop-shadow(0 0 6px var(--brand))' } }} isAnimationActive animationDuration={800} connectNulls />
             )}
             {bestPoint && typeof bestPoint.userRating === 'number' && (
               <ReferenceDot
+                yAxisId="left"
                 x={bestPoint.date}
                 y={bestPoint.userRating}
                 r={4}
@@ -293,21 +320,14 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
                 }}
               />
             )}
-            {milestones.map((milestone) => (
+            {activeMilestones.map((milestone) => (
               <ReferenceLine
+                yAxisId="left"
                 key={milestone.label}
                 y={milestone.value}
                 stroke="var(--border-default)"
                 strokeOpacity={0.4}
                 strokeDasharray="3 3"
-                label={{
-                  value: milestone.label,
-                  position: 'insideBottomLeft',
-                  fill: 'var(--text-muted)',
-                  fontSize: 10,
-                  fontWeight: 600,
-                  opacity: 0.6,
-                }}
               />
             ))}
           </ComposedChart>

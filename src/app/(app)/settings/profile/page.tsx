@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { GlassCard } from '@/components/shared/GlassCard';
 import { UserAvatar } from '@/components/shared/UserAvatar';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Github, Linkedin, Globe } from 'lucide-react';
 
 interface ProfileData {
   id: string;
@@ -14,13 +14,20 @@ interface ProfileData {
   displayName: string | null;
   avatarUrl: string | null;
   bio: string | null;
+  githubUrl?: string | null;
+  linkedinUrl?: string | null;
+  websiteUrl?: string | null;
 }
 
 export default function ProfileSettingsPage() {
   const queryClient = useQueryClient();
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
+  const [githubUrl, setGithubUrl] = useState('');
+  const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [websiteUrl, setWebsiteUrl] = useState('');
   const [isDirty, setIsDirty] = useState(false);
+  const [isSocialDirty, setIsSocialDirty] = useState(false);
 
   const { data: profile, isLoading } = useQuery<ProfileData>({
     queryKey: ['profile'],
@@ -35,7 +42,11 @@ export default function ProfileSettingsPage() {
     if (profile) {
       setDisplayName(profile.displayName ?? '');
       setBio(profile.bio ?? '');
+      setGithubUrl(profile.githubUrl ?? '');
+      setLinkedinUrl(profile.linkedinUrl ?? '');
+      setWebsiteUrl(profile.websiteUrl ?? '');
       setIsDirty(false);
+      setIsSocialDirty(false);
     }
   }, [profile]);
 
@@ -44,7 +55,7 @@ export default function ProfileSettingsPage() {
       const res = await fetch('/api/user/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ displayName, bio, githubUrl, linkedinUrl, websiteUrl }),
       });
       if (!res.ok) throw new Error('Failed to update profile');
       return res.json();
@@ -72,108 +83,197 @@ export default function ProfileSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <GlassCard padding="lg">
-        <h2 className="mb-6 text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
-          Profile Details
+      <GlassCard padding="xl">
+        <h2 className="text-xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          Profile Settings
         </h2>
+        <p className="mb-10 mt-1.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
+          Manage your public identity and profile details.
+        </p>
 
-        <div className="mb-8 flex items-center gap-6">
-          <div className="group relative">
-            <div className="rounded-full bg-[var(--bg-surface-3)] p-1">
-              <UserAvatar
-                src={profile?.avatarUrl}
-                name={profile?.displayName ?? profile?.username ?? ''}
-                size={88}
+        <div className="flex flex-col gap-10 md:flex-row md:items-start">
+          <div className="flex w-full flex-col items-center gap-4 rounded-xl p-8 md:w-64 md:shrink-0" style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border-subtle)' }}>
+            <div className="group relative">
+              <div className="rounded-full bg-[var(--bg-surface-3)] p-1.5 shadow-sm">
+                <UserAvatar
+                  src={profile?.avatarUrl}
+                  name={profile?.displayName ?? profile?.username ?? ''}
+                  size={110}
+                />
+              </div>
+              <div className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/40 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+                <span className="text-[11px] font-semibold text-white tracking-wide">CHANGE</span>
+              </div>
+            </div>
+            <div className="text-center">
+              <p className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+                {profile?.displayName ?? profile?.username}
+              </p>
+              <p className="text-xs font-semibold mt-1" style={{ color: 'var(--text-tertiary)' }}>
+                @{profile?.username}
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="flex-1 space-y-7">
+            <div className="grid gap-7 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={profile?.username ?? ''}
+                  disabled
+                  className="w-full rounded-lg border px-4 py-2.5 text-sm outline-none disabled:opacity-50"
+                  style={{
+                    background: 'var(--bg-input)',
+                    borderColor: 'var(--border-default)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+                  Display Name
+                </label>
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => {
+                    setDisplayName(e.target.value);
+                    setIsDirty(true);
+                  }}
+                  placeholder="e.g. John Doe"
+                  className="w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--brand)] hover:border-[var(--border-strong)]"
+                  style={{
+                    background: 'var(--bg-input)',
+                    borderColor: 'var(--border-default)',
+                    color: 'var(--text-primary)',
+                    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-2 flex items-end justify-between">
+                <label className="block text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+                  Bio
+                </label>
+                <span className="font-mono-data text-[10px] font-semibold" style={{ color: 'var(--text-tertiary)' }}>
+                  {bio.length} / 160
+                </span>
+              </div>
+              <textarea
+                value={bio}
+                onChange={(e) => {
+                  setBio(e.target.value);
+                  setIsDirty(true);
+                }}
+                maxLength={160}
+                rows={5}
+                placeholder="Tell us a little about yourself"
+                className="w-full resize-none rounded-lg border px-4 py-3 text-sm outline-none transition-colors focus:border-[var(--brand)] hover:border-[var(--border-strong)]"
+                style={{
+                  background: 'var(--bg-input)',
+                  borderColor: 'var(--border-default)',
+                  color: 'var(--text-primary)',
+                  boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)'
+                }}
               />
             </div>
-            <div className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/40 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
-              <span className="text-xs font-semibold text-white">Edit</span>
+
+            <div className="flex items-center justify-end border-t pt-6" style={{ borderColor: 'var(--border-subtle)' }}>
+              <button
+                type="submit"
+                disabled={isPending || !isDirty}
+                className="flex h-11 items-center justify-center rounded-lg px-8 text-sm font-bold tracking-wide transition-colors hover:opacity-90 disabled:opacity-50"
+                style={{ background: 'var(--accent-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(79,142,247,0.25)' }}
+              >
+                {isPending ? <Loader2 size={16} className="animate-spin" /> : 'Save Changes'}
+              </button>
             </div>
-          </div>
-          <div>
-            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-              {profile?.displayName ?? profile?.username}
-            </p>
-            <p className="mt-1 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-              Avatar is synced from your connected account.
-            </p>
-          </div>
+          </form>
         </div>
+      </GlassCard>
 
-        <form onSubmit={handleSubmit} className="max-w-lg space-y-5">
+      <GlassCard padding="xl">
+        <h2 className="text-xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          Social Accounts
+        </h2>
+        <p className="mb-8 mt-1.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
+          Link your professional platforms to be displayed on your public profile.
+        </p>
+        
+        <form onSubmit={handleSubmit} className="space-y-6 md:w-2/3 lg:w-1/2">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
-              Username
+            <label className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+              <Linkedin size={14} />
+              LinkedIn Profile
             </label>
             <input
-              type="text"
-              value={profile?.username ?? ''}
-              disabled
-              className="w-full rounded-lg border px-3 py-2 text-sm outline-none disabled:opacity-50"
-              style={{
-                background: 'var(--bg-surface-3)',
-                borderColor: 'var(--border-subtle)',
-                color: 'var(--text-primary)',
+              type="url"
+              pattern=".*linkedin\.com/.*"
+              title="Must be a valid LinkedIn URL (e.g. https://linkedin.com/in/username)"
+              value={linkedinUrl}
+              onChange={(e) => {
+                setLinkedinUrl(e.target.value);
+                setIsSocialDirty(true);
               }}
+              placeholder="https://linkedin.com/in/username"
+              className="w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--brand)] hover:border-[var(--border-strong)]"
+              style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
-              Display Name
+            <label className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+              <Github size={14} />
+              GitHub Profile
             </label>
             <input
-              type="text"
-              value={displayName}
+              type="url"
+              pattern=".*github\.com/.*"
+              title="Must be a valid GitHub URL (e.g. https://github.com/username)"
+              value={githubUrl}
               onChange={(e) => {
-                setDisplayName(e.target.value);
-                setIsDirty(true);
+                setGithubUrl(e.target.value);
+                setIsSocialDirty(true);
               }}
-              placeholder="e.g. John Doe"
-              className="w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--brand)] hover:border-[var(--border-strong)]"
-              style={{
-                background: 'var(--bg-surface-2)',
-                borderColor: 'var(--border-subtle)',
-                color: 'var(--text-primary)',
-              }}
+              placeholder="https://github.com/username"
+              className="w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--brand)] hover:border-[var(--border-strong)]"
+              style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}
             />
           </div>
 
           <div>
-            <div className="mb-1.5 flex items-end justify-between">
-              <label className="block text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
-                Bio
-              </label>
-              <span className="font-mono-data text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
-                {bio.length} / 160
-              </span>
-            </div>
-            <textarea
-              value={bio}
+            <label className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+              <Globe size={14} />
+              Personal Website
+            </label>
+            <input
+              type="url"
+              value={websiteUrl}
               onChange={(e) => {
-                setBio(e.target.value);
-                setIsDirty(true);
+                setWebsiteUrl(e.target.value);
+                setIsSocialDirty(true);
               }}
-              maxLength={160}
-              rows={3}
-              placeholder="Tell us a little about yourself"
-              className="w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--brand)] hover:border-[var(--border-strong)]"
-              style={{
-                background: 'var(--bg-surface-2)',
-                borderColor: 'var(--border-subtle)',
-                color: 'var(--text-primary)',
-              }}
+              placeholder="https://yourwebsite.com"
+              className="w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--brand)] hover:border-[var(--border-strong)]"
+              style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}
             />
           </div>
 
-          <div className="flex items-center gap-4 pt-2">
+          <div className="flex items-center justify-end border-t pt-6" style={{ borderColor: 'var(--border-subtle)' }}>
             <button
               type="submit"
-              disabled={isPending || !isDirty}
-              className="flex h-10 items-center justify-center rounded-lg px-6 text-sm font-medium transition-colors hover:opacity-90 disabled:opacity-50"
-              style={{ background: 'var(--accent-primary)', color: '#fff' }}
+              disabled={isPending || !isSocialDirty}
+              className="flex h-11 items-center justify-center rounded-lg px-8 text-sm font-bold tracking-wide transition-colors hover:opacity-90 disabled:opacity-50"
+              style={{ background: 'var(--accent-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(79,142,247,0.25)' }}
             >
-              {isPending ? <Loader2 size={16} className="animate-spin" /> : 'Save Changes'}
+              {isPending ? <Loader2 size={16} className="animate-spin" /> : 'Save Links'}
             </button>
           </div>
         </form>

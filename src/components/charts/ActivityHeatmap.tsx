@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 
 interface HeatmapDay {
   date: string;
@@ -32,6 +32,7 @@ function colorFor(count: number, accent: 'blue' | 'purple' | 'cyan') {
 
 export function ActivityHeatmap({ data, loading, accentColor = 'blue', compact = false }: ActivityHeatmapProps) {
   const [tooltip, setTooltip] = useState<{ x: number; y: number; date: string; count: number } | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const monthsData = useMemo(() => {
     const today = new Date();
@@ -98,7 +99,13 @@ export function ActivityHeatmap({ data, loading, accentColor = 'blue', compact =
     }
 
     return builtMonths;
-  }, [compact, data]);
+  }, [data]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, [monthsData]);
 
   if (loading) {
     return (
@@ -120,7 +127,7 @@ export function ActivityHeatmap({ data, loading, accentColor = 'blue', compact =
             <span key={index} className="text-[9px] leading-none flex items-center" style={{ color: 'var(--text-muted)' }}>{label}</span>
           ))}
         </div>
-        <div className="flex min-w-0 flex-1 overflow-x-auto no-scrollbar pb-2" style={{ gap: monthGap }}>
+        <div className="flex min-w-0 flex-1 overflow-x-auto no-scrollbar pb-2" style={{ gap: monthGap }} ref={scrollRef}>
           {monthsData.map((monthData) => (
             <div key={monthData.id} className="flex min-w-0 flex-col" style={{ flex: `0 0 auto`, minWidth: 'max-content' }}>
               <span className="mb-1.5 text-center text-[10px] font-medium" style={{ color: 'var(--text-muted)', lineHeight: '14px' }}>

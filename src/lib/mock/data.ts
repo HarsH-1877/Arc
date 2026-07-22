@@ -65,12 +65,12 @@ function ratingCurve(index: number, base: number, slope: number, amp: number, ph
 function addFriendRatingLines(points: { date: string; cfRating: number; lcRating: number }[]) {
   return points.map((point, index) => ({
     ...point,
-    cfRating: ratingCurve(index, 1708, 5.2, 28, 0.2, 9),
-    lcRating: ratingCurve(index, 1760, 4.4, 22, 1.1, 14),
-    friend1: ratingCurve(index, 3520, 8.2, 46, 0.4, 8),
-    friend2: ratingCurve(index, 3440, 5.8, 52, 1.7, 12),
-    friend3: ratingCurve(index, 3230, 4.4, 40, 2.4, 15),
-    friend4: ratingCurve(index, 2860, 7.6, 58, 3.1, 10),
+    cfRating: ratingCurve(index, 1400, 15, 300, 0.2, 9),
+    lcRating: ratingCurve(index, 1750, 10, 200, 1.1, 14),
+    friend1: ratingCurve(index, 2100, 8, 400, 0.4, 8),
+    friend2: ratingCurve(index, 1200, 35, 200, 1.7, 12),
+    friend3: ratingCurve(index, 1900, -10, 350, 2.4, 15),
+    friend4: ratingCurve(index, 1500, 25, 100, 3.1, 10),
   }));
 }
 

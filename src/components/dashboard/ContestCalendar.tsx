@@ -48,7 +48,7 @@ function buildContestDays(data: RatingPoint[] = []): ContestDay[] {
   });
 
   const today = new Date();
-  
+
   const missedDate = new Date(today);
   missedDate.setDate(today.getDate() - 3);
   const missed = [{
@@ -76,7 +76,9 @@ function buildContestDays(data: RatingPoint[] = []): ContestDay[] {
     const key = day.date.toDateString();
     if (grouped.has(key)) {
       const existing = grouped.get(key)!;
-      existing.platforms = [...new Set([...existing.platforms, ...day.platforms])];
+      for (const p of day.platforms) {
+        if (!existing.platforms.includes(p)) existing.platforms.push(p);
+      }
       existing.label += ` & ${day.label}`;
     } else {
       grouped.set(key, { ...day });
@@ -191,26 +193,28 @@ export function ContestCalendar({ data = [], loading = false }: ContestCalendarP
               }}
             >
               <div className="flex justify-between items-start">
-                <span className="text-[11px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                <span className="text-[11px] font-semibold leading-none" style={{ color: 'var(--text-secondary)' }}>
                   {date.getDate()}
                 </span>
-                {event && event.platforms && (
-                  <div className="flex -space-x-1.5">
-                    {event.platforms.map((platform, i) => (
-                      <div key={platform + i} className="rounded-full bg-[var(--bg-elevated)] p-[1px] shadow-sm">
-                        <PlatformLogo platform={platform} size={10} />
-                      </div>
-                    ))}
-                  </div>
+                {event?.type === 'given' && (
+                  <span className="font-mono-data text-[8px] font-bold leading-none" style={{ color: positive ? 'var(--accent-green)' : 'var(--accent-rose)' }}>
+                    {positive ? '+' : ''}
+                    {event.delta}
+                  </span>
                 )}
               </div>
-              {event?.type === 'given' && (
-                <span className="font-mono-data text-[10px] font-bold" style={{ color: positive ? 'var(--accent-green)' : 'var(--accent-rose)' }}>
-                  {positive ? '+' : ''}
-                  {event.delta}
-                </span>
-              )}
-              {event?.type === 'upcoming' && <Trophy size={12} style={{ color: 'var(--accent-amber)' }} />}
+              <div className="flex justify-between items-end mt-auto">
+                <div>
+                  {event && event.platforms && event.platforms.length > 1 && (
+                    <PlatformLogo platform={event.platforms[1]} size={11} />
+                  )}
+                </div>
+                <div>
+                  {event && event.platforms && event.platforms.length > 0 && (
+                    <PlatformLogo platform={event.platforms[0]} size={11} />
+                  )}
+                </div>
+              </div>
             </div>
           );
         })}

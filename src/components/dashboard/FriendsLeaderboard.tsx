@@ -4,9 +4,9 @@ import { Card } from '@/components/shared/Card';
 import { useQuery } from '@tanstack/react-query';
 import { getInitials } from '@/lib/utils';
 import { ArrowUpRight, Crown } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
 import { MOCK_FRIENDS, MOCK_PROFILE } from '@/lib/mock/data';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { useUIStore } from '@/store/useUIStore';
 
 interface FriendsLeaderboardProps {
   compact?: boolean;
@@ -19,11 +19,28 @@ function rankClass(rank: number) {
   return 'rank-badge rank-badge-default';
 }
 
+export function getRankAbbr(platform: 'CODEFORCES' | 'LEETCODE', rating: number) {
+  if (platform === 'CODEFORCES') {
+    if (rating < 1200) return 'NB';
+    if (rating < 1400) return 'PPL';
+    if (rating < 1600) return 'SP';
+    if (rating < 1900) return 'EXP';
+    if (rating < 2100) return 'CM';
+    if (rating < 2300) return 'M';
+    if (rating < 2400) return 'IM';
+    if (rating < 2600) return 'GM';
+    if (rating < 3000) return 'IGM';
+    return 'LGM';
+  } else {
+    if (rating >= 2200) return 'GRD';
+    if (rating >= 1850) return 'KNT';
+    return '';
+  }
+}
+
 export function FriendsLeaderboard({ compact = false }: FriendsLeaderboardProps) {
   const { data: dashboardData } = useDashboardData();
-  const userRowRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isPinned, setIsPinned] = useState(false);
+  const { selectedPlatform } = useUIStore();
 
   const { data: friends = [] } = useQuery({
     queryKey: ['friends'],
@@ -34,12 +51,15 @@ export function FriendsLeaderboard({ compact = false }: FriendsLeaderboardProps)
     },
   });
 
-  const userRating = dashboardData?.platforms?.codeforces?.currentRating ?? 0;
+  const userRating = selectedPlatform === 'CODEFORCES'
+    ? dashboardData?.platforms?.codeforces?.currentRating ?? 0
+    : dashboardData?.platforms?.leetcode?.currentRating ?? 0;
+
   const sortedLeaderboard = [
     ...friends.map((f: any) => ({
       id: f.id,
       name: f.displayName ?? f.username,
-      rating: f.cfRating ?? 0,
+      rating: selectedPlatform === 'CODEFORCES' ? (f.cfRating ?? 0) : (f.lcRating ?? 0),
       isYou: false,
     })),
     {
@@ -53,29 +73,17 @@ export function FriendsLeaderboard({ compact = false }: FriendsLeaderboardProps)
   const userEntry = sortedLeaderboard.find((entry) => entry.isYou);
   const leaderboard = sortedLeaderboard;
 
-  useEffect(() => {
-    if (!userRowRef.current || !containerRef.current) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        setIsPinned(!entries[0].isIntersecting);
-      },
-      { root: containerRef.current, threshold: 0.1 }
-    );
-    observer.observe(userRowRef.current);
-    return () => observer.disconnect();
-  }, [leaderboard]);
-
-  const renderRow = (user: any, isRef = false) => {
+  const renderRow = (user: any) => {
     const rank = user.rank;
     return (
       <div
         key={user.id}
-        ref={isRef ? userRowRef : null}
-        className="group flex items-center gap-3 rounded-xl px-2.5 py-2.5"
+        className={`group flex items-center gap-3 rounded-xl px-2.5 py-2.5 ${user.isYou ? 'sticky bottom-0 z-10' : ''}`}
         style={{
           background: user.isYou ? 'var(--brand-dim)' : 'var(--bg-elevated)',
           border: user.isYou ? '1px solid var(--brand)' : '1px solid var(--border-subtle)',
           borderLeft: user.isYou ? '3px solid var(--brand)' : undefined,
+          backdropFilter: user.isYou ? 'blur(8px)' : undefined,
         }}
       >
         <span className={rankClass(rank)}>{rank}</span>
@@ -86,6 +94,9 @@ export function FriendsLeaderboard({ compact = false }: FriendsLeaderboardProps)
           {user.name}
         </span>
         <span className="font-mono-data flex items-center gap-1 rounded-full px-2 py-1 text-xs" style={{ color: user.isYou ? 'var(--brand)' : 'var(--text-secondary)', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
+          {getRankAbbr(selectedPlatform, user.rating) && (
+            <span className="mr-1 text-[10px] font-bold opacity-60 uppercase tracking-wider">{getRankAbbr(selectedPlatform, user.rating)}</span>
+          )}
           <ArrowUpRight size={12} style={{ color: 'var(--text-muted)' }} />
           {user.rating.toLocaleString()}
         </span>
@@ -105,17 +116,11 @@ export function FriendsLeaderboard({ compact = false }: FriendsLeaderboardProps)
         </span>
       </div>
 
-      <div className="min-h-0 overflow-y-auto pr-1" style={{ maxHeight: compact ? '250px' : '300px' }} ref={containerRef}>
-        <div className="flex min-h-0 flex-col gap-2">
-          {leaderboard.map((user) => renderRow(user, user.isYou))}
+      <div className="min-h-0 overflow-y-auto pr-1" style={{ maxHeight: compact ? '250px' : '300px' }}>
+        <div className="flex min-h-0 flex-col gap-2 relative">
+          {leaderboard.map((user) => renderRow(user))}
         </div>
       </div>
-      
-      {isPinned && userEntry && (
-        <div className="mt-2 pt-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-          {renderRow(userEntry)}
-        </div>
-      )}
     </Card>
   );
 }
