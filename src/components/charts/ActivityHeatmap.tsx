@@ -17,12 +17,13 @@ interface ActivityHeatmapProps {
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DAY_LABELS = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
 
-function colorFor(count: number, accent: 'blue' | 'purple' | 'cyan') {
+function colorFor(count: number, accent: 'blue' | 'purple' | 'cyan' | 'amber') {
   if (count === 0) return 'var(--bg-elevated)';
   const palettes = {
     blue: ['rgba(79,142,247,0.18)', 'rgba(79,142,247,0.34)', 'rgba(79,142,247,0.52)', 'rgba(79,142,247,0.75)', 'var(--accent-blue)'],
     purple: ['rgba(167,139,250,0.18)', 'rgba(167,139,250,0.34)', 'rgba(167,139,250,0.52)', 'rgba(167,139,250,0.75)', 'var(--accent-purple)'],
     cyan: ['rgba(34,211,238,0.18)', 'rgba(34,211,238,0.34)', 'rgba(34,211,238,0.52)', 'rgba(34,211,238,0.75)', 'var(--accent-cyan)'],
+    amber: ['rgba(251,191,36,0.18)', 'rgba(251,191,36,0.34)', 'rgba(251,191,36,0.52)', 'rgba(251,191,36,0.75)', 'var(--accent-amber)'],
   };
   if (count <= 2) return palettes[accent][0];
   if (count <= 5) return palettes[accent][1];
@@ -30,7 +31,7 @@ function colorFor(count: number, accent: 'blue' | 'purple' | 'cyan') {
   return palettes[accent][4];
 }
 
-export function ActivityHeatmap({ data, loading, accentColor = 'blue', compact = false }: ActivityHeatmapProps) {
+export function ActivityHeatmap({ data, loading, accentColor = 'blue', compact = false }: ActivityHeatmapProps & { accentColor?: 'blue' | 'purple' | 'cyan' | 'amber' }) {
   const [tooltip, setTooltip] = useState<{ x: number; y: number; date: string; count: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 

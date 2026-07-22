@@ -185,11 +185,11 @@ export default function ProfileSettingsPage() {
               />
             </div>
 
-            <div className="flex items-center justify-end border-t pt-6" style={{ borderColor: 'var(--border-subtle)' }}>
+            <div className="pt-2">
               <button
                 type="submit"
                 disabled={isPending || !isDirty}
-                className="flex h-11 items-center justify-center rounded-lg px-8 text-sm font-bold tracking-wide transition-colors hover:opacity-90 disabled:opacity-50"
+                className="flex w-full h-11 items-center justify-center rounded-lg text-sm font-bold tracking-wide transition-colors hover:opacity-90 disabled:opacity-50"
                 style={{ background: 'var(--accent-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(79,142,247,0.25)' }}
               >
                 {isPending ? <Loader2 size={16} className="animate-spin" /> : 'Save Changes'}
@@ -207,70 +207,72 @@ export default function ProfileSettingsPage() {
           Link your professional platforms to be displayed on your public profile.
         </p>
         
-        <form onSubmit={handleSubmit} className="space-y-6 md:w-2/3 lg:w-1/2">
-          <div>
-            <label className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
-              <Linkedin size={14} />
-              LinkedIn Profile
-            </label>
-            <input
-              type="url"
-              pattern=".*linkedin\.com/.*"
-              title="Must be a valid LinkedIn URL (e.g. https://linkedin.com/in/username)"
-              value={linkedinUrl}
-              onChange={(e) => {
-                setLinkedinUrl(e.target.value);
-                setIsSocialDirty(true);
-              }}
-              placeholder="https://linkedin.com/in/username"
-              className="w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--brand)] hover:border-[var(--border-strong)]"
-              style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}
-            />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+                <Linkedin size={14} />
+                LinkedIn Profile
+              </label>
+              <input
+                type="url"
+                pattern=".*linkedin\.com/.*"
+                title="Must be a valid LinkedIn URL (e.g. https://linkedin.com/in/username)"
+                value={linkedinUrl}
+                onChange={(e) => {
+                  setLinkedinUrl(e.target.value);
+                  setIsSocialDirty(true);
+                }}
+                placeholder="https://linkedin.com/in/username"
+                className="w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--brand)] hover:border-[var(--border-strong)]"
+                style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+                <Github size={14} />
+                GitHub Profile
+              </label>
+              <input
+                type="url"
+                pattern=".*github\.com/.*"
+                title="Must be a valid GitHub URL (e.g. https://github.com/username)"
+                value={githubUrl}
+                onChange={(e) => {
+                  setGithubUrl(e.target.value);
+                  setIsSocialDirty(true);
+                }}
+                placeholder="https://github.com/username"
+                className="w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--brand)] hover:border-[var(--border-strong)]"
+                style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+                <Globe size={14} />
+                Personal Website
+              </label>
+              <input
+                type="url"
+                value={websiteUrl}
+                onChange={(e) => {
+                  setWebsiteUrl(e.target.value);
+                  setIsSocialDirty(true);
+                }}
+                placeholder="https://yourwebsite.com"
+                className="w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--brand)] hover:border-[var(--border-strong)]"
+                style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
-              <Github size={14} />
-              GitHub Profile
-            </label>
-            <input
-              type="url"
-              pattern=".*github\.com/.*"
-              title="Must be a valid GitHub URL (e.g. https://github.com/username)"
-              value={githubUrl}
-              onChange={(e) => {
-                setGithubUrl(e.target.value);
-                setIsSocialDirty(true);
-              }}
-              placeholder="https://github.com/username"
-              className="w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--brand)] hover:border-[var(--border-strong)]"
-              style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
-              <Globe size={14} />
-              Personal Website
-            </label>
-            <input
-              type="url"
-              value={websiteUrl}
-              onChange={(e) => {
-                setWebsiteUrl(e.target.value);
-                setIsSocialDirty(true);
-              }}
-              placeholder="https://yourwebsite.com"
-              className="w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--brand)] hover:border-[var(--border-strong)]"
-              style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}
-            />
-          </div>
-
-          <div className="flex items-center justify-end border-t pt-6" style={{ borderColor: 'var(--border-subtle)' }}>
+          <div className="pt-2">
             <button
               type="submit"
               disabled={isPending || !isSocialDirty}
-              className="flex h-11 items-center justify-center rounded-lg px-8 text-sm font-bold tracking-wide transition-colors hover:opacity-90 disabled:opacity-50"
+              className="flex w-full h-11 items-center justify-center rounded-lg text-sm font-bold tracking-wide transition-colors hover:opacity-90 disabled:opacity-50"
               style={{ background: 'var(--accent-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(79,142,247,0.25)' }}
             >
               {isPending ? <Loader2 size={16} className="animate-spin" /> : 'Save Links'}

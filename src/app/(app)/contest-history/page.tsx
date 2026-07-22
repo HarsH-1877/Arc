@@ -99,8 +99,8 @@ function SolvedMarkers({ solved, total }: { solved: number; total: number }) {
             key={index}
             className="h-1.5 w-3 rounded-sm"
             style={{ 
-              background: index < solved ? '#10b981' : 'var(--bg-elevated)',
-              boxShadow: index < solved ? '0 0 8px rgba(16,185,129,0.4)' : 'none'
+              background: index < solved ? '#4ade80' : 'var(--bg-elevated)',
+              boxShadow: index < solved ? '0 0 8px rgba(74,222,128,0.45)' : 'none'
             }}
           />
         ))}
