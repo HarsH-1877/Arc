@@ -24,6 +24,7 @@ function colorFor(count: number, accent: 'blue' | 'purple' | 'cyan' | 'amber') {
     purple: ['rgba(167,139,250,0.18)', 'rgba(167,139,250,0.34)', 'rgba(167,139,250,0.52)', 'rgba(167,139,250,0.75)', 'var(--accent-purple)'],
     cyan: ['rgba(34,211,238,0.18)', 'rgba(34,211,238,0.34)', 'rgba(34,211,238,0.52)', 'rgba(34,211,238,0.75)', 'var(--accent-cyan)'],
     amber: ['rgba(251,191,36,0.18)', 'rgba(251,191,36,0.34)', 'rgba(251,191,36,0.52)', 'rgba(251,191,36,0.75)', 'var(--accent-amber)'],
+    rose: ['rgba(244,63,94,0.18)', 'rgba(244,63,94,0.34)', 'rgba(244,63,94,0.52)', 'rgba(244,63,94,0.75)', 'var(--accent-rose)'],
   };
   if (count <= 2) return palettes[accent][0];
   if (count <= 5) return palettes[accent][1];
@@ -31,7 +32,7 @@ function colorFor(count: number, accent: 'blue' | 'purple' | 'cyan' | 'amber') {
   return palettes[accent][4];
 }
 
-export function ActivityHeatmap({ data, loading, accentColor = 'blue', compact = false }: ActivityHeatmapProps & { accentColor?: 'blue' | 'purple' | 'cyan' | 'amber' }) {
+export function ActivityHeatmap({ data, loading, accentColor = 'blue', compact = false }: ActivityHeatmapProps & { accentColor?: 'blue' | 'purple' | 'cyan' | 'amber' | 'rose' }) {
   const [tooltip, setTooltip] = useState<{ x: number; y: number; date: string; count: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -128,7 +129,7 @@ export function ActivityHeatmap({ data, loading, accentColor = 'blue', compact =
             <span key={index} className="text-[9px] leading-none flex items-center" style={{ color: 'var(--text-muted)' }}>{label}</span>
           ))}
         </div>
-        <div className="flex min-w-0 flex-1 overflow-x-auto no-scrollbar pb-2" style={{ gap: monthGap }} ref={scrollRef}>
+        <div className="flex min-w-0 flex-1 overflow-x-auto hover-scrollbar pb-2" style={{ gap: monthGap }} ref={scrollRef}>
           {monthsData.map((monthData) => (
             <div key={monthData.id} className="flex min-w-0 flex-col" style={{ flex: `0 0 auto`, minWidth: 'max-content' }}>
               <span className="mb-1.5 text-center text-[10px] font-medium" style={{ color: 'var(--text-muted)', lineHeight: '14px' }}>

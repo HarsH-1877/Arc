@@ -22,8 +22,8 @@ export function ConsistencyComparison({ user, friend }: ConsistencyComparisonPro
         <HeatmapPanel title="You" accent="var(--accent-blue)" total={uTotal} active={uActive}>
           <ActivityHeatmap data={user.heatmapData} accentColor="blue" compact />
         </HeatmapPanel>
-        <HeatmapPanel title="Friend" accent="var(--accent-amber)" total={fTotal} active={fActive}>
-          <ActivityHeatmap data={friend.heatmapData} accentColor="amber" compact />
+        <HeatmapPanel title="Friend" accent="var(--accent-rose)" total={fTotal} active={fActive}>
+          <ActivityHeatmap data={friend.heatmapData} accentColor="rose" compact />
         </HeatmapPanel>
       </div>
     </Card>

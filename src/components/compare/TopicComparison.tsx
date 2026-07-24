@@ -67,19 +67,19 @@ export function TopicComparison({ user, friend }: TopicComparisonProps) {
           </div>
           <div className="flex items-center gap-4 text-xs">
             <span className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}><i className="h-2 w-2 rounded-full" style={{ background: 'var(--accent-blue)' }} />You</span>
-            <span className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}><i className="h-2 w-2 rounded-full" style={{ background: 'var(--accent-amber)' }} />Friend</span>
+            <span className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}><i className="h-2 w-2 rounded-full" style={{ background: 'var(--accent-rose)' }} />Friend</span>
           </div>
         </div>
 
         <div className="min-h-0 flex-1" style={{ height: 340 }}>
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart data={chartData} margin={{ top: 16, right: 48, bottom: 16, left: 48 }}>
-              <PolarGrid stroke="var(--border-default)" radialLines />
-              <PolarAngleAxis dataKey="topic" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
+              <PolarGrid stroke="var(--border-default)" radialLines strokeDasharray="4 4" />
+              <PolarAngleAxis dataKey="topic" tick={{ fill: 'var(--text-secondary)', fontSize: 11, fontWeight: 600 }} />
               <PolarRadiusAxis angle={90} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
               <Tooltip content={<TopicTooltip />} />
-              <Radar name="You" dataKey="you" stroke="var(--accent-blue)" fill="var(--accent-blue)" fillOpacity={0.18} strokeWidth={2.5} />
-              <Radar name="Friend" dataKey="friend" stroke="var(--accent-amber)" fill="var(--accent-amber)" fillOpacity={0.16} strokeWidth={2.5} />
+              <Radar name="You" dataKey="you" stroke="var(--accent-blue)" fill="var(--accent-blue)" fillOpacity={0.25} strokeWidth={3} dot={{ r: 3, fill: 'var(--accent-blue)', strokeWidth: 0 }} />
+              <Radar name="Friend" dataKey="friend" stroke="var(--accent-rose)" fill="var(--accent-rose)" fillOpacity={0.2} strokeWidth={3} dot={{ r: 3, fill: 'var(--accent-rose)', strokeWidth: 0 }} />
             </RadarChart>
           </ResponsiveContainer>
         </div>
@@ -131,9 +131,9 @@ export function TopicComparison({ user, friend }: TopicComparisonProps) {
                     <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--accent-blue)' }}>{row.uStat}</span>
                     <div className="flex h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: 'var(--bg-elevated)' }}>
                       <div className="h-full transition-all duration-500" style={{ width: `${(row.uStat / total) * 100}%`, background: 'var(--accent-blue)' }} />
-                      <div className="h-full transition-all duration-500" style={{ width: `${(row.fStat / total) * 100}%`, background: 'var(--accent-amber)' }} />
+                      <div className="h-full transition-all duration-500" style={{ width: `${(row.fStat / total) * 100}%`, background: 'var(--accent-rose)' }} />
                     </div>
-                    <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--accent-amber)' }}>{row.fStat}</span>
+                    <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--accent-rose)' }}>{row.fStat}</span>
                   </div>
                 </button>
               );

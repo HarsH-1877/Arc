@@ -1,7 +1,7 @@
 'use client';
 
 import { Card } from '@/components/shared/Card';
-import { Clock3, Trophy } from 'lucide-react';
+import { Clock3, Trophy, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface RatingPoint {
@@ -143,9 +143,10 @@ export function ContestCalendar({ data = [], loading = false }: ContestCalendarP
           >
             Contest Calendar
           </span>
-          <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <button className="mt-1 flex items-center gap-1.5 text-sm font-semibold transition-opacity hover:opacity-80" style={{ color: 'var(--text-primary)' }}>
             {format(now, 'MMMM yyyy')}
-          </p>
+            <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
+          </button>
         </div>
         <span
           className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-semibold"
