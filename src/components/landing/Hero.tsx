@@ -2,91 +2,231 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { NodeBackground } from '@/components/shared/NodeBackground';
-import { ArrowRight } from 'lucide-react';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
 import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 export function Hero() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const textRef = useRef<HTMLParagraphElement>(null);
-  const btnsRef = useRef<HTMLDivElement>(null);
-  const imgRef = useRef<HTMLDivElement>(null);
-  const reducedMotion = useReducedMotion();
+  const headlineRef = useRef<HTMLHeadingElement>(null);
+  const subRef = useRef<HTMLParagraphElement>(null);
+  const ctaRef = useRef<HTMLAnchorElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
 
+  // Mouse parallax tilt on the screenshot frame
   useEffect(() => {
-    if (reducedMotion) return;
+    const frame = frameRef.current;
+    if (!frame) return;
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) return;
 
-    const tl = gsap.timeline({ defaults: { ease: 'power4.out', duration: 1.2 } });
+    function onMove(e: MouseEvent) {
+      if (!frame) return;
+      const rect = frame.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = (e.clientX - cx) / rect.width;
+      const dy = (e.clientY - cy) / rect.height;
+      frame.style.transform = `perspective(800px) rotateY(${dx * 2}deg) rotateX(${-dy * 2}deg)`;
+    }
+    function onLeave() {
+      if (frame) frame.style.transform = '';
+    }
+    window.addEventListener('mousemove', onMove, { passive: true });
+    frame.addEventListener('mouseleave', onLeave);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      frame?.removeEventListener('mouseleave', onLeave);
+    };
+  }, []);
 
-    tl.fromTo(titleRef.current, { y: 40, opacity: 0 }, { y: 0, opacity: 1 }, 0.2)
-      .fromTo(textRef.current, { y: 30, opacity: 0 }, { y: 0, opacity: 1 }, 0.4)
-      .fromTo(btnsRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1 }, 0.6)
-      .fromTo(imgRef.current, { y: 60, opacity: 0, scale: 0.95 }, { y: 0, opacity: 1, scale: 1 }, 0.8);
-
-    return () => { tl.kill(); };
-  }, [reducedMotion]);
+  // Word-stagger headline reveal on load
+  useEffect(() => {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const els = [headlineRef.current, subRef.current, ctaRef.current].filter(Boolean);
+    if (prefersReduced) {
+      gsap.set(els, { opacity: 1 });
+      return;
+    }
+    gsap.set(els, { opacity: 0, y: 18 });
+    gsap.to(els, {
+      opacity: 1,
+      y: 0,
+      stagger: 0.12,
+      duration: 0.6,
+      ease: 'cubic-bezier(0.16,1,0.3,1)',
+      delay: 0.1,
+    });
+  }, []);
 
   return (
-    <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden pt-32 pb-20">
-      <div className="absolute inset-0 z-0">
-        <NodeBackground />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--bg-base)]/50 to-[var(--bg-base)]" />
-      </div>
+    <section
+      id="hero"
+      className="relative flex min-h-screen items-center"
+      style={{ paddingTop: 80 }}
+    >
+      {/* Background grid — faint horizontal hairlines */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage:
+            'repeating-linear-gradient(180deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 48px)',
+          pointerEvents: 'none',
+        }}
+      />
 
-      <div ref={containerRef} className="relative z-10 mx-auto max-w-5xl px-4 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium mb-8" style={{ background: 'var(--bg-surface-2)', borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}>
-          <span className="flex h-2 w-2 rounded-full" style={{ background: 'var(--accent-primary)' }} />
-          Public Beta Available
-        </div>
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-8 lg:px-16">
+        <div className="grid grid-cols-1 gap-16 lg:grid-cols-[45fr_55fr] lg:gap-8">
+          {/* Left — text */}
+          <div className="flex flex-col justify-center py-16 lg:py-0">
+            {/* Micro-label */}
+            <span
+              className="mb-6 font-mono text-[11px] uppercase tracking-[0.18em]"
+              style={{ color: 'var(--active-tier, #3B7DDB)' }}
+            >
+              {'// ONE RATING. EVERY JUDGE.'}
+            </span>
 
-        <h1 ref={titleRef} className="text-5xl font-semibold tracking-tight sm:text-7xl mb-6" style={{ color: 'var(--text-primary)' }}>
-          Your coding journey,{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-cyan)]">
-            unified.
-          </span>
-        </h1>
+            {/* Two-line headline, mixed weight */}
+            <h1
+              ref={headlineRef}
+              className="mb-6"
+              style={{
+                fontSize: 'clamp(2.8rem, 5vw, 4.2rem)',
+                lineHeight: 1.06,
+                letterSpacing: '-0.02em',
+                color: '#EDEAE4',
+              }}
+            >
+              <span style={{ fontWeight: 700, display: 'block' }}>Every problem you solve</span>
+              <span style={{ fontWeight: 300, display: 'block', color: '#8A8A85' }}>
+                takes you somewhere.
+              </span>
+            </h1>
 
-        <p ref={textRef} className="mx-auto max-w-2xl text-lg sm:text-xl mb-10" style={{ color: 'var(--text-secondary)' }}>
-          A premium analytics and social hub for competitive programmers. Connect Codeforces and LeetCode, track your consistency, and compare head-to-head with friends.
-        </p>
+            {/* Sub-headline */}
+            <p
+              ref={subRef}
+              className="mb-10 max-w-md"
+              style={{
+                fontSize: '1rem',
+                lineHeight: 1.6,
+                color: '#8A8A85',
+                fontWeight: 400,
+              }}
+            >
+              Codeforces and LeetCode each give you a separate number — neither knows the
+              other exists. Arc unifies them into one coherent picture of where you actually stand.
+            </p>
 
-        <div ref={btnsRef} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link
-            href="/signup"
-            className="flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-lg px-8 text-sm font-medium transition-all hover:opacity-90 hover:scale-[1.02]"
-            style={{ background: 'var(--text-primary)', color: 'var(--bg-base)' }}
-          >
-            Start your journey <ArrowRight size={16} />
-          </Link>
-          <Link
-            href="/login"
-            className="flex h-12 w-full sm:w-auto items-center justify-center rounded-lg px-8 text-sm font-medium transition-colors hover:bg-white/[0.05]"
-            style={{ color: 'var(--text-primary)' }}
-          >
-            Sign in
-          </Link>
-        </div>
+            {/* CTA */}
+            <Link
+              ref={ctaRef}
+              href="/onboarding"
+              className="inline-flex items-center gap-3 border font-mono text-[13px] uppercase tracking-[0.1em] px-6 py-3.5 transition-all duration-150 self-start"
+              style={{
+                borderColor: 'var(--active-tier, #3B7DDB)',
+                borderRadius: 2,
+                color: '#EDEAE4',
+                transitionTimingFunction: 'cubic-bezier(0.4,0,0.2,1)',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.background = 'var(--active-tier, #3B7DDB)1A';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.background = '';
+              }}
+            >
+              Connect your handle
+              <span
+                className="font-mono text-base"
+                style={{ color: 'var(--active-tier, #3B7DDB)', animation: 'blink 1s step-end infinite' }}
+              >
+                _
+              </span>
+            </Link>
 
-        <div ref={imgRef} className="mt-20 mx-auto w-full max-w-4xl relative">
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-[var(--accent-primary)] to-[var(--accent-cyan)] opacity-20 blur-3xl" />
-          <div className="relative rounded-2xl border bg-black overflow-hidden" style={{ borderColor: 'var(--border-subtle)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
-            {/* Minimal mockup of dashboard */}
-            <div className="flex items-center gap-1.5 border-b px-4 py-3" style={{ background: 'var(--bg-surface-1)', borderColor: 'var(--border-subtle)' }}>
-              <div className="h-2.5 w-2.5 rounded-full bg-red-500/50" />
-              <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/50" />
-              <div className="h-2.5 w-2.5 rounded-full bg-green-500/50" />
-            </div>
-            <div className="aspect-video w-full bg-[var(--bg-base)] p-4 flex gap-4">
-              <div className="w-48 h-full rounded-lg" style={{ background: 'var(--bg-surface-2)' }} />
-              <div className="flex-1 flex flex-col gap-4">
-                <div className="flex gap-4">
-                  <div className="h-24 flex-1 rounded-lg" style={{ background: 'var(--bg-surface-2)' }} />
-                  <div className="h-24 flex-1 rounded-lg" style={{ background: 'var(--bg-surface-2)' }} />
-                  <div className="h-24 flex-1 rounded-lg" style={{ background: 'var(--bg-surface-2)' }} />
+            {/* Live stat */}
+            <p
+              className="mt-8 font-mono text-[10px] uppercase tracking-[0.08em]"
+              style={{ color: '#8A8A85' }}
+            >
+              ↗ 38,204 problems solved in the last 24 h
+            </p>
+          </div>
+
+          {/* Right — screenshot placeholder */}
+          <div className="flex items-center justify-end">
+            <div
+              ref={frameRef}
+              className="relative w-full max-w-2xl"
+              style={{
+                transition: 'transform 0.15s cubic-bezier(0.4,0,0.2,1)',
+                willChange: 'transform',
+              }}
+            >
+              {/* Viewfinder corner brackets */}
+              <div
+                style={{
+                  position: 'relative',
+                  border: '1px solid #242426',
+                  borderRadius: 4,
+                  aspectRatio: '16/10',
+                  background: 'rgba(10,11,13,0.6)',
+                  overflow: 'hidden',
+                }}
+              >
+                {/* Corner brackets */}
+                {[
+                  { top: 8, left: 8, borderTop: '1px solid', borderLeft: '1px solid', borderTopLeftRadius: 2 },
+                  { top: 8, right: 8, borderTop: '1px solid', borderRight: '1px solid', borderTopRightRadius: 2 },
+                  { bottom: 8, left: 8, borderBottom: '1px solid', borderLeft: '1px solid', borderBottomLeftRadius: 2 },
+                  { bottom: 8, right: 8, borderBottom: '1px solid', borderRight: '1px solid', borderBottomRightRadius: 2 },
+                ].map((style, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      position: 'absolute',
+                      width: 16,
+                      height: 16,
+                      borderColor: 'var(--active-tier, #3B7DDB)',
+                      ...style,
+                    }}
+                  />
+                ))}
+
+                {/* Placeholder label */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <span
+                    className="font-mono text-[11px] uppercase tracking-[0.1em] text-center px-8"
+                    style={{ color: '#242426' }}
+                  >
+                    {/* SCREENSHOT: Arc dashboard overview — replace with real product image */}
+                  DASHBOARD SCREENSHOT
+                  </span>
                 </div>
-                <div className="flex-1 rounded-lg" style={{ background: 'var(--bg-surface-2)' }} />
+
+                {/* Faint scan-line texture */}
+                <div
+                  aria-hidden
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    backgroundImage:
+                      'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.012) 3px, rgba(255,255,255,0.012) 4px)',
+                    pointerEvents: 'none',
+                  }}
+                />
               </div>
             </div>
           </div>

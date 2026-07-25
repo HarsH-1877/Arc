@@ -63,7 +63,7 @@ export function TopicRadar({
   return (
     <ResponsiveContainer width="100%" height={220}>
       <RadarChart data={chartData} margin={{ top: 8, right: 24, bottom: 8, left: 24 }}>
-        <PolarGrid stroke="var(--border-subtle)" gridType="polygon" />
+        <PolarGrid stroke="var(--border-strong)" radialLines strokeDasharray="4 4" />
         <PolarAngleAxis
           dataKey="topic"
           tick={{ fill: 'var(--text-tertiary)', fontSize: 10, fontFamily: 'var(--font-inter)' }}
@@ -75,6 +75,7 @@ export function TopicRadar({
           fill={primaryColor}
           fillOpacity={0.25}
           strokeWidth={2}
+          dot={{ r: 3, fill: primaryColor, strokeWidth: 0 }}
         />
         {compareData && (
           <Radar
@@ -84,6 +85,7 @@ export function TopicRadar({
             fill={compareColor}
             fillOpacity={0.2}
             strokeWidth={2}
+            dot={{ r: 3, fill: compareColor, strokeWidth: 0 }}
           />
         )}
       </RadarChart>

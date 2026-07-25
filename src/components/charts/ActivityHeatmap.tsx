@@ -8,16 +8,16 @@ interface HeatmapDay {
 }
 
 interface ActivityHeatmapProps {
-  data: HeatmapDay[];
+  data?: HeatmapDay[];
   loading?: boolean;
-  accentColor?: 'blue' | 'purple' | 'cyan';
+  accentColor?: 'blue' | 'purple' | 'cyan' | 'amber' | 'rose';
   compact?: boolean;
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DAY_LABELS = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
 
-function colorFor(count: number, accent: 'blue' | 'purple' | 'cyan' | 'amber') {
+function colorFor(count: number, accent: 'blue' | 'purple' | 'cyan' | 'amber' | 'rose') {
   if (count === 0) return 'var(--bg-elevated)';
   const palettes = {
     blue: ['rgba(79,142,247,0.18)', 'rgba(79,142,247,0.34)', 'rgba(79,142,247,0.52)', 'rgba(79,142,247,0.75)', 'var(--accent-blue)'],
@@ -32,7 +32,7 @@ function colorFor(count: number, accent: 'blue' | 'purple' | 'cyan' | 'amber') {
   return palettes[accent][4];
 }
 
-export function ActivityHeatmap({ data, loading, accentColor = 'blue', compact = false }: ActivityHeatmapProps & { accentColor?: 'blue' | 'purple' | 'cyan' | 'amber' | 'rose' }) {
+export function ActivityHeatmap({ data, loading, accentColor = 'blue', compact = false }: ActivityHeatmapProps) {
   const [tooltip, setTooltip] = useState<{ x: number; y: number; date: string; count: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -41,7 +41,7 @@ export function ActivityHeatmap({ data, loading, accentColor = 'blue', compact =
     const startDate = new Date(today);
     startDate.setDate(today.getDate() - 364);
     
-    const dataMap = new Map(data.map((d) => [d.date, d.count]));
+    const dataMap = new Map((data ?? []).map((d) => [d.date, d.count]));
     const builtMonths = [];
 
     let curr = new Date(startDate.getFullYear(), startDate.getMonth(), 1);

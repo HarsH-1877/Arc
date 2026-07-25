@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 interface GlassCardProps {
   children: ReactNode;
   className?: string;
-  padding?: 'none' | 'sm' | 'md' | 'lg';
+  padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
   style?: React.CSSProperties;
 }
 
@@ -16,6 +16,7 @@ const padMap = {
   sm: '12px',
   md: '16px',
   lg: '24px',
+  xl: '32px',
 };
 
 // Deprecated: Use <Card> instead.

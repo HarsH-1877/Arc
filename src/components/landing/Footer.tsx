@@ -1,22 +1,63 @@
+'use client';
+
 import Link from 'next/link';
 
 export function Footer() {
   return (
-    <footer className="border-t py-12" style={{ background: 'var(--bg-base)', borderColor: 'var(--border-subtle)' }}>
-      <div className="mx-auto max-w-5xl px-4 flex flex-col items-center justify-between gap-6 sm:flex-row">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xl font-bold tracking-tight" style={{ color: 'var(--accent-primary)' }}>arc</span>
-        </div>
-        
-        <nav className="flex gap-6 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-          <Link href="/login" className="transition-colors hover:text-white">Sign In</Link>
-          <Link href="/signup" className="transition-colors hover:text-white">Sign Up</Link>
-          <a href="https://github.com" target="_blank" rel="noreferrer" className="transition-colors hover:text-white">GitHub</a>
-        </nav>
+    <footer
+      style={{
+        position: 'relative',
+        zIndex: 1,
+        padding: '48px 0 64px',
+        borderTop: '1px solid #242426',
+      }}
+    >
+      <div className="mx-auto max-w-7xl px-8 lg:px-16">
+        <div className="flex items-center justify-between gap-8">
+          {/* Logo */}
+          <Link href="/">
+            <img
+              src="/logo.png"
+              alt="ARC Logo"
+              style={{ height: 42, width: 'auto', objectFit: 'contain' }}
+            />
+          </Link>
 
-        <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-          © {new Date().getFullYear()} Arc. All rights reserved.
-        </p>
+          {/* Links */}
+          <div className="flex items-center gap-8">
+            <Link
+              href="/privacy"
+              className="font-mono text-[10px] uppercase tracking-[0.08em] transition-opacity hover:opacity-100"
+              style={{ color: '#8A8A85' }}
+            >
+              Privacy
+            </Link>
+            <Link
+              href="/terms"
+              className="font-mono text-[10px] uppercase tracking-[0.08em] transition-opacity hover:opacity-100"
+              style={{ color: '#8A8A85' }}
+            >
+              Terms
+            </Link>
+            <Link
+              href="https://github.com"
+              className="font-mono text-[10px] uppercase tracking-[0.08em] transition-opacity hover:opacity-100"
+              style={{ color: '#8A8A85' }}
+              target="_blank"
+              rel="noreferrer"
+            >
+              GitHub
+            </Link>
+          </div>
+
+          {/* Copyright */}
+          <span
+            className="font-mono text-[10px] uppercase tracking-[0.08em]"
+            style={{ color: '#8A8A85' }}
+          >
+            © {new Date().getFullYear()} Arc
+          </span>
+        </div>
       </div>
     </footer>
   );

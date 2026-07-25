@@ -2,7 +2,7 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 @import '../styles/tokens.css';
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @layer base {
   *,
@@ -181,3 +181,47 @@
   from { opacity: 0; transform: translateY(2px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ============ LANDING PAGE ============ */
+
+/* CSS variable for active tier — starts at expert blue, updated by MountainTrail.tsx */
+:root {
+  --active-tier: #3B7DDB;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Rank label light-sweep unlock */
+@keyframes labelSweep {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+.label-sweep {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.55) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: labelSweep 0.45s ease-in-out forwards;
+}
+
+/* Switzer: self-hosted via CDN as an approximation; replace with next/font/local if you have the file */
+@font-face {
+  font-family: 'Switzer';
+  src: url('https://api.fontshare.com/v2/css?f[]=switzer@300,400,500,600,700&display=swap');
+  font-display: swap;
+}
+
+.font-display {
+  font-family: 'Switzer', 'ui-sans-serif', system-ui, sans-serif;
+}
+
+

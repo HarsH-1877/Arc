@@ -74,7 +74,7 @@ export function TopicComparison({ user, friend }: TopicComparisonProps) {
         <div className="min-h-0 flex-1" style={{ height: 340 }}>
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart data={chartData} margin={{ top: 16, right: 48, bottom: 16, left: 48 }}>
-              <PolarGrid stroke="var(--border-default)" radialLines strokeDasharray="4 4" />
+              <PolarGrid stroke="var(--border-strong)" radialLines strokeDasharray="4 4" />
               <PolarAngleAxis dataKey="topic" tick={{ fill: 'var(--text-secondary)', fontSize: 11, fontWeight: 600 }} />
               <PolarRadiusAxis angle={90} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
               <Tooltip content={<TopicTooltip />} />

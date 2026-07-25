@@ -19,7 +19,7 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
     <div className="mx-auto max-w-5xl">
       <div className="flex flex-col gap-8 md:flex-row">
         <aside className="w-full shrink-0 md:w-56 sticky top-8 self-start">
-          <div className="mb-5 px-3 pt-[24px]">
+          <div className="mb-5 px-3 pt-[32px]">
             <h1 className="text-xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Settings</h1>
           </div>
           <nav className="flex flex-col gap-1">
