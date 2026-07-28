@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 
 const TICKER_ITEMS = [
   '1,204,391 submissions tracked',
@@ -48,9 +47,9 @@ export function LandingNav() {
     <nav
       className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4 transition-all duration-300"
       style={{
-        backdropFilter: scrolled ? 'blur(12px)' : undefined,
-        background: scrolled ? 'rgba(10,11,13,0.80)' : 'transparent',
-        borderBottom: scrolled ? '1px solid #242426' : '1px solid transparent',
+        backdropFilter: 'blur(14px)',
+        background: scrolled ? 'rgba(10,11,13,0.88)' : 'rgba(10,11,13,0.74)',
+        borderBottom: scrolled ? '1px solid #242426' : '1px solid rgba(255,255,255,0.06)',
       }}
     >
       {/* Logo */}
@@ -58,7 +57,7 @@ export function LandingNav() {
         <img
           src="/logo.png"
           alt="ARC Logo"
-          style={{ height: 42, width: 'auto', objectFit: 'contain' }}
+          style={{ height: 56, width: 'auto', objectFit: 'contain' }}
         />
       </Link>
 
@@ -80,25 +79,25 @@ export function LandingNav() {
       </div>
 
       {/* Right links + CTA */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-5">
         <Link
           href="#features"
-          className="font-mono text-[11px] uppercase tracking-[0.08em] transition-colors hover:opacity-100"
+          className="landing-feature-link inline-flex h-9 items-center font-mono text-[11px] uppercase tracking-[0.08em]"
           style={{ color: '#8A8A85' }}
         >
           Features
         </Link>
         <Link
-          href="/auth/signin"
-          className="font-mono text-[11px] uppercase tracking-[0.08em] transition-colors hover:opacity-100"
+          href="/login"
+          className="landing-feature-link inline-flex h-9 items-center font-mono text-[11px] uppercase tracking-[0.08em]"
           style={{ color: '#8A8A85' }}
         >
           Sign in
         </Link>
         <Link
           ref={btnRef}
-          href="/onboarding"
-          className="border font-mono text-[11px] uppercase tracking-[0.08em] px-4 py-2 transition-all duration-150"
+          href="/signup"
+          className="landing-connect-link inline-flex h-9 items-center border px-4 font-mono text-[11px] uppercase tracking-[0.08em] transition-all duration-150"
           style={{
             borderColor: '#242426',
             borderRadius: 2,

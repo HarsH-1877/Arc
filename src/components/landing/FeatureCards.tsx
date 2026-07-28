@@ -225,7 +225,7 @@ export function FeatureCards() {
       {/* ════════════════════════════════════════
           CHAPTER III — Five Core Features
          ════════════════════════════════════════ */}
-      <section className="relative w-full border-b border-[#242426] py-28 overflow-hidden">
+      <section id="features" className="relative w-full scroll-mt-28 border-b border-[#242426] py-28 overflow-hidden">
         <Watermark label="III" side="right" />
         <div className="mx-auto max-w-7xl px-8 lg:px-16 relative z-10">
           <div className="flex items-center justify-between mb-16">
@@ -247,18 +247,27 @@ export function FeatureCards() {
             {/* ─────────────────────────────────────────
                 ROW 01 — Friends System (CENTERED, dark)
                ───────────────────────────────────────── */}
-            <div className="border-t border-[#242426] py-16 flex flex-col items-center text-center">
-              <div className="flex items-center gap-2 mb-3">
+            <div className="py-16 grid grid-cols-1 md:grid-cols-12 gap-10 items-center">
+              <div className="md:col-span-5 text-left">
+              <div className="flex items-center gap-2 mb-4">
                 <Users size={18} stroke="var(--active-tier,#3B7DDB)" strokeWidth={1.5} />
                 <span className="font-mono text-xs text-[#8A8A85]">01</span>
               </div>
-              <h3 className="text-2xl font-bold mb-3 text-[#EDEAE4]">Friends System</h3>
-              <p className="text-base text-[#8A8A85] leading-relaxed mb-10 max-w-xl">
+              <h3 className="text-3xl font-bold mb-4 text-[#EDEAE4] tracking-[-0.02em]">Friends System</h3>
+              <p className="text-base text-[#8A8A85] leading-relaxed max-w-md">
                 Connect with friends directly — no more hunting profile URLs across Codeforces and LeetCode. One search, instant connection, live comparison.
               </p>
+              <div className="mt-8 grid max-w-md grid-cols-3 gap-3">
+                {['2 requests', '5 active', '1 leaderboard'].map((item) => (
+                  <div key={item} className="border border-[#242426] bg-[#0A0B0D]/70 px-3 py-2">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#8A8A85]">{item}</span>
+                  </div>
+                ))}
+              </div>
+              </div>
 
               {/* Friends Widget */}
-              <div className="w-full max-w-2xl" style={{ background:'rgba(10,11,13,0.96)', border:'1px solid #1F1F22', borderRadius: 6, overflow:'hidden' }}>
+              <div className="md:col-span-7 w-full" style={{ background:'rgba(10,11,13,0.96)', border:'1px solid #1F1F22', borderRadius: 6, overflow:'hidden' }}>
                 {/* Header bar */}
                 <div className="flex items-center justify-between px-5 py-3 border-b border-[#1F1F22]">
                   <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#8A8A85]">Friends — Arc Network</span>
@@ -325,7 +334,7 @@ export function FeatureCards() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
                 {/* Text */}
-                <div className="md:col-span-4 p-4 rounded-sm" style={{ background:'linear-gradient(90deg,rgba(10,11,13,0.88) 0%,transparent 100%)' }}>
+                <div className="md:col-span-4 md:order-2 p-4 rounded-sm" style={{ background:'linear-gradient(90deg,rgba(10,11,13,0.88) 0%,transparent 100%)' }}>
                   <h3 className="text-2xl font-bold mb-3 text-[#EDEAE4]">Head-to-head analysis</h3>
                   <p className="text-base text-[#8A8A85] leading-relaxed">
                     Pick any rival and see exactly where you stand — across every metric, not just a rating number.
@@ -333,7 +342,7 @@ export function FeatureCards() {
                 </div>
 
                 {/* Rich Comparison Widget */}
-                <div className="md:col-span-8">
+                <div className="md:col-span-8 md:order-1">
                   <div style={{ background:'rgba(10,11,13,0.90)', border:'1px solid #1F1F22', borderRadius:6, overflow:'hidden' }}>
                     {/* Two-column header */}
                     <div className="grid grid-cols-3 text-center border-b border-[#1F1F22] divide-x divide-[#1F1F22]">
@@ -492,7 +501,7 @@ export function FeatureCards() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                 {/* Text block left */}
-                <div className="p-4 rounded-sm" style={{ background:'linear-gradient(90deg,rgba(10,11,13,0.88) 0%,transparent 100%)' }}>
+                <div className="md:order-2 p-4 rounded-sm" style={{ background:'linear-gradient(90deg,rgba(10,11,13,0.88) 0%,transparent 100%)' }}>
                   <h3 className="text-2xl font-bold mb-3 text-[#EDEAE4]">
                     Insights. Not just graphs.
                   </h3>
@@ -502,7 +511,7 @@ export function FeatureCards() {
                 </div>
 
                 {/* Insights Feed card — right side */}
-                <div className="space-y-2" style={{ background:'rgba(10,11,13,0.0)' }}>
+                <div className="md:order-1 space-y-2" style={{ background:'rgba(10,11,13,0.0)' }}>
                   {[
                     {
                       icon: <ArrowUpRight size={14} stroke="var(--active-tier,#3B7DDB)" strokeWidth={2}/>,

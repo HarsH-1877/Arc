@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const USE_MOCK = true;
+const USE_MOCK = process.env.USE_MOCK_DATA === 'true';
 
-const PROTECTED_PREFIXES = ['/dashboard', '/compare', '/friends', '/settings', '/onboarding'];
+const PROTECTED_PREFIXES = ['/dashboard', '/compare', '/friends', '/settings', '/onboarding', '/link-account'];
 const AUTH_PREFIXES = ['/login', '/signup'];
 
 export async function middleware(request: NextRequest) {
@@ -34,6 +34,7 @@ export const config = {
     '/friends/:path*',
     '/settings/:path*',
     '/onboarding/:path*',
+    '/link-account/:path*',
     '/login',
     '/signup',
   ],

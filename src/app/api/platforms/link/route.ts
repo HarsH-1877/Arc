@@ -1,22 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth } from '@/lib/firebase/server';
 import { db } from '@/lib/db';
-import { cookies } from 'next/headers';
 import { syncPlatform } from '@/workers/syncWorker';
 import type { Platform } from '@prisma/client';
+import { getSession } from '@/lib/session';
 
 // POST /api/platforms/link
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies();
-    const uid = cookieStore.get('arc-session')?.value;
-    if (!uid) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
-
-    const firebaseUser = await adminAuth.getUser(uid);
-    if (!firebaseUser.email) return NextResponse.json({ error: 'No email' }, { status: 400 });
-
-    const user = await db.user.findUnique({ where: { email: firebaseUser.email } });
-    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
 
     const { platform, handle } = await request.json() as { platform: Platform; handle: string };
     if (!platform || !handle) {
@@ -43,15 +35,14 @@ export async function POST(request: NextRequest) {
     }
 
     const connection = await db.platformConnection.upsert({
-      where: { userId_platform: { userId: user.id, platform } },
-      create: { userId: user.id, platform, handle, syncStatus: 'PENDING' },
+      where: { userId_platform: { userId: session.id, platform } },
+      create: { userId: session.id, platform, handle, syncStatus: 'PENDING' },
       update: { handle, syncStatus: 'PENDING', syncError: null },
     });
 
-    // Fire-and-forget sync
-    syncPlatform(connection.id).catch(console.error);
+    await syncPlatform(connection.id);
 
-    return NextResponse.json({ ok: true, connectionId: connection.id });
+    return NextResponse.json({ ok: true, connectionId: connection.id, status: 'SYNCED' });
   } catch (err) {
     console.error('[platforms/link]', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

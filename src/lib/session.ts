@@ -15,8 +15,8 @@ import { USE_MOCK_DATA, MOCK_SESSION_USER } from '@/lib/mock';
 
 /**
  * Server-side session helper (use in Server Components and Route Handlers).
- * Reads the arc-session cookie (which holds the Firebase UID), verifies it
- * with Firebase Admin SDK, then fetches the user from our Postgres DB.
+ * Reads the Firebase session cookie, verifies it with Firebase Admin SDK,
+ * then fetches the user from Postgres.
  *
  * Returns null if unauthenticated or if the token is invalid.
  */
@@ -34,15 +34,16 @@ export async function getSession(): Promise<SessionUser | null> {
 
   try {
     const cookieStore = cookies();
-    const uid = cookieStore.get('arc-session')?.value;
-    if (!uid) return null;
+    const sessionCookie = cookieStore.get('arc-session')?.value;
+    if (!sessionCookie) return null;
 
-    // Verify the UID is still valid in Firebase (catches revoked accounts)
-    const firebaseUser = await adminAuth.getUser(uid);
-    if (!firebaseUser.email) return null;
+    // checkRevoked protects authenticated routes after a user disables their account
+    // or explicitly revokes their Firebase sessions.
+    const decodedToken = await adminAuth.verifySessionCookie(sessionCookie, true);
+    if (!decodedToken.email) return null;
 
     const user = await db.user.findUnique({
-      where: { email: firebaseUser.email },
+      where: { email: decodedToken.email },
       select: {
         id: true,
         email: true,

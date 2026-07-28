@@ -10,7 +10,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const session = await getSession();
   if (!session) redirect('/login');
-  if (!session.onboarded) redirect('/onboarding');
+  if (!session.onboarded) redirect('/link-account');
 
   return <AppShell>{children}</AppShell>;
 }

@@ -124,19 +124,13 @@ export function Hero() {
             {/* CTA */}
             <Link
               ref={ctaRef}
-              href="/onboarding"
-              className="inline-flex items-center gap-3 border font-mono text-[13px] uppercase tracking-[0.1em] px-6 py-3.5 transition-all duration-150 self-start"
+              href="/signup"
+              className="landing-connect-link relative z-20 inline-flex items-center gap-3 border font-mono text-[13px] uppercase tracking-[0.1em] px-6 py-3.5 transition-all duration-150 self-start"
               style={{
                 borderColor: 'var(--active-tier, #3B7DDB)',
                 borderRadius: 2,
                 color: '#EDEAE4',
                 transitionTimingFunction: 'cubic-bezier(0.4,0,0.2,1)',
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background = 'var(--active-tier, #3B7DDB)1A';
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background = '';
               }}
             >
               Connect your handle

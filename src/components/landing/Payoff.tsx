@@ -153,23 +153,17 @@ export function Payoff() {
             </p>
 
             <Link
-              href="/onboarding"
-              className="inline-flex items-center gap-3 border font-mono text-[13px] uppercase tracking-[0.1em] px-8 py-4"
+              href="/signup"
+              className="landing-connect-link relative z-20 inline-flex items-center gap-3 border px-8 py-4 font-mono text-[13px] uppercase tracking-[0.1em]"
               style={{
-                borderColor: '#E0473B',
+                borderColor: 'var(--active-tier, #3B7DDB)',
                 borderRadius: 2,
                 color: '#EDEAE4',
                 transition: 'all 150ms cubic-bezier(0.4,0,0.2,1)',
               }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background = 'rgba(224,71,59,0.12)';
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background = '';
-              }}
             >
               Connect your handle
-              <span style={{ color: '#E0473B', animation: 'blink 1s step-end infinite' }}>_</span>
+              <span style={{ color: 'var(--active-tier, #3B7DDB)', animation: 'blink 1s step-end infinite' }}>_</span>
             </Link>
           </div>
         </div>

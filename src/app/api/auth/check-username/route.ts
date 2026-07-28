@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 
 // GET /api/auth/check-username?username=foo
 export async function GET(request: NextRequest) {
-  const username = request.nextUrl.searchParams.get('username');
+  const username = request.nextUrl.searchParams.get('username')?.toLowerCase();
 
   if (!username) {
     return NextResponse.json({ available: false, error: 'Username required' }, { status: 400 });
