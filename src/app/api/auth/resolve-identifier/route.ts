@@ -11,15 +11,16 @@ export async function GET(request: NextRequest) {
   }
 
   if (identifier.includes('@')) {
-    return NextResponse.json({ email: identifier });
+    return NextResponse.json({ email: identifier.toLowerCase() });
   }
 
   if (!USERNAME_RE.test(identifier)) {
     return NextResponse.json({ error: 'Invalid Arc ID' }, { status: 400 });
   }
 
+  const normalized = identifier.toLowerCase();
   const user = await db.user.findUnique({
-    where: { username: identifier.toLowerCase() },
+    where: { username: normalized },
     select: { email: true },
   });
 
@@ -27,5 +28,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Arc ID not found' }, { status: 404 });
   }
 
-  return NextResponse.json({ email: user.email });
+  // Arc passwords are linked to the synthetic Firebase email used during signup.
+  return NextResponse.json({ email: `${normalized}@arc.local` });
 }

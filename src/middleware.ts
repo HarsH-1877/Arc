@@ -2,15 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const USE_MOCK = process.env.USE_MOCK_DATA === 'true';
 
-const PROTECTED_PREFIXES = ['/dashboard', '/compare', '/friends', '/settings', '/onboarding', '/link-account'];
-const AUTH_PREFIXES = ['/login', '/signup'];
+const PROTECTED_PREFIXES = ['/dashboard', '/compare', '/friends', '/settings', '/onboarding', '/link-account', '/contest-history'];
 
 export async function middleware(request: NextRequest) {
   if (USE_MOCK) return NextResponse.next();
 
   const { pathname } = request.nextUrl;
   const isProtectedRoute = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
-  const isAuthRoute = AUTH_PREFIXES.some((p) => pathname.startsWith(p));
   const sessionCookie = request.cookies.get('arc-session')?.value;
   const isLoggedIn = !!sessionCookie;
 
@@ -20,7 +18,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isAuthRoute && isLoggedIn) {
+  // Only auto-redirect away from login — signup handles existing sessions itself
+  if (isLoggedIn && pathname.startsWith('/login')) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
@@ -35,6 +34,7 @@ export const config = {
     '/settings/:path*',
     '/onboarding/:path*',
     '/link-account/:path*',
+    '/contest-history/:path*',
     '/login',
     '/signup',
   ],

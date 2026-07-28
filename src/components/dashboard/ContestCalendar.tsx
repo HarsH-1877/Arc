@@ -1,22 +1,15 @@
 'use client';
 
 import { Card } from '@/components/shared/Card';
-import { Clock3, Trophy, ChevronDown } from 'lucide-react';
+import { Clock3, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
-
-interface RatingPoint {
-  date: string;
-  cfRating?: number;
-  lcRating?: number;
-  userRating?: number;
-}
+import { PlatformLogo } from '@/components/shared/PlatformLogo';
+import type { DashboardApiData } from '@/hooks/useDashboardData';
 
 interface ContestCalendarProps {
-  data?: RatingPoint[];
+  events?: DashboardApiData['contestCalendarEvents'];
   loading?: boolean;
 }
-
-import { PlatformLogo } from '@/components/shared/PlatformLogo';
 
 interface ContestDay {
   date: Date;
@@ -26,70 +19,35 @@ interface ContestDay {
   platforms: ('CODEFORCES' | 'LEETCODE')[];
 }
 
-function buildContestDays(data: RatingPoint[] = []): ContestDay[] {
-  const history = data
-    .map((point) => ({
-      date: new Date(point.date),
-      rating: point.userRating ?? point.cfRating ?? point.lcRating,
-    }))
-    .filter((point): point is { date: Date; rating: number } => typeof point.rating === 'number')
-    .slice(-4);
-
-  const previous = history.map((point, index) => {
-    const previousRating = history[index - 1]?.rating ?? point.rating - 12;
-    const platform = index % 2 === 0 ? 'CODEFORCES' : 'LEETCODE';
-    return {
-      date: point.date,
-      label: platform === 'CODEFORCES' ? 'Codeforces Round' : 'Weekly Contest',
-      delta: Math.round(point.rating - previousRating),
-      type: 'given' as const,
-      platforms: [platform as 'CODEFORCES' | 'LEETCODE'],
-    };
-  });
-
-  const today = new Date();
-
-  const missedDate = new Date(today);
-  missedDate.setDate(today.getDate() - 3);
-  const missed = [{
-    date: missedDate,
-    label: 'Codeforces Round 999',
-    type: 'missed' as const,
-    platforms: ['CODEFORCES' as const],
-  }];
-
-  const upcoming = [6, 13, 21].map((offset, index) => {
-    const date = new Date(today);
-    date.setDate(today.getDate() + offset);
-    return {
-      date,
-      label: index === 1 ? 'LeetCode Weekly' : 'Codeforces Round',
-      type: 'upcoming' as const,
-      platforms: [index === 1 ? 'LEETCODE' as const : 'CODEFORCES' as const],
-    };
-  });
-
-  // Group by date to handle multiple platforms on the same day
-  const allDays = [...previous, ...missed, ...upcoming];
+function buildContestDays(events: NonNullable<DashboardApiData['contestCalendarEvents']> = []): ContestDay[] {
   const grouped = new Map<string, ContestDay>();
-  allDays.forEach(day => {
-    const key = day.date.toDateString();
-    if (grouped.has(key)) {
-      const existing = grouped.get(key)!;
-      for (const p of day.platforms) {
-        if (!existing.platforms.includes(p)) existing.platforms.push(p);
-      }
-      existing.label += ` & ${day.label}`;
+
+  for (const event of events) {
+    const date = new Date(event.date);
+    const key = date.toDateString();
+    const existing = grouped.get(key);
+
+    if (existing) {
+      if (!existing.platforms.includes(event.platform)) existing.platforms.push(event.platform);
+      if (event.type === 'given' && typeof event.delta === 'number') existing.delta = event.delta;
+      if (event.type !== 'upcoming') existing.type = event.type;
+      if (existing.label !== event.label) existing.label = `${existing.label} & ${event.label}`;
     } else {
-      grouped.set(key, { ...day });
+      grouped.set(key, {
+        date,
+        label: event.label,
+        delta: event.delta,
+        type: event.type,
+        platforms: [event.platform],
+      });
     }
-  });
+  }
 
   return Array.from(grouped.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
-export function ContestCalendar({ data = [], loading = false }: ContestCalendarProps) {
-  const contests = buildContestDays(data);
+export function ContestCalendar({ events = [], loading = false }: ContestCalendarProps) {
+  const contests = buildContestDays(events);
 
   if (loading) {
     return (
@@ -197,7 +155,7 @@ export function ContestCalendar({ data = [], loading = false }: ContestCalendarP
                 <span className="text-[11px] font-semibold leading-none" style={{ color: 'var(--text-secondary)' }}>
                   {date.getDate()}
                 </span>
-                {event?.type === 'given' && (
+                {event?.type === 'given' && typeof event.delta === 'number' && (
                   <span className="font-mono-data text-[8px] font-bold leading-none" style={{ color: positive ? 'var(--accent-green)' : 'var(--accent-rose)' }}>
                     {positive ? '+' : ''}
                     {event.delta}
@@ -206,12 +164,12 @@ export function ContestCalendar({ data = [], loading = false }: ContestCalendarP
               </div>
               <div className="flex justify-between items-end mt-auto">
                 <div>
-                  {event && event.platforms && event.platforms.length > 1 && (
+                  {event && event.platforms.length > 1 && (
                     <PlatformLogo platform={event.platforms[1]} size={11} />
                   )}
                 </div>
                 <div>
-                  {event && event.platforms && event.platforms.length > 0 && (
+                  {event && event.platforms.length > 0 && (
                     <PlatformLogo platform={event.platforms[0]} size={11} />
                   )}
                 </div>

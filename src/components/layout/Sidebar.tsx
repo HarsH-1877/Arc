@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { signOut } from 'firebase/auth';
 import { LayoutDashboard, Users, BarChart2, Settings, Plus, LogOut, FolderOpen, Edit2, Inbox, Trophy, Share, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore } from '@/store/useUIStore';
+import { auth } from '@/lib/firebase/client';
 
 interface NavItem {
   label: string;
@@ -43,10 +45,11 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
   }
 
   async function handleSignOut() {
-    try {
-      await fetch('/api/auth/session', { method: 'DELETE' });
-    } catch {}
-    router.push('/login');
+    await Promise.allSettled([
+      fetch('/api/auth/session', { method: 'DELETE' }),
+      signOut(auth),
+    ]);
+    window.location.href = '/login';
   }
 
   const userDisplayName = profile?.displayName ?? profile?.username ?? 'User';

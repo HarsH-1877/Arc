@@ -18,6 +18,14 @@ interface PlatformData {
 
 export default function ConnectionsSettingsPage() {
   const queryClient = useQueryClient();
+  const [linkingPlatform, setLinkingPlatform] = useState<'CODEFORCES' | 'LEETCODE' | null>(null);
+  const [syncingPlatform, setSyncingPlatform] = useState<'CODEFORCES' | 'LEETCODE' | null>(null);
+  const [unlinkingPlatform, setUnlinkingPlatform] = useState<'CODEFORCES' | 'LEETCODE' | null>(null);
+  const [cfHandle, setCfHandle] = useState('');
+  const [lcHandle, setLcHandle] = useState('');
+  const [cfError, setCfError] = useState('');
+  const [lcError, setLcError] = useState('');
+
   const { data: dashboard, isLoading } = useQuery({
     queryKey: ['dashboard'],
     queryFn: async () => {
@@ -27,8 +35,8 @@ export default function ConnectionsSettingsPage() {
     },
   });
 
-  const { mutate: linkPlatform, isPending: isLinking } = useMutation({
-    mutationFn: async ({ platform, handle }: { platform: string; handle: string }) => {
+  const { mutate: linkPlatform } = useMutation({
+    mutationFn: async ({ platform, handle }: { platform: 'CODEFORCES' | 'LEETCODE'; handle: string }) => {
       const res = await fetch('/api/platforms/link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -40,10 +48,14 @@ export default function ConnectionsSettingsPage() {
       }
       return res.json();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      if (variables.platform === 'CODEFORCES') setCfHandle('');
+      else setLcHandle('');
+    },
   });
 
-  const { mutate: unlinkPlatform, isPending: isUnlinking } = useMutation({
+  const { mutate: unlinkPlatform } = useMutation({
     mutationFn: async (platform: string) => {
       const res = await fetch('/api/platforms/unlink', {
         method: 'DELETE',
@@ -56,7 +68,7 @@ export default function ConnectionsSettingsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
   });
 
-  const { mutate: syncPlatform, isPending: isSyncing } = useMutation({
+  const { mutate: syncPlatformMutation } = useMutation({
     mutationFn: async (platform: string) => {
       const res = await fetch('/api/platforms/sync', {
         method: 'POST',
@@ -69,18 +81,34 @@ export default function ConnectionsSettingsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
   });
 
-  const [cfHandle, setCfHandle] = useState('');
-  const [lcHandle, setLcHandle] = useState('');
-  const [error, setError] = useState('');
-
   const handleLink = (platform: 'CODEFORCES' | 'LEETCODE', handle: string) => {
-    setError('');
-    linkPlatform({ platform, handle }, {
-      onError: (err) => setError(err.message),
-      onSuccess: () => {
-        if (platform === 'CODEFORCES') setCfHandle('');
-        else setLcHandle('');
+    if (platform === 'CODEFORCES') setCfError('');
+    else setLcError('');
+
+    setLinkingPlatform(platform);
+    linkPlatform(
+      { platform, handle },
+      {
+        onError: (err) => {
+          if (platform === 'CODEFORCES') setCfError(err.message);
+          else setLcError(err.message);
+        },
+        onSettled: () => setLinkingPlatform(null),
       },
+    );
+  };
+
+  const handleSync = (platform: 'CODEFORCES' | 'LEETCODE') => {
+    setSyncingPlatform(platform);
+    syncPlatformMutation(platform, {
+      onSettled: () => setSyncingPlatform(null),
+    });
+  };
+
+  const handleUnlink = (platform: 'CODEFORCES' | 'LEETCODE') => {
+    setUnlinkingPlatform(platform);
+    unlinkPlatform(platform, {
+      onSettled: () => setUnlinkingPlatform(null),
     });
   };
 
@@ -101,8 +129,6 @@ export default function ConnectionsSettingsPage() {
           </p>
         </div>
 
-        {error && <div className="rounded-lg p-3 text-sm" style={{ background: 'var(--danger-dim)', color: 'var(--danger)' }}>{error}</div>}
-
         <div className="grid gap-4 md:grid-cols-2">
           <PlatformCard
             name="Codeforces"
@@ -110,12 +136,13 @@ export default function ConnectionsSettingsPage() {
             data={cf}
             handle={cfHandle}
             setHandle={setCfHandle}
-            isLinking={isLinking}
-            isSyncing={isSyncing}
-            isUnlinking={isUnlinking}
+            error={cfError}
+            isLinking={linkingPlatform === 'CODEFORCES'}
+            isSyncing={syncingPlatform === 'CODEFORCES'}
+            isUnlinking={unlinkingPlatform === 'CODEFORCES'}
             onLink={handleLink}
-            onSync={syncPlatform}
-            onUnlink={unlinkPlatform}
+            onSync={handleSync}
+            onUnlink={handleUnlink}
           />
           <PlatformCard
             name="LeetCode"
@@ -123,12 +150,13 @@ export default function ConnectionsSettingsPage() {
             data={lc}
             handle={lcHandle}
             setHandle={setLcHandle}
-            isLinking={isLinking}
-            isSyncing={isSyncing}
-            isUnlinking={isUnlinking}
+            error={lcError}
+            isLinking={linkingPlatform === 'LEETCODE'}
+            isSyncing={syncingPlatform === 'LEETCODE'}
+            isUnlinking={unlinkingPlatform === 'LEETCODE'}
             onLink={handleLink}
-            onSync={syncPlatform}
-            onUnlink={unlinkPlatform}
+            onSync={handleSync}
+            onUnlink={handleUnlink}
           />
         </div>
       </Card>
@@ -157,6 +185,7 @@ function PlatformCard({
   data,
   handle,
   setHandle,
+  error,
   isLinking,
   isSyncing,
   isUnlinking,
@@ -169,12 +198,13 @@ function PlatformCard({
   data?: PlatformData | null;
   handle: string;
   setHandle: (value: string) => void;
+  error: string;
   isLinking: boolean;
   isSyncing: boolean;
   isUnlinking: boolean;
   onLink: (platform: 'CODEFORCES' | 'LEETCODE', handle: string) => void;
-  onSync: (platform: string) => void;
-  onUnlink: (platform: string) => void;
+  onSync: (platform: 'CODEFORCES' | 'LEETCODE') => void;
+  onUnlink: (platform: 'CODEFORCES' | 'LEETCODE') => void;
 }) {
   const syncing = isSyncing || data?.syncStatus === 'SYNCING';
 
@@ -197,6 +227,8 @@ function PlatformCard({
         </div>
       </div>
 
+      {error && <div className="rounded-lg p-3 text-xs" style={{ background: 'var(--danger-dim)', color: 'var(--danger)' }}>{error}</div>}
+
       {data ? (
         <div className="border-t pt-4" style={{ borderColor: 'var(--border-subtle)' }}>
           <div className="flex items-center justify-between gap-3">
@@ -215,7 +247,7 @@ function PlatformCard({
       ) : (
         <div className="flex items-center gap-2 border-t pt-4" style={{ borderColor: 'var(--border-subtle)' }}>
           <input type="text" placeholder={name + ' handle'} value={handle} onChange={(e) => setHandle(e.target.value)} className="h-9 min-w-0 flex-1 rounded-md px-3 text-xs outline-none" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-default)', color: 'var(--text-primary)' }} />
-          <button onClick={() => onLink(platform, handle)} disabled={isLinking || !handle} className="flex h-9 items-center justify-center gap-1.5 rounded-md px-3 text-xs font-semibold disabled:opacity-50" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}>
+          <button onClick={() => onLink(platform, handle)} disabled={isLinking || !handle.trim()} className="flex h-9 items-center justify-center gap-1.5 rounded-md px-3 text-xs font-semibold disabled:opacity-50" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}>
             {isLinking ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Link
           </button>
         </div>

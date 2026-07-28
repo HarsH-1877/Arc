@@ -2,46 +2,9 @@
 
 import { Card } from '@/components/shared/Card';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
-import { ArrowDownRight, ArrowUpRight, CalendarClock, ExternalLink, TrendingUp, Trophy } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, CalendarClock, ExternalLink, Loader2, TrendingUp, Trophy } from 'lucide-react';
 import { UpcomingContestCard } from '@/components/contest-history/UpcomingContestCard';
-
-type Platform = 'CODEFORCES' | 'LEETCODE';
-
-interface ContestItem {
-  id: string;
-  name: string;
-  platform: Platform;
-  date: string;
-  time: string;
-  before: number;
-  after: number;
-  solved: number;
-  total: number;
-  href: string;
-}
-
-const HISTORY: ContestItem[] = [
-  { id: 'c1', name: 'Codeforces Round 1034', platform: 'CODEFORCES', date: '2026-06-29', time: '20:05', before: 1788, after: 1823, solved: 5, total: 7, href: 'https://codeforces.com/contests' },
-  { id: 'c2', name: 'LeetCode Weekly Contest 456', platform: 'LEETCODE', date: '2026-06-22', time: '08:00', before: 1819, after: 1848, solved: 3, total: 4, href: 'https://leetcode.com/contest/' },
-  { id: 'c3', name: 'Codeforces Round 1031', platform: 'CODEFORCES', date: '2026-06-15', time: '19:35', before: 1812, after: 1788, solved: 3, total: 7, href: 'https://codeforces.com/contests' },
-  { id: 'c4', name: 'LeetCode Biweekly Contest 161', platform: 'LEETCODE', date: '2026-06-08', time: '20:00', before: 1792, after: 1819, solved: 3, total: 4, href: 'https://leetcode.com/contest/' },
-  { id: 'c5', name: 'Codeforces Educational Round 179', platform: 'CODEFORCES', date: '2026-06-01', time: '20:05', before: 1760, after: 1812, solved: 6, total: 8, href: 'https://codeforces.com/contests' },
-  { id: 'c6', name: 'LeetCode Weekly Contest 453', platform: 'LEETCODE', date: '2026-05-25', time: '08:00', before: 1808, after: 1792, solved: 2, total: 4, href: 'https://leetcode.com/contest/' },
-  { id: 'c7', name: 'Codeforces Round 1024', platform: 'CODEFORCES', date: '2026-05-18', time: '19:35', before: 1734, after: 1760, solved: 4, total: 7, href: 'https://codeforces.com/contests' },
-  { id: 'c8', name: 'LeetCode Biweekly Contest 158', platform: 'LEETCODE', date: '2026-05-11', time: '20:00', before: 1771, after: 1808, solved: 4, total: 4, href: 'https://leetcode.com/contest/' },
-  { id: 'c9', name: 'Codeforces Round 1019', platform: 'CODEFORCES', date: '2026-05-04', time: '20:05', before: 1758, after: 1734, solved: 2, total: 6, href: 'https://codeforces.com/contests' },
-  { id: 'c10', name: 'LeetCode Weekly Contest 450', platform: 'LEETCODE', date: '2026-04-27', time: '08:00', before: 1739, after: 1771, solved: 3, total: 4, href: 'https://leetcode.com/contest/' },
-];
-
-const UPCOMING: ContestItem[] = [
-  { id: 'u1', name: 'Codeforces Round 1040 (Div. 2)', platform: 'CODEFORCES', date: '2026-07-12', time: '20:05', before: 1823, after: 1823, solved: 0, total: 7, href: 'https://codeforces.com/contests' },
-  { id: 'u2', name: 'LeetCode Weekly Contest 459', platform: 'LEETCODE', date: '2026-07-14', time: '08:00', before: 1848, after: 1848, solved: 0, total: 4, href: 'https://leetcode.com/contest/' },
-  { id: 'u3', name: 'Educational Codeforces Round 181', platform: 'CODEFORCES', date: '2026-07-18', time: '19:35', before: 1823, after: 1823, solved: 0, total: 8, href: 'https://codeforces.com/contests' },
-];
-
-const BEST_BY_PLATFORM = (['CODEFORCES', 'LEETCODE'] as const).map((platform) => (
-  HISTORY.filter((contest) => contest.platform === platform).reduce((best, contest) => (contest.after - contest.before > best.after - best.before ? contest : best))
-));
+import { useContestsData, type ContestItem } from '@/hooks/useContestsData';
 
 function formatDate(date: string) {
   return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(date));
@@ -98,9 +61,9 @@ function SolvedMarkers({ solved, total }: { solved: number; total: number }) {
           <div
             key={index}
             className="h-1.5 w-3 rounded-sm"
-            style={{ 
+            style={{
               background: index < solved ? '#4ade80' : 'var(--bg-elevated)',
-              boxShadow: index < solved ? '0 0 8px rgba(74,222,128,0.45)' : 'none'
+              boxShadow: index < solved ? '0 0 8px rgba(74,222,128,0.45)' : 'none',
             }}
           />
         ))}
@@ -142,6 +105,8 @@ function BestContestRow({ contest }: { contest: ContestItem }) {
 }
 
 export default function ContestHistoryPage() {
+  const { data, isLoading, error } = useContestsData();
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
@@ -151,15 +116,29 @@ export default function ContestHistoryPage() {
         </div>
       </div>
 
+      {error && (
+        <p className="text-sm text-[var(--color-danger)]">Could not load contest data. Link your platforms and sync from Settings.</p>
+      )}
+
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
         <Card padding="18px" className="gap-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Last 10 Contests</span>
             <CalendarClock size={18} style={{ color: 'var(--accent-blue)' }} />
           </div>
-          <div className="space-y-2">
-            {HISTORY.map((contest) => <ContestRow key={contest.id} contest={contest} />)}
-          </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="animate-spin" size={24} style={{ color: 'var(--text-muted)' }} />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {(data?.history ?? []).length > 0 ? (
+                data?.history.map((contest) => <ContestRow key={contest.id} contest={contest} />)
+              ) : (
+                <p className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>No contest history yet. Link Codeforces or LeetCode to sync your results.</p>
+              )}
+            </div>
+          )}
         </Card>
 
         <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden xl:h-auto xl:self-stretch">
@@ -169,11 +148,14 @@ export default function ContestHistoryPage() {
             </span>
             <TrendingUp size={18} style={{ color: 'var(--accent-purple)' }} />
           </div>
-          
+
           <div className="relative min-h-0 flex-1">
             <div className="absolute inset-0 overflow-y-auto no-scrollbar pb-4 pr-1">
               <div className="space-y-4">
-                {UPCOMING.map((contest) => <UpcomingContestCard key={contest.id} contest={contest} />)}
+                {(data?.upcoming ?? []).map((contest) => <UpcomingContestCard key={contest.id} contest={contest} />)}
+                {!isLoading && (data?.upcoming ?? []).length === 0 && (
+                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No upcoming contests scheduled right now.</p>
+                )}
               </div>
             </div>
             <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[var(--bg-base)] to-transparent" />
@@ -186,7 +168,11 @@ export default function ContestHistoryPage() {
               <Trophy size={20} style={{ color: 'var(--accent-amber)' }} />
             </div>
             <div className="relative z-10 space-y-3">
-              {BEST_BY_PLATFORM.map((contest) => <BestContestRow key={contest.platform} contest={contest} />)}
+              {(data?.bestByPlatform ?? []).length > 0 ? (
+                data?.bestByPlatform.map((contest) => <BestContestRow key={contest.platform} contest={contest} />)
+              ) : (
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Best contest highlights appear after your first synced contests.</p>
+              )}
             </div>
           </Card>
         </div>

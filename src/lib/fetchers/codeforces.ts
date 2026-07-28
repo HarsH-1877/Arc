@@ -209,3 +209,31 @@ export async function getCFSubmissions(
     creationTimeSeconds: s.creationTimeSeconds,
   }));
 }
+
+export interface CFContest {
+  id: number;
+  name: string;
+  type: string;
+  phase: string;
+  frozen: boolean;
+  durationSeconds: number;
+  startTimeSeconds: number;
+  relativeTimeSeconds?: number;
+}
+
+/**
+ * Fetch Codeforces contest schedule (upcoming and recent).
+ */
+export async function getCFContests(): Promise<CFContest[]> {
+  const raw = await cfFetch<CFContest[]>('contest.list?gym=false');
+  return raw.map((c) => ({
+    id: c.id,
+    name: c.name,
+    type: c.type,
+    phase: c.phase,
+    frozen: c.frozen,
+    durationSeconds: c.durationSeconds,
+    startTimeSeconds: c.startTimeSeconds,
+    relativeTimeSeconds: c.relativeTimeSeconds,
+  }));
+}

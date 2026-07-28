@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     let user = await db.user.findUnique({ where: { email } });
+    const isNewUser = !user;
 
     if (!user) {
       const username = await resolveUsername(email, requestedUsername);
@@ -59,11 +60,28 @@ export async function POST(request: NextRequest) {
           onboarded: Boolean(onboard),
         },
       });
-    } else if (decodedToken.picture && decodedToken.picture !== user.avatarUrl) {
-      user = await db.user.update({
-        where: { id: user.id },
-        data: { avatarUrl: decodedToken.picture },
-      });
+    } else {
+      const updates: { avatarUrl?: string; username?: string; displayName?: string } = {};
+
+      if (decodedToken.picture && decodedToken.picture !== user.avatarUrl) {
+        updates.avatarUrl = decodedToken.picture;
+      }
+
+      if (requestedUsername && USERNAME_RE.test(requestedUsername.toLowerCase())) {
+        const normalized = requestedUsername.toLowerCase();
+        const taken = await db.user.findUnique({ where: { username: normalized } });
+        if (!taken || taken.id === user.id) {
+          updates.username = normalized;
+          updates.displayName = normalized;
+        }
+      }
+
+      if (Object.keys(updates).length > 0) {
+        user = await db.user.update({
+          where: { id: user.id },
+          data: updates,
+        });
+      }
     }
 
     if (onboard && !user.onboarded) {
@@ -78,6 +96,7 @@ export async function POST(request: NextRequest) {
       ok: true,
       onboarded: user.onboarded,
       userId: user.id,
+      isNewUser,
     });
 
     response.cookies.set('arc-session', sessionCookie, {
@@ -109,6 +128,12 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE() {
   const response = NextResponse.json({ ok: true });
-  response.cookies.delete('arc-session');
+  response.cookies.set('arc-session', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  });
   return response;
 }

@@ -36,8 +36,8 @@ export default function LinkAccountPage() {
   const [lcError, setLcError] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [saving, setSaving] = useState(false);
-  const debouncedCfHandle = useDebounce(cfHandle, 500);
-  const debouncedLcUsername = useDebounce(lcUsername, 500);
+  const debouncedCfHandle = useDebounce(cfHandle, 300);
+  const debouncedLcUsername = useDebounce(lcUsername, 300);
 
   useEffect(() => {
     if (!debouncedCfHandle) {
@@ -47,8 +47,9 @@ export default function LinkAccountPage() {
       return;
     }
 
+    const controller = new AbortController();
     setCfStatus('checking');
-    fetch(`/api/onboarding/validate-cf?handle=${encodeURIComponent(debouncedCfHandle)}`)
+    fetch(`/api/onboarding/validate-cf?handle=${encodeURIComponent(debouncedCfHandle)}`, { signal: controller.signal })
       .then((response) => response.json())
       .then((data) => {
         if (data.valid) {
@@ -61,10 +62,13 @@ export default function LinkAccountPage() {
           setCfError(data.error ?? 'Handle not found.');
         }
       })
-      .catch(() => {
+      .catch((err: unknown) => {
+        if ((err as { name?: string }).name === 'AbortError') return;
         setCfStatus('invalid');
         setCfError('Could not reach Codeforces.');
       });
+
+    return () => controller.abort();
   }, [debouncedCfHandle]);
 
   useEffect(() => {
@@ -75,8 +79,9 @@ export default function LinkAccountPage() {
       return;
     }
 
+    const controller = new AbortController();
     setLcStatus('checking');
-    fetch(`/api/onboarding/validate-lc?username=${encodeURIComponent(debouncedLcUsername)}`)
+    fetch(`/api/onboarding/validate-lc?username=${encodeURIComponent(debouncedLcUsername)}`, { signal: controller.signal })
       .then((response) => response.json())
       .then((data) => {
         if (data.valid) {
@@ -89,10 +94,13 @@ export default function LinkAccountPage() {
           setLcError(data.error ?? 'Username not found.');
         }
       })
-      .catch(() => {
+      .catch((err: unknown) => {
+        if ((err as { name?: string }).name === 'AbortError') return;
         setLcStatus('invalid');
         setLcError('Could not reach LeetCode.');
       });
+
+    return () => controller.abort();
   }, [debouncedLcUsername]);
 
   const canSave =
@@ -282,7 +290,7 @@ function HandleCard({
 function PreviewRow({ image, name, meta }: { image: string | null; name: string; meta: string }) {
   return (
     <div className="mt-3 flex items-center gap-3 rounded-xl border border-[rgba(52,199,123,0.22)] bg-[rgba(52,199,123,0.08)] p-3">
-      {image ? <Image src={image} width={36} height={36} alt="" className="h-9 w-9 rounded-lg object-cover" /> : <div className="h-9 w-9 rounded-lg bg-[var(--bg-elevated)]" />}
+      {image ? <Image src={image} width={36} height={36} alt="" className="h-9 w-9 rounded-lg object-cover" unoptimized /> : <div className="h-9 w-9 rounded-lg bg-[var(--bg-elevated)]" />}
       <div className="min-w-0">
         <p className="truncate font-mono text-sm font-semibold text-[var(--text-primary)]">{name}</p>
         <p className="truncate text-xs text-[var(--text-secondary)]">{meta}</p>

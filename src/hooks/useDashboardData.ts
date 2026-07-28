@@ -39,6 +39,22 @@ export interface DashboardApiData {
     tags: string[];
     timestamp: string;
   }[];
+  contestCalendarEvents: Array<{
+    date: string;
+    label: string;
+    platform: 'CODEFORCES' | 'LEETCODE';
+    type: 'given' | 'upcoming' | 'missed';
+    delta?: number;
+    contestId?: string;
+  }>;
+  upcomingContests: Array<{
+    id: string;
+    name: string;
+    platform: 'CODEFORCES' | 'LEETCODE';
+    startTime: string;
+    durationSeconds: number;
+    href: string;
+  }>;
 }
 
 async function fetchDashboard(): Promise<DashboardApiData> {

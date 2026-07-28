@@ -124,7 +124,7 @@ export function HeroStats({ data, loading }: HeroStatsProps) {
         <ActivityCheckupRow data={data} loading={loading} className="sm:col-span-3" />
       </div>
 
-      <ContestCalendar data={data?.ratingChartData ?? []} loading={loading} />
+      <ContestCalendar events={data?.contestCalendarEvents ?? []} loading={loading} />
     </div>
   );
 }

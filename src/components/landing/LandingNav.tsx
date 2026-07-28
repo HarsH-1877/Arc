@@ -8,7 +8,7 @@ const TICKER_ITEMS = [
   '38,204 problems solved today',
   '12,847 active users',
 ];
-
+g
 export function LandingNav() {
   const [scrolled, setScrolled] = useState(false);
   const [tickerIdx, setTickerIdx] = useState(0);

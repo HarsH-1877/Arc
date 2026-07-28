@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { AlertCircle, ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, XCircle } from 'lucide-react';
@@ -11,6 +12,7 @@ import {
   GoogleAuthProvider,
   linkWithCredential,
   signInWithPopup,
+  signOut,
   updateProfile,
 } from 'firebase/auth';
 import { AuthStepper } from '@/components/auth/AuthStepper';
@@ -21,16 +23,28 @@ import { EASE_OUT_FAST } from '@/lib/animations';
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-async function createSession(idToken: string, username: string) {
+async function createSession(idToken: string, username?: string) {
   const response = await fetch('/api/auth/session', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ idToken, username }),
+    body: JSON.stringify(username ? { idToken, username } : { idToken }),
   });
   const data = await response.json();
   if (!response.ok || !data.ok) {
     throw new Error(data.error?.message ?? 'Arc could not start a secure session. Please try again.');
   }
+  return data as { ok: true; onboarded: boolean; isNewUser: boolean };
+}
+
+async function precheckAccount(idToken: string) {
+  const response = await fetch('/api/auth/precheck', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? 'Could not verify Google account.');
+  return data as { exists: boolean; onboarded: boolean };
 }
 
 function passwordScore(password: string) {
@@ -39,6 +53,10 @@ function passwordScore(password: string) {
 
 function isGoogleUser(user: User | null) {
   return Boolean(user?.providerData.some((provider) => provider.providerId === 'google.com'));
+}
+
+function hasArcPassword(user: User | null) {
+  return Boolean(user?.providerData.some((provider) => provider.providerId === 'password'));
 }
 
 function describeFirebaseError(error: unknown) {
@@ -52,6 +70,7 @@ function describeFirebaseError(error: unknown) {
     'auth/email-already-in-use': 'That Arc user ID is already in use. Choose a different one.',
     'auth/provider-already-linked': 'These Arc credentials are already connected. Continue to link your coding handles.',
     'auth/weak-password': 'Password must be at least 6 characters.',
+    'auth/popup-closed-by-user': 'Google sign-in was cancelled.',
   };
   return messages[code ?? ''] ?? (error instanceof Error ? error.message : 'Something went wrong. Please try again.');
 }
@@ -64,11 +83,72 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [bootstrapping, setBootstrapping] = useState(true);
   const [error, setError] = useState('');
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
   const debouncedUsername = useDebounce(username, 350);
   const score = passwordScore(password);
   const step = googleUser ? 1 : 0;
+
+  const routeExistingGoogleUser = useCallback(async (user: User) => {
+    const idToken = await user.getIdToken(true);
+    const status = await precheckAccount(idToken);
+
+    if (status.exists && status.onboarded) {
+      await createSession(idToken);
+      router.replace('/dashboard');
+      return true;
+    }
+
+    if (status.exists && !status.onboarded && hasArcPassword(user)) {
+      await createSession(idToken);
+      router.replace('/link-account');
+      return true;
+    }
+
+    if (status.exists && !status.onboarded && !hasArcPassword(user)) {
+      await fetch('/api/auth/session', { method: 'DELETE' });
+      setGoogleUser(user);
+      return true;
+    }
+
+    return false;
+  }, [router]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function bootstrap() {
+      try {
+        const user = auth.currentUser;
+        if (user && isGoogleUser(user)) {
+          const routed = await routeExistingGoogleUser(user);
+          if (routed) return;
+          setGoogleUser(user);
+          return;
+        }
+
+        const statusRes = await fetch('/api/auth/status');
+        const status = await statusRes.json();
+
+        if (status.authenticated && status.onboarded) {
+          router.replace('/dashboard');
+          return;
+        }
+
+        if (status.authenticated && !status.onboarded) {
+          router.replace('/link-account');
+        }
+      } finally {
+        if (!cancelled) setBootstrapping(false);
+      }
+    }
+
+    bootstrap();
+    return () => {
+      cancelled = true;
+    };
+  }, [router, routeExistingGoogleUser]);
 
   useEffect(() => {
     if (!googleUser || !debouncedUsername) {
@@ -112,6 +192,11 @@ export default function SignupPage() {
       return;
     }
 
+    if (password.length < 8 || score < 2) {
+      setError('Use at least 8 characters with a mix of letters, numbers, or symbols.');
+      return;
+    }
+
     setLoading(true);
     try {
       await finishCredentials();
@@ -130,13 +215,25 @@ export default function SignupPage() {
       if (!isGoogleUser(credential.user)) {
         throw new Error('The selected account could not be verified with Google. Please try again.');
       }
-      setGoogleUser(credential.user);
+
+      const routed = await routeExistingGoogleUser(credential.user);
+      if (!routed) {
+        setGoogleUser(credential.user);
+      }
     } catch (googleError: unknown) {
       setError(describeFirebaseError(googleError));
     } finally {
       setGoogleLoading(false);
     }
   };
+
+  if (bootstrapping) {
+    return (
+      <div className="flex min-h-[320px] items-center justify-center">
+        <Loader2 size={24} className="animate-spin text-[var(--text-muted)]" />
+      </div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={EASE_OUT_FAST}>
@@ -167,6 +264,12 @@ export default function SignupPage() {
                 Continue with Google
               </button>
               {error && <ErrorMessage message={error} />}
+              <p className="text-center text-sm text-[var(--text-secondary)]">
+                Already have an account?{' '}
+                <Link href="/login" className="font-medium text-[var(--accent-blue)] hover:text-[var(--text-primary)]">
+                  Sign in
+                </Link>
+              </p>
             </div>
           ) : (
             <form onSubmit={handleCredentials} className="space-y-3.5">
@@ -231,6 +334,23 @@ export default function SignupPage() {
                 className="group flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent-blue)] text-sm font-semibold text-white shadow-[0_14px_34px_rgba(79,110,247,0.24)] hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? <Loader2 size={16} className="animate-spin" /> : <>Continue <ArrowRight size={15} className="group-hover:translate-x-0.5" /></>}
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  await Promise.allSettled([
+                    fetch('/api/auth/session', { method: 'DELETE' }),
+                    signOut(auth),
+                  ]);
+                  setGoogleUser(null);
+                  setUsername('');
+                  setPassword('');
+                  setError('');
+                }}
+                className="w-full text-center text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              >
+                Use a different Google account
               </button>
             </form>
           )}

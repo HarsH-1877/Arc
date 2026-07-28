@@ -31,7 +31,11 @@ export async function GET(request: NextRequest) {
   try {
     const res = await fetch(LC_GRAPHQL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Referer: 'https://leetcode.com',
+        'User-Agent': 'ProjectArc/1.0',
+      },
       body: JSON.stringify({
         query: PROFILE_QUERY,
         variables: { username },

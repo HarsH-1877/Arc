@@ -137,6 +137,12 @@ export const MOCK_DASHBOARD = {
     { id: 's9', problemName: 'Course Schedule', platform: 'LEETCODE' as const, verdict: 'Accepted', difficulty: 'medium', tags: ['Graph', 'Topological Sort'], timestamp: daysAgo(7) },
     { id: 's10', problemName: 'E. Graph Challenge', platform: 'CODEFORCES' as const, verdict: 'OK', difficulty: null, tags: ['graphs'], timestamp: daysAgo(8) },
   ],
+  contestCalendarEvents: [
+    { date: daysAgo(14).slice(0, 10), label: 'Codeforces Round 1034', platform: 'CODEFORCES' as const, type: 'given' as const, delta: 35 },
+    { date: daysAgo(7).slice(0, 10), label: 'LeetCode Weekly Contest 456', platform: 'LEETCODE' as const, type: 'given' as const, delta: 29 },
+    { date: daysAgo(3).slice(0, 10), label: 'Codeforces Round 1035', platform: 'CODEFORCES' as const, type: 'missed' as const },
+  ],
+  upcomingContests: [],
 };
 
 export const MOCK_FRIENDS: Friend[] = [

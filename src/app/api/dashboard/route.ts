@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
-import { getHeatmapLevel } from '@/lib/utils';
 import { USE_MOCK_DATA, MOCK_DASHBOARD } from '@/lib/mock';
+import { fetchUpcomingContests, fetchContestSchedule, buildContestCalendarEvents, contestResultsToHistory, mergeRatingChartData } from '@/lib/contests/schedule';
 
 // GET /api/dashboard
 export async function GET() {
@@ -26,26 +26,30 @@ export async function GET() {
   const cf = user.platforms.find((p) => p.platform === 'CODEFORCES');
   const lc = user.platforms.find((p) => p.platform === 'LEETCODE');
 
-  // Recent submissions (last 50 AC)
   const connectionIds = user.platforms.map((p) => p.id);
-  const recentSubmissions = await db.submission.findMany({
-    where: { connectionId: { in: connectionIds } },
-    orderBy: { timestamp: 'desc' },
-    take: 100,
-  });
 
-  // Build heatmap data (last 365 days)
-  const oneYearAgo = new Date();
-  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-
-  const heatmapSubs = await db.submission.findMany({
-    where: {
-      connectionId: { in: connectionIds },
-      verdict: { in: ['OK', 'Accepted', 'AC'] },
-      timestamp: { gte: oneYearAgo },
-    },
-    select: { timestamp: true },
-  });
+  const [recentSubmissions, heatmapSubs, contestRows, upcomingContests, contestSchedule] = await Promise.all([
+    db.submission.findMany({
+      where: { connectionId: { in: connectionIds } },
+      orderBy: { timestamp: 'desc' },
+      take: 100,
+    }),
+    db.submission.findMany({
+      where: {
+        connectionId: { in: connectionIds },
+        verdict: { in: ['OK', 'Accepted', 'AC'] },
+        timestamp: { gte: new Date(Date.now() - 365 * 86400000) },
+      },
+      select: { timestamp: true },
+    }),
+    db.contestResult.findMany({
+      where: { connectionId: { in: connectionIds } },
+      orderBy: { timestamp: 'desc' },
+      take: 20,
+    }),
+    fetchUpcomingContests(),
+    fetchContestSchedule(),
+  ]);
 
   const heatmapMap: Record<string, number> = {};
   for (const sub of heatmapSubs) {
@@ -60,14 +64,32 @@ export async function GET() {
     rating: number;
     contestId: number;
   }[];
-  const lcContestRating = lc?.leetcodeData?.contestRating;
 
-  // Merge CF rating history with static LC rating for chart display
-  const ratingChartData = cfRatingHistory.map((r) => ({
-    date: r.date,
-    cfRating: r.rating,
-    lcRating: lcContestRating ?? undefined,
+  const lcRatingHistory = (
+    (lc?.leetcodeData?.streakData as { ratingHistory?: Array<{ startTime: number; rating: number }> } | null)
+      ?.ratingHistory ?? []
+  ).map((entry) => ({
+    date: new Date(entry.startTime * 1000).toISOString(),
+    rating: entry.rating,
   }));
+
+  const ratingChartData = mergeRatingChartData(cfRatingHistory, lcRatingHistory);
+
+  const contestHistory = contestResultsToHistory(
+    contestRows.map((row) => {
+      const ratingChange = row.ratingChange ?? 0;
+      const after = row.newRating ?? 0;
+      return {
+        ...row,
+        metadata: { oldRating: after - ratingChange },
+      };
+    }),
+  );
+
+  const attendedKeys = new Set(
+    contestHistory.map((contest) => `${contest.platform}:${contest.date}:${contest.name}`),
+  );
+  const contestCalendarEvents = buildContestCalendarEvents(contestHistory, contestSchedule, attendedKeys);
 
   // Build topic stats (merged CF + LC tags)
   const cfTags = (cf?.codeforcesData?.tagStats ?? {}) as Record<string, number>;
@@ -131,6 +153,8 @@ export async function GET() {
       : { currentStreak: 0, longestStreak: 0, freezeTokens: 2, totalActiveDays: 0 },
     heatmapData,
     ratingChartData,
+    contestCalendarEvents,
+    upcomingContests: upcomingContests.slice(0, 5),
     topicStats,
     recentSubmissions: recentSubmissions.map((s) => ({
       id: s.id,

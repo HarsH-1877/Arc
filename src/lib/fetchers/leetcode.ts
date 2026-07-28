@@ -38,6 +38,23 @@ export interface LCTagStat {
   problemsSolved: number;
 }
 
+export interface LCProfile {
+  username: string;
+  ranking: number | null;
+  avatar: string | null;
+  realName: string | null;
+}
+
+export interface LCContestHistoryEntry {
+  contestTitle: string;
+  startTime: number;
+  rating: number;
+  ranking: number;
+  problemsSolved: number;
+  totalProblems: number;
+  attended: boolean;
+}
+
 // ---------------------------------------------------------------------------
 // Internal raw response types
 // ---------------------------------------------------------------------------
@@ -300,4 +317,85 @@ export async function getLCTagStats(username: string): Promise<LCTagStat[]> {
   return Array.from(merged.entries())
     .map(([tagName, problemsSolved]) => ({ tagName, problemsSolved }))
     .sort((a, b) => b.problemsSolved - a.problemsSolved);
+}
+
+/**
+ * Fetch public profile details (avatar, global ranking).
+ */
+export async function getLCProfile(username: string): Promise<LCProfile> {
+  const query = `
+    query getUserProfile($username: String!) {
+      matchedUser(username: $username) {
+        username
+        profile {
+          realName
+          userAvatar
+          ranking
+        }
+      }
+    }
+  `;
+
+  const data = await lcQuery<{
+    matchedUser: {
+      username: string;
+      profile: { realName: string | null; userAvatar: string | null; ranking: number | null } | null;
+    } | null;
+  }>(query, { username });
+
+  if (!data.matchedUser) {
+    throw new Error(`LeetCode user not found: ${username}`);
+  }
+
+  return {
+    username: data.matchedUser.username,
+    ranking: data.matchedUser.profile?.ranking ?? null,
+    avatar: data.matchedUser.profile?.userAvatar ?? null,
+    realName: data.matchedUser.profile?.realName ?? null,
+  };
+}
+
+/**
+ * Fetch contest participation history with per-contest stats.
+ */
+export async function getLCContestHistory(username: string): Promise<LCContestHistoryEntry[]> {
+  const query = `
+    query getContestHistory($username: String!) {
+      userContestRankingHistory(username: $username) {
+        attended
+        rating
+        ranking
+        problemsSolved
+        totalProblems
+        contest {
+          title
+          startTime
+        }
+      }
+    }
+  `;
+
+  const data = await lcQuery<{
+    userContestRankingHistory: Array<{
+      attended: boolean;
+      rating: number;
+      ranking: number;
+      problemsSolved: number;
+      totalProblems: number;
+      contest: { title: string; startTime: number };
+    }> | null;
+  }>(query, { username });
+
+  return (data.userContestRankingHistory ?? [])
+    .filter((entry) => entry.attended && entry.contest)
+    .map((entry) => ({
+      contestTitle: entry.contest.title,
+      startTime: entry.contest.startTime,
+      rating: Math.round(entry.rating),
+      ranking: entry.ranking,
+      problemsSolved: entry.problemsSolved,
+      totalProblems: entry.totalProblems,
+      attended: entry.attended,
+    }))
+    .sort((a, b) => a.startTime - b.startTime);
 }

@@ -1,9 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { getRedirectResult, GoogleAuthProvider, signInWithEmailAndPassword, signInWithRedirect } from 'firebase/auth';
@@ -23,7 +23,7 @@ async function createSession(idToken: string) {
   if (!res.ok || !data.ok) {
     throw new Error(data.error?.message ?? 'Session creation failed. Please try again.');
   }
-  return data;
+  return data as { ok: true; onboarded: boolean };
 }
 
 async function resolveIdentifier(identifier: string) {
@@ -33,8 +33,10 @@ async function resolveIdentifier(identifier: string) {
   return data.email as string;
 }
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('from');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -45,8 +47,12 @@ export default function LoginPage() {
 
   const finishSession = useCallback(async (idToken: string) => {
     const data = await createSession(idToken);
+    if (redirectTo && redirectTo.startsWith('/') && data.onboarded) {
+      router.push(redirectTo);
+      return;
+    }
     router.push(data.onboarded ? '/dashboard' : '/link-account');
-  }, [router]);
+  }, [redirectTo, router]);
 
   useEffect(() => {
     if (handledGoogleRedirect.current) return;
@@ -130,7 +136,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <label className="block">
-              <span className="mb-2 block text-xs font-medium text-[var(--text-secondary)]">Arc user ID or email</span>
+              <span className="mb-2 block text-xs font-medium text-[var(--text-secondary)]">Arc user ID</span>
               <input
                 value={identifier}
                 onChange={(event) => setIdentifier(event.target.value)}
@@ -189,6 +195,14 @@ export default function LoginPage() {
         </div>
       </section>
     </motion.div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }
 

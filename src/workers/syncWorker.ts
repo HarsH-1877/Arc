@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { getCFUser, getCFRatingHistory, getCFSubmissions } from '@/lib/fetchers/codeforces';
-import { getLCSolvedStats, getLCContestInfo, getLCRecentSubmissions, getLCTagStats } from '@/lib/fetchers/leetcode';
+import { getLCSolvedStats, getLCContestInfo, getLCRecentSubmissions, getLCTagStats, getLCContestHistory, getLCProfile } from '@/lib/fetchers/leetcode';
 import type { Platform } from '@prisma/client';
 
 // ─── Streak calculation ──────────────────────────────────────────────────────
@@ -90,7 +90,7 @@ export async function recalculateStreak(userId: string): Promise<void> {
 
 // ─── Platform sync ───────────────────────────────────────────────────────────
 
-export async function syncPlatform(connectionId: string): Promise<void> {
+export async function syncPlatform(connectionId: string, options?: { quick?: boolean }): Promise<void> {
   const connection = await db.platformConnection.findUnique({
     where: { id: connectionId },
     include: { user: { select: { id: true } } },
@@ -106,9 +106,9 @@ export async function syncPlatform(connectionId: string): Promise<void> {
 
   try {
     if (connection.platform === 'CODEFORCES') {
-      await syncCodeforces(connectionId, connection.handle, connection.user.id);
+      await syncCodeforces(connectionId, connection.handle, connection.user.id, options?.quick);
     } else {
-      await syncLeetCode(connectionId, connection.handle, connection.user.id);
+      await syncLeetCode(connectionId, connection.handle, connection.user.id, options?.quick);
     }
 
     await db.platformConnection.update({
@@ -127,11 +127,12 @@ export async function syncPlatform(connectionId: string): Promise<void> {
   }
 }
 
-async function syncCodeforces(connectionId: string, handle: string, userId: string) {
+async function syncCodeforces(connectionId: string, handle: string, userId: string, quick = false) {
+  const submissionLimit = quick ? 100 : 500;
   const [cfUser, ratingHistory, submissions] = await Promise.all([
     getCFUser(handle),
     getCFRatingHistory(handle),
-    getCFSubmissions(handle, 500),
+    getCFSubmissions(handle, submissionLimit),
   ]);
 
   // Build tag stats from AC submissions
@@ -228,18 +229,34 @@ async function syncCodeforces(connectionId: string, handle: string, userId: stri
   }
 }
 
-async function syncLeetCode(connectionId: string, username: string, userId: string) {
-  const [solvedStats, contestInfo, recentSubs, tagStats] = await Promise.all([
+async function syncLeetCode(connectionId: string, username: string, userId: string, quick = false) {
+  const submissionLimit = quick ? 30 : 100;
+  const [solvedStats, contestInfo, recentSubs, tagStats, contestHistory, profile] = await Promise.all([
     getLCSolvedStats(username),
     getLCContestInfo(username),
-    getLCRecentSubmissions(username, 50),
+    getLCRecentSubmissions(username, submissionLimit),
     getLCTagStats(username),
+    quick ? Promise.resolve([]) : getLCContestHistory(username),
+    quick ? Promise.resolve(null) : getLCProfile(username).catch(() => null),
   ]);
 
   const tagStatsMap: Record<string, number> = {};
   for (const t of tagStats) {
     tagStatsMap[t.tagName] = t.problemsSolved;
   }
+
+  const ratingHistory = contestHistory.map((entry, index) => {
+    const previous = contestHistory[index - 1]?.rating ?? entry.rating;
+    return {
+      contestTitle: entry.contestTitle,
+      startTime: entry.startTime,
+      rating: entry.rating,
+      ratingChange: entry.rating - previous,
+      ranking: entry.ranking,
+      problemsSolved: entry.problemsSolved,
+      totalProblems: entry.totalProblems,
+    };
+  });
 
   await db.leetcodeData.upsert({
     where: { connectionId },
@@ -250,10 +267,12 @@ async function syncLeetCode(connectionId: string, username: string, userId: stri
       mediumSolved: solvedStats.mediumSolved,
       hardSolved: solvedStats.hardSolved,
       acceptanceRate: solvedStats.acceptanceRate,
+      ranking: profile?.ranking ?? null,
       contestRating: contestInfo?.rating ?? null,
-      contestsAttended: contestInfo?.attended ?? 0,
+      contestsAttended: contestInfo?.attended ?? contestHistory.length,
       topPercentage: contestInfo?.topPercentage ?? null,
       tagStats: tagStatsMap,
+      streakData: { ratingHistory },
     },
     update: {
       totalSolved: solvedStats.totalSolved,
@@ -261,10 +280,12 @@ async function syncLeetCode(connectionId: string, username: string, userId: stri
       mediumSolved: solvedStats.mediumSolved,
       hardSolved: solvedStats.hardSolved,
       acceptanceRate: solvedStats.acceptanceRate,
+      ranking: profile?.ranking ?? null,
       contestRating: contestInfo?.rating ?? null,
-      contestsAttended: contestInfo?.attended ?? 0,
+      contestsAttended: contestInfo?.attended ?? contestHistory.length,
       topPercentage: contestInfo?.topPercentage ?? null,
       tagStats: tagStatsMap,
+      streakData: { ratingHistory },
     },
   });
 
@@ -285,6 +306,37 @@ async function syncLeetCode(connectionId: string, username: string, userId: stri
         tags: [],
       },
       update: {},
+    });
+  }
+
+  for (let index = 0; index < contestHistory.length; index++) {
+    const entry = contestHistory[index];
+    const previousRating = contestHistory[index - 1]?.rating ?? entry.rating;
+    const contestId = `${entry.startTime}-${entry.contestTitle.replace(/\s+/g, '-').slice(0, 48)}`;
+
+    await db.contestResult.upsert({
+      where: {
+        connectionId_contestId_platform: {
+          connectionId,
+          contestId,
+          platform: 'LEETCODE',
+        },
+      },
+      create: {
+        connectionId,
+        platform: 'LEETCODE',
+        contestId,
+        contestName: entry.contestTitle,
+        rank: entry.ranking,
+        ratingChange: entry.rating - previousRating,
+        newRating: entry.rating,
+        timestamp: new Date(entry.startTime * 1000),
+      },
+      update: {
+        rank: entry.ranking,
+        ratingChange: entry.rating - previousRating,
+        newRating: entry.rating,
+      },
     });
   }
 }

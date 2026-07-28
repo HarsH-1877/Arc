@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { syncPlatform } from '@/workers/syncWorker';
 import type { Platform } from '@prisma/client';
 import { getSession } from '@/lib/session';
+import { getCFUser } from '@/lib/fetchers/codeforces';
+import { getLCSolvedStats } from '@/lib/fetchers/leetcode';
+import { queueBackgroundSync } from '@/lib/sync/background';
+
+const HANDLE_RE = /^[a-zA-Z0-9_-]{1,24}$/;
 
 // POST /api/platforms/link
 export async function POST(request: NextRequest) {
@@ -15,23 +19,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'platform and handle are required' }, { status: 400 });
     }
 
-    // Validate handle exists on the platform
+    if (!HANDLE_RE.test(handle)) {
+      return NextResponse.json({ error: 'Invalid handle format' }, { status: 400 });
+    }
+
     if (platform === 'CODEFORCES') {
-      const res = await fetch(`https://codeforces.com/api/user.info?handles=${encodeURIComponent(handle)}`);
-      const data = await res.json();
-      if (data.status !== 'OK') {
+      try {
+        await getCFUser(handle);
+      } catch {
         return NextResponse.json({ error: 'Codeforces handle not found' }, { status: 422 });
       }
     } else if (platform === 'LEETCODE') {
-      const res = await fetch('https://leetcode.com/graphql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: `query { matchedUser(username: "${handle}") { username } }` }),
-      });
-      const data = await res.json();
-      if (!data?.data?.matchedUser) {
+      try {
+        await getLCSolvedStats(handle);
+      } catch {
         return NextResponse.json({ error: 'LeetCode username not found' }, { status: 422 });
       }
+    } else {
+      return NextResponse.json({ error: 'Unsupported platform' }, { status: 400 });
+    }
+
+    const taken = await db.platformConnection.findFirst({
+      where: {
+        platform,
+        handle,
+        userId: { not: session.id },
+      },
+    });
+    if (taken) {
+      return NextResponse.json({ error: 'This handle is already linked to another Arc account.' }, { status: 409 });
     }
 
     const connection = await db.platformConnection.upsert({
@@ -40,9 +56,9 @@ export async function POST(request: NextRequest) {
       update: { handle, syncStatus: 'PENDING', syncError: null },
     });
 
-    await syncPlatform(connection.id);
+    queueBackgroundSync(connection.id, true);
 
-    return NextResponse.json({ ok: true, connectionId: connection.id, status: 'SYNCED' });
+    return NextResponse.json({ ok: true, connectionId: connection.id, status: 'SYNCING' });
   } catch (err) {
     console.error('[platforms/link]', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
