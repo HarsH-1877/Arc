@@ -88,7 +88,7 @@ export function LandingNav() {
           Features
         </Link>
         <Link
-          href="/login"
+          href="/login?fresh=1"
           className="landing-feature-link inline-flex h-9 items-center font-mono text-[11px] uppercase tracking-[0.08em]"
           style={{ color: '#8A8A85' }}
         >
@@ -96,8 +96,8 @@ export function LandingNav() {
         </Link>
         <Link
           ref={btnRef}
-          href="/signup"
-          className="landing-connect-link inline-flex h-9 items-center border px-4 font-mono text-[11px] uppercase tracking-[0.08em] transition-all duration-150"
+          href="/signup?fresh=1"
+          className="landing-connect-link inline-flex h-9 items-center justify-center border px-4 font-mono text-[11px] uppercase leading-none tracking-[0.08em] transition-all duration-150"
           style={{
             borderColor: '#242426',
             borderRadius: 2,

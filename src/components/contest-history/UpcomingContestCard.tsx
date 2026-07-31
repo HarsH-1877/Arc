@@ -10,6 +10,7 @@ interface ContestItem {
   date: string;
   time: string;
   href: string;
+  registrationOpen?: boolean;
 }
 
 
@@ -49,6 +50,7 @@ export function UpcomingContestCard({ contest }: { contest: ContestItem }) {
   }, [contest.date, contest.time]);
 
   let displayId: string | null = null;
+  const canRegister = contest.platform !== 'CODEFORCES' || contest.registrationOpen !== false;
   if (contest.platform === 'CODEFORCES') {
     const divMatch = contest.name.match(/(Div\.?\s*\d)/i);
     const eduMatch = contest.name.match(/(Educational)/i);
@@ -107,15 +109,21 @@ export function UpcomingContestCard({ contest }: { contest: ContestItem }) {
         </div>
       </div>
 
-      <a
-        href={contest.href}
-        target="_blank"
-        rel="noreferrer"
-        className="flex w-full items-center justify-center gap-2 py-3 text-[11px] font-bold tracking-[0.2em] transition-opacity hover:opacity-90"
-        style={{ background: 'var(--text-primary)', color: 'var(--bg-card)', textDecoration: 'none' }}
-      >
-        REGISTER <ChevronRight size={14} strokeWidth={3} />
-      </a>
+      {canRegister ? (
+        <a
+          href={contest.href}
+          target="_blank"
+          rel="noreferrer"
+          className="flex w-full items-center justify-center gap-2 py-3 text-[11px] font-bold tracking-[0.2em] transition-opacity hover:opacity-90"
+          style={{ background: 'var(--text-primary)', color: 'var(--bg-card)', textDecoration: 'none' }}
+        >
+          REGISTER <ChevronRight size={14} strokeWidth={3} />
+        </a>
+      ) : (
+        <div className="flex w-full items-center justify-center py-3 text-[11px] font-bold tracking-[0.2em]" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', borderTop: '1px solid var(--border-subtle)' }}>
+          REGISTRATION SOON
+        </div>
+      )}
     </div>
   );
 }

@@ -14,6 +14,7 @@ export interface ContestItem {
   solved: number;
   total: number;
   href: string;
+  registrationOpen?: boolean;
 }
 
 interface ContestsApiData {

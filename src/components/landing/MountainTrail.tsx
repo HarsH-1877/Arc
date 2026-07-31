@@ -17,7 +17,7 @@ const LABEL_POINTS = [
   { left: 71.6, top: 17.2 },
 ];
 
-const TRAIL_D = 'M 12 96 C 25 93, 38 88, 47.5 77.5 C 51 70, 53 69, 54.2 66.8 C 57 59, 59 57, 61.2 53.5 C 63 48, 64 45, 66.1 41.5 C 68 35, 68.5 32, 69.5 28.5 C 70.5 23, 70.6 18, 70.8 16.2';
+const TRAIL_D = 'M 12 96 C 25 93, 38 88, 47.5 77.5 C 51 70, 53 69, 54.2 66.8 C 57 59, 59 57, 61.2 53.5 C 63 48, 64 45, 66.1 41.5 C 68 35, 68.5 32, 69.5 28.5 C 70.5 23, 70.8 18.5, 71.6 17.2';
 
 
 
@@ -211,7 +211,10 @@ export function MountainTrail() {
           backgroundImage: 'url(/bg-original.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          filter: 'brightness(0.6)',
+          // Preserve the supplied image detail; a dark overlay handles text
+          // contrast without crushing highlights or softening the mountain.
+          filter: 'contrast(1.05) saturate(1.04)',
+          imageRendering: 'auto',
         }}
       />
 
@@ -240,7 +243,7 @@ export function MountainTrail() {
         }}
       >
         <defs>
-          <linearGradient id="trailGrad" gradientUnits="userSpaceOnUse" x1="12" y1="96" x2="70.8" y2="16.2">
+          <linearGradient id="trailGrad" gradientUnits="userSpaceOnUse" x1="12" y1="96" x2="71.6" y2="17.2">
             <stop offset="0%" stopColor="var(--active-tier, #3B7DDB)" stopOpacity="0.15" />
             <stop offset="60%" stopColor="var(--active-tier, #3B7DDB)" stopOpacity="0.6" />
             <stop offset="100%" stopColor="white" stopOpacity="0.95" />

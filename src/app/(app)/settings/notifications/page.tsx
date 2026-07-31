@@ -1,7 +1,7 @@
 'use client';
 
 import { GlassCard } from '@/components/shared/GlassCard';
-import { Bell, UserPlus, TrendingUp, RefreshCw } from 'lucide-react';
+import { Bell, UserPlus, TrendingUp, CalendarClock } from 'lucide-react';
 import { useState } from 'react';
 
 const TOGGLES = [
@@ -24,10 +24,10 @@ const TOGGLES = [
     description: 'When your Codeforces or LeetCode rating changes by 50+ points.',
   },
   {
-    id: 'syncComplete',
-    icon: RefreshCw,
-    label: 'Sync completion',
-    description: 'When a platform sync finishes successfully.',
+    id: 'contestReminders',
+    icon: CalendarClock,
+    label: 'Contest reminders',
+    description: 'When a connected-platform contest is scheduled for today.',
   },
 ] as const;
 
@@ -38,7 +38,7 @@ export default function NotificationsSettingsPage() {
     friendRequests: true,
     friendAccepted: true,
     ratingChanges: true,
-    syncComplete: true,
+    contestReminders: true,
   });
 
   const toggle = (id: ToggleId) => {

@@ -10,9 +10,11 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Link as LinkIcon } from 'lucide-react';
 import { Card } from '@/components/shared/Card';
 import { FriendsLeaderboard } from '@/components/dashboard/FriendsLeaderboard';
+import { useUIStore } from '@/store/useUIStore';
 
 export function DashboardClient() {
   const { data, isLoading } = useDashboardData();
+  const { selectedPlatform } = useUIStore();
 
   const cf = data?.platforms.codeforces;
   const lc = data?.platforms.leetcode;
@@ -41,11 +43,17 @@ export function DashboardClient() {
 
           <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div className="min-w-0 space-y-4">
-              <Card variant="base" padding="18px">
+              <Card variant="base" padding="18px" className="h-[218px] overflow-hidden">
                 <span style={{ fontSize: '10px', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '12px', display: 'block' }}>
                   Activity Heatmap
                 </span>
-                <ActivityHeatmap data={data?.heatmapData ?? []} loading={isLoading} compact />
+                <ActivityHeatmap
+                  data={selectedPlatform === 'CODEFORCES'
+                    ? data?.codeforcesHeatmapData ?? data?.heatmapData ?? []
+                    : data?.leetcodeHeatmapData ?? []}
+                  loading={isLoading}
+                  compact
+                />
               </Card>
 
               <Card variant="base" padding="18px">
@@ -57,7 +65,13 @@ export function DashboardClient() {
             </div>
 
             <div className="min-w-0">
-              <TopicBreakdown topics={data?.topicStats ?? []} loading={isLoading} />
+              <TopicBreakdown
+                topics={selectedPlatform === 'CODEFORCES'
+                  ? data?.codeforcesTopicStats ?? data?.topicStats ?? []
+                  : data?.leetcodeTopicStats ?? data?.topicStats ?? []}
+                loading={isLoading}
+                className="h-[218px]"
+              />
             </div>
           </div>
         </>

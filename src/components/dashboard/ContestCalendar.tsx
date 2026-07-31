@@ -16,7 +16,7 @@ interface ContestDay {
   label: string;
   delta?: number;
   type: 'given' | 'upcoming' | 'missed';
-  platforms: ('CODEFORCES' | 'LEETCODE')[];
+  platforms: Array<{ platform: 'CODEFORCES' | 'LEETCODE'; href?: string }>;
 }
 
 function buildContestDays(events: NonNullable<DashboardApiData['contestCalendarEvents']> = []): ContestDay[] {
@@ -28,7 +28,9 @@ function buildContestDays(events: NonNullable<DashboardApiData['contestCalendarE
     const existing = grouped.get(key);
 
     if (existing) {
-      if (!existing.platforms.includes(event.platform)) existing.platforms.push(event.platform);
+      if (!existing.platforms.some((item) => item.platform === event.platform)) {
+        existing.platforms.push({ platform: event.platform, href: event.href });
+      }
       if (event.type === 'given' && typeof event.delta === 'number') existing.delta = event.delta;
       if (event.type !== 'upcoming') existing.type = event.type;
       if (existing.label !== event.label) existing.label = `${existing.label} & ${event.label}`;
@@ -38,7 +40,7 @@ function buildContestDays(events: NonNullable<DashboardApiData['contestCalendarE
         label: event.label,
         delta: event.delta,
         type: event.type,
-        platforms: [event.platform],
+        platforms: [{ platform: event.platform, href: event.href }],
       });
     }
   }
@@ -165,12 +167,12 @@ export function ContestCalendar({ events = [], loading = false }: ContestCalenda
               <div className="flex justify-between items-end mt-auto">
                 <div>
                   {event && event.platforms.length > 1 && (
-                    <PlatformLogo platform={event.platforms[1]} size={11} />
+                    <ContestLogo item={event.platforms[1]} label={event.label} />
                   )}
                 </div>
                 <div>
                   {event && event.platforms.length > 0 && (
-                    <PlatformLogo platform={event.platforms[0]} size={11} />
+                    <ContestLogo item={event.platforms[0]} label={event.label} />
                   )}
                 </div>
               </div>
@@ -194,5 +196,13 @@ export function ContestCalendar({ events = [], loading = false }: ContestCalenda
         </span>
       </div>
     </Card>
+  );
+}
+
+function ContestLogo({ item, label }: { item: ContestDay['platforms'][number]; label: string }) {
+  return (
+    <span className="group inline-flex rounded-sm p-0.5 hover:bg-white/[0.08]" title={label}>
+      <PlatformLogo platform={item.platform} size={12} className="transition-transform duration-150 group-hover:scale-110" />
+    </span>
   );
 }

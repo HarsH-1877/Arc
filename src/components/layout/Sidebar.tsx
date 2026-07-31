@@ -46,14 +46,16 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
 
   async function handleSignOut() {
     await Promise.allSettled([
-      fetch('/api/auth/session', { method: 'DELETE' }),
+      fetch('/api/auth/session', { method: 'DELETE', cache: 'no-store' }),
       signOut(auth),
     ]);
-    window.location.href = '/login';
+    window.location.replace('/');
   }
 
   const userDisplayName = profile?.displayName ?? profile?.username ?? 'User';
   const initials = getInitials(userDisplayName);
+  const connectedPlatforms = profile?.connectedPlatforms ?? [];
+  const hasBothPlatforms = connectedPlatforms.includes('CODEFORCES') && connectedPlatforms.includes('LEETCODE');
 
   return (
     <motion.aside
@@ -133,7 +135,7 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
       </div>
 
       <div className="mt-4 flex shrink-0 flex-col gap-3 overflow-hidden">
-        {!sidebarCollapsed && (
+        {!sidebarCollapsed && !hasBothPlatforms && (
           <div style={{ background: 'linear-gradient(var(--bg-card), var(--bg-card)) padding-box, linear-gradient(135deg, var(--accent-blue), var(--accent-purple)) border-box', border: '1px solid transparent', borderRadius: 'var(--r-md)', padding: '12px' }}>
             <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Connect accounts</h4>
             <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginTop: '4px', marginBottom: 0 }}>Link coding profiles.</p>

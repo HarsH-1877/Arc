@@ -9,7 +9,6 @@ gsap.registerPlugin(ScrollTrigger);
 
 export function Payoff() {
   const sectionRef = useRef<HTMLElement>(null);
-  const glowCoreRef = useRef<HTMLDivElement>(null);
   const gmLabelRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
 
@@ -19,7 +18,6 @@ export function Payoff() {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     gsap.set([gmLabelRef.current, ctaRef.current], { opacity: 0, y: 24 });
-    gsap.set([glowCoreRef.current], { scale: 0.3, opacity: 0 });
 
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
@@ -28,15 +26,6 @@ export function Payoff() {
       start: 'top 60%',
       toggleActions: 'play none none reverse',
       onEnter() {
-        if (!prefersReduced) {
-          gsap.to([glowCoreRef.current], {
-            scale: 1,
-            opacity: 1,
-            duration: 0.8,
-            stagger: 0.12,
-            ease: 'cubic-bezier(0.16,1,0.3,1)',
-          });
-        }
         // GM label — light-sweep style
         gsap.to(gmLabelRef.current, {
           opacity: 1, y: 0,
@@ -76,30 +65,6 @@ export function Payoff() {
         padding: '128px 0',
       }}
     >
-      {/* Summit white core glow */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '15%',
-          right: '25%',
-          pointerEvents: 'none',
-        }}
-      >
-        <div
-          ref={glowCoreRef}
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            width: 48,
-            height: 48,
-            borderRadius: '50%',
-            transform: 'translate(-50%,-50%)',
-            background: 'radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(180,210,255,0.7) 40%, transparent 70%)',
-            filter: 'blur(3px)',
-          }}
-        />
-      </div>
 
       <div className="relative mx-auto w-full max-w-[1400px] px-8 lg:px-12">
         <div style={{ maxWidth: 520, paddingLeft: '2%' }}>
@@ -153,7 +118,7 @@ export function Payoff() {
             </p>
 
             <Link
-              href="/signup"
+              href="/signup?fresh=1"
               className="landing-connect-link relative z-20 inline-flex items-center gap-3 border px-8 py-4 font-mono text-[13px] uppercase tracking-[0.1em]"
               style={{
                 borderColor: 'var(--active-tier, #3B7DDB)',

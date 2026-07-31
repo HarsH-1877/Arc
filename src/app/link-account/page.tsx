@@ -123,7 +123,7 @@ export default function LinkAccountPage() {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error ?? 'Could not finish linking your accounts.');
-      router.push('/dashboard');
+      router.replace('/dashboard');
     } catch (error: unknown) {
       setSubmitError(error instanceof Error ? error.message : 'Could not finish linking your accounts.');
     } finally {
@@ -142,7 +142,7 @@ export default function LinkAccountPage() {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error ?? 'Could not complete setup.');
-      router.push('/dashboard');
+      router.replace('/dashboard');
     } catch (error: unknown) {
       setSubmitError(error instanceof Error ? error.message : 'Could not complete setup.');
     } finally {
@@ -158,7 +158,6 @@ export default function LinkAccountPage() {
         <section className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[rgba(17,17,20,0.94)] shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
           <div className="grid border-b border-[var(--border-subtle)] px-7 py-5 text-center md:grid-cols-[1fr_auto] md:items-center md:text-left">
             <div>
-              <Image src="/logo.png" width={44} height={44} alt="Arc" className="mx-auto h-11 w-11 object-contain md:mx-0" priority />
               <h1 className="mt-3 text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)]">Connect your handles</h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">
                 Arc reads public Codeforces and LeetCode data, syncs your history, and builds your dashboard from it.
@@ -253,7 +252,6 @@ function HandleCard({
           <Image src={logo} width={28} height={28} alt="" className="h-7 w-7 object-contain" />
           <div>
             <p className="text-sm font-semibold text-[var(--text-primary)]">{label}</p>
-            <p className="text-xs text-[var(--text-muted)]">Public profile handle</p>
           </div>
         </div>
         <span className="text-[var(--text-muted)]">{icon}</span>

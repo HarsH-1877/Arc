@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   ComposedChart,
   Line,
@@ -11,13 +11,13 @@ import {
   ResponsiveContainer,
   Area,
   ReferenceDot,
-  ReferenceLine,
 } from 'recharts';
 import { format } from 'date-fns';
 import { Card } from '@/components/shared/Card';
 import { ChevronDown, Layers3 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useUIStore } from '@/store/useUIStore';
+import { useDismissOnOutsideClick } from '@/hooks/useDismissOnOutsideClick';
 
 export interface RatingPoint {
   date: string;
@@ -56,14 +56,15 @@ const LC_MILESTONES = [
   { value: 1850, label: 'KNT' },
   { value: 2200, label: 'GRD' },
 ];
+const LC_AXIS_TICKS = [1500, 1650, 1850, 2000, 2200, 2350, 2500];
 
 const SERIES = [
   { key: 'userRating', name: 'You', color: 'var(--line-you)', primary: true },
-  { key: 'friend1', name: 'Friend 1', color: 'var(--line-friend)', primary: false },
-  { key: 'friend2', name: 'Friend 2', color: 'var(--line-friend)', primary: false },
-  { key: 'friend3', name: 'Friend 3', color: 'var(--line-friend)', primary: false },
-  { key: 'friend4', name: 'Friend 4', color: 'var(--line-friend)', primary: false },
-  { key: 'avgTop4', name: 'Avg Top 4', color: 'var(--line-friend)', primary: false },
+  { key: 'friend1', name: 'Friend 1', color: 'var(--line-f1)', primary: false },
+  { key: 'friend2', name: 'Friend 2', color: 'var(--line-f2)', primary: false },
+  { key: 'friend3', name: 'Friend 3', color: 'var(--line-f3)', primary: false },
+  { key: 'friend4', name: 'Friend 4', color: 'var(--line-f4)', primary: false },
+  { key: 'avgTop4', name: 'Avg Top 4', color: 'var(--accent-cyan)', primary: false },
 ] as const;
 
 function CustomTooltip({ active, payload, label }: any) {
@@ -89,6 +90,8 @@ function CustomTooltip({ active, payload, label }: any) {
 export function RatingChart({ data, loading, compact = false }: RatingChartProps) {
   const [friendMode, setFriendMode] = useState<FriendMode>('top4');
   const [modeOpen, setModeOpen] = useState(false);
+  const modeMenuRef = useRef<HTMLDivElement>(null);
+  useDismissOnOutsideClick(modeMenuRef, () => setModeOpen(false), modeOpen);
   const { selectedPlatform } = useUIStore();
   const milestones = selectedPlatform === 'CODEFORCES' ? CF_MILESTONES : LC_MILESTONES;
 
@@ -116,14 +119,19 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
     return best;
   }, null);
 
-  const maxRating = Math.max(
-    ...chartData.map(d => {
-      const vals = [d.userRating, ...activeFriendKeys.map(k => (d as any)[k])].filter(v => typeof v === 'number') as number[];
-      return vals.length ? Math.max(...vals) : 0;
-    })
-  );
-
-  const activeMilestones = milestones.filter(m => m.value <= Math.max(maxRating + 200, 1200));
+  const chartRatings = chartData.flatMap((point) => [
+    point.userRating,
+    ...activeFriendKeys.map((key) => (point as any)[key]),
+  ]).filter((value): value is number => typeof value === 'number');
+  const minRating = Math.min(...chartRatings);
+  const maxRating = Math.max(...chartRatings);
+  const domainMin = Math.max(0, Math.floor((minRating - 120) / 100) * 100);
+  const domainMax = Math.ceil((maxRating + 120) / 100) * 100;
+  const axisTickCandidates = selectedPlatform === 'CODEFORCES'
+    ? CF_MILESTONES.map((milestone) => milestone.value)
+    : LC_AXIS_TICKS;
+  const axisTicks = axisTickCandidates.filter((value) => value >= domainMin && value <= domainMax);
+  const activeMilestones = milestones.filter((milestone) => milestone.value >= domainMin && milestone.value <= domainMax);
 
   const reachedMilestones = activeMilestones.map((milestone) => {
     const point = chartData.find((item) => typeof item.userRating === 'number' && item.userRating >= milestone.value);
@@ -171,7 +179,7 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
         </div>
 
         <div className="flex min-w-0 flex-wrap items-center gap-3">
-          <div className="relative">
+          <div ref={modeMenuRef} className="relative">
             <button
               type="button"
               onClick={() => setModeOpen((value) => !value)}
@@ -236,22 +244,22 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
           )}
           {friendMode === 'top4' && visibleSeries.some((series) => !series.primary) && (
             <div className="flex items-center gap-2">
-              <span className="h-[3px] w-4 rounded-full" style={{ background: 'var(--line-friend)' }} />
+              <span className="h-[3px] w-5 rounded-full" style={{ background: 'linear-gradient(90deg, var(--line-f1) 0 25%, var(--line-f2) 25% 50%, var(--line-f3) 50% 75%, var(--line-f4) 75% 100%)' }} />
               <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', fontWeight: 600 }}>Friends</span>
             </div>
           )}
           {friendMode === 'avg' && visibleSeries.some((series) => series.key === 'avgTop4') && (
             <div className="flex items-center gap-2">
-              <span className="h-[3px] w-4 rounded-full" style={{ background: 'var(--line-friend)' }} />
+              <span className="h-[3px] w-5 rounded-full" style={{ background: 'var(--accent-cyan)' }} />
               <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', fontWeight: 600 }}>Avg Friends</span>
             </div>
           )}
         </div>
       </div>
 
-      <div style={{ width: '100%', height: compact ? '250px' : '240px' }}>
+      <div className="min-w-0" style={{ width: '100%', height: compact ? '250px' : '240px' }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 24, right: 28, bottom: 0, left: 0 }}>
+          <ComposedChart data={chartData} margin={{ top: 24, right: 40, bottom: 0, left: 4 }}>
             <defs>
               <linearGradient id="grad-you" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="var(--brand)" stopOpacity={0.3} />
@@ -269,6 +277,7 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
               tickLine={false}
               minTickGap={60}
               interval="preserveStartEnd"
+              padding={{ left: 8, right: 8 }}
             />
             <YAxis
               yAxisId="left"
@@ -276,10 +285,10 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
               tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
               axisLine={false}
               tickLine={false}
-              width={36}
-              domain={[(dataMin: number) => Math.min(dataMin, 900), 'auto']}
+              width={42}
+              domain={[domainMin, domainMax]}
               allowDecimals={false}
-              ticks={activeMilestones.map(m => m.value)}
+              ticks={axisTicks}
             />
             <YAxis
               yAxisId="right"
@@ -287,10 +296,10 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
               tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 700 }}
               axisLine={false}
               tickLine={false}
-              width={32}
-              domain={[(dataMin: number) => Math.min(dataMin, 900), 'auto']}
+              width={38}
+              domain={[domainMin, domainMax]}
               allowDecimals={false}
-              ticks={activeMilestones.map(m => m.value)}
+              ticks={axisTicks}
               tickFormatter={(val) => activeMilestones.find(m => m.value === val)?.label ?? ''}
             />
             <Tooltip content={<CustomTooltip />} />
@@ -320,14 +329,16 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
                 }}
               />
             )}
-            {activeMilestones.map((milestone) => (
-              <ReferenceLine
+            {reachedMilestones.map((milestone) => (
+              <ReferenceDot
                 yAxisId="left"
-                key={milestone.label}
-                y={milestone.value}
-                stroke="var(--border-default)"
-                strokeOpacity={0.4}
-                strokeDasharray="3 3"
+                key={`${milestone.label}-${milestone.point.date}`}
+                x={milestone.point.date}
+                y={milestone.point.userRating}
+                r={3.5}
+                fill="var(--accent-blue)"
+                stroke="rgba(255,255,255,0.9)"
+                strokeWidth={1.5}
               />
             ))}
           </ComposedChart>

@@ -28,8 +28,12 @@ export interface DashboardApiData {
   };
   streak: { currentStreak: number; longestStreak: number; freezeTokens: number; totalActiveDays: number };
   heatmapData: { date: string; count: number }[];
+  codeforcesHeatmapData?: { date: string; count: number }[];
+  leetcodeHeatmapData?: { date: string; count: number }[];
   ratingChartData: { date: string; cfRating?: number; lcRating?: number; friend1?: number; friend2?: number; friend3?: number; friend4?: number }[];
   topicStats: { topic: string; value: number; rawCount: number }[];
+  codeforcesTopicStats?: { topic: string; value: number; rawCount: number }[];
+  leetcodeTopicStats?: { topic: string; value: number; rawCount: number }[];
   recentSubmissions: {
     id: string;
     problemName: string;
@@ -46,6 +50,7 @@ export interface DashboardApiData {
     type: 'given' | 'upcoming' | 'missed';
     delta?: number;
     contestId?: string;
+    href?: string;
   }>;
   upcomingContests: Array<{
     id: string;

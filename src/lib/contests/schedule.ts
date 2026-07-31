@@ -20,21 +20,43 @@ interface LCUpcomingRaw {
 }
 
 async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
-  const res = await fetch('https://leetcode.com/graphql', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Referer: 'https://leetcode.com',
-      'User-Agent': 'ProjectArc/1.0',
-    },
-    body: JSON.stringify({ query: LC_WEEKLY_QUERY }),
+  try {
+    const res = await fetch('https://leetcode.com/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Referer: 'https://leetcode.com',
+        'User-Agent': 'ProjectArc/1.0',
+      },
+      body: JSON.stringify({ query: LC_WEEKLY_QUERY }),
+      next: { revalidate: 300 },
+    });
+
+    if (res.ok) {
+      const body = (await res.json()) as { data?: { upcomingContests?: LCUpcomingRaw[] } };
+      const contests = body.data?.upcomingContests ?? [];
+      if (contests.length) return contests;
+    }
+  } catch {
+    // Continue to LeetCode's public contest feed below.
+  }
+
+  // LeetCode's GraphQL schedule endpoint occasionally returns an empty list.
+  // Their contest feed keeps the upcoming rounds available as a stable fallback.
+  const fallback = await fetch('https://leetcode.com/contest/api/list/', {
+    headers: { Referer: 'https://leetcode.com', 'User-Agent': 'ProjectArc/1.0' },
     next: { revalidate: 300 },
   });
-
-  if (!res.ok) return [];
-
-  const body = (await res.json()) as { data?: { upcomingContests?: LCUpcomingRaw[] } };
-  return body.data?.upcomingContests ?? [];
+  if (!fallback.ok) return [];
+  const body = await fallback.json() as {
+    contest?: Array<{ title: string; title_slug: string; start_time: number; duration: number }>;
+  };
+  return (body.contest ?? []).map((contest) => ({
+    title: contest.title,
+    titleSlug: contest.title_slug,
+    startTime: contest.start_time,
+    duration: contest.duration,
+  }));
 }
 
 function formatContestTime(isoDate: string): string {
@@ -44,6 +66,10 @@ function formatContestTime(isoDate: string): string {
 
 function cfContestHref(contestId: number) {
   return `https://codeforces.com/contest/${contestId}`;
+}
+
+function cfContestRegistrationHref(contestId: number) {
+  return `https://codeforces.com/contestRegistration/${contestId}`;
 }
 
 function lcContestHref(slug: string) {
@@ -61,13 +87,15 @@ export async function fetchContestSchedule(): Promise<UpcomingContest[]> {
     for (const contest of cfContests) {
       if (contest.startTimeSeconds < twoWeeksAgo) continue;
       if (contest.phase === 'BEFORE' && contest.startTimeSeconds > now) {
+        const registrationOpen = contest.startTimeSeconds - now <= 24 * 60 * 60;
         contests.push({
           id: `cf-${contest.id}`,
           name: contest.name,
           platform: 'CODEFORCES',
           startTime: new Date(contest.startTimeSeconds * 1000).toISOString(),
           durationSeconds: contest.durationSeconds,
-          href: cfContestHref(contest.id),
+          href: registrationOpen ? cfContestRegistrationHref(contest.id) : cfContestHref(contest.id),
+          registrationOpen,
         });
         continue;
       }
@@ -80,6 +108,19 @@ export async function fetchContestSchedule(): Promise<UpcomingContest[]> {
           startTime: new Date(contest.startTimeSeconds * 1000).toISOString(),
           durationSeconds: contest.durationSeconds,
           href: cfContestHref(contest.id),
+          registrationOpen: false,
+        });
+      }
+
+      if (contest.phase === 'FINISHED') {
+        contests.push({
+          id: `cf-${contest.id}`,
+          name: contest.name,
+          platform: 'CODEFORCES',
+          startTime: new Date(contest.startTimeSeconds * 1000).toISOString(),
+          durationSeconds: contest.durationSeconds,
+          href: cfContestHref(contest.id),
+          registrationOpen: false,
         });
       }
     }
@@ -129,6 +170,7 @@ export function buildContestCalendarEvents(
       type: 'given',
       delta: contest.ratingChange,
       contestId: contest.id,
+      href: contest.href,
     });
   }
 
@@ -147,6 +189,7 @@ export function buildContestCalendarEvents(
         label: contest.name,
         platform: contest.platform,
         type: 'upcoming',
+        href: contest.href,
       });
       continue;
     }
@@ -158,6 +201,7 @@ export function buildContestCalendarEvents(
         label: contest.name,
         platform: contest.platform,
         type: 'missed',
+        href: contest.href,
       });
     }
   }
@@ -199,7 +243,7 @@ export function contestResultsToHistory(
         href:
           row.platform === 'CODEFORCES'
             ? `https://codeforces.com/contest/${row.contestId}`
-            : 'https://leetcode.com/contest/',
+            : lcContestHref(row.contestId.replace(/^\d+-/, '').replace(/-+/g, '-').toLowerCase()),
       };
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

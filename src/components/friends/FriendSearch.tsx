@@ -1,19 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Search, UserPlus, Check, Clock } from 'lucide-react';
 import { UserAvatar } from '@/components/shared/UserAvatar';
 import { useFriendSearch, useSendFriendRequest } from '@/hooks/useFriends';
 import { useDebounce } from '@/hooks/useDebounce';
 import { RatingBadge } from '@/components/shared/RatingBadge';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useDismissOnOutsideClick } from '@/hooks/useDismissOnOutsideClick';
 
-export function FriendSearch() {
+export function FriendSearch({ placeholder = 'Search by username or name...' }: { placeholder?: string }) {
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);
   const { data: results, isLoading } = useFriendSearch(debouncedQuery);
   const { mutate: sendRequest, isPending: isSending } = useSendFriendRequest();
   const [sentTo, setSentTo] = useState<Set<string>>(new Set());
+  const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  useDismissOnOutsideClick(searchRef, () => setShowResults(false), showResults);
 
   const handleSendRequest = (userId: string) => {
     sendRequest(userId, {
@@ -24,7 +28,7 @@ export function FriendSearch() {
   };
 
   return (
-    <div className="relative">
+    <div ref={searchRef} className="relative">
       <div className="relative">
         <Search
           size={18}
@@ -33,9 +37,13 @@ export function FriendSearch() {
         />
         <input
           type="text"
-          placeholder="Search by username or name..."
+          placeholder={placeholder}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setShowResults(true);
+          }}
+          onFocus={() => setShowResults(true)}
           className="h-10 w-full rounded-lg border pl-10 pr-4 text-sm outline-none transition-colors focus:border-accent-primary"
           style={{
             background: 'var(--bg-card)',
@@ -47,7 +55,7 @@ export function FriendSearch() {
       </div>
 
       <AnimatePresence>
-      {query.length >= 2 && (
+      {showResults && query.length >= 2 && (
         <motion.div
           initial={{ opacity: 0, y: -8, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}

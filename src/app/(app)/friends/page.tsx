@@ -48,9 +48,6 @@ export default function FriendsPage() {
               All Friends {friends && <span style={{ color: 'var(--text-muted)' }}>({friends.length})</span>}
             </h2>
             <div className="flex w-full flex-wrap items-center justify-end gap-3 sm:w-auto">
-              <div className="relative z-10 w-full sm:w-[260px]">
-                <FriendSearch />
-              </div>
               <div className="flex rounded-full p-1" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-default)' }}>
                 {[
                   { value: 'rating' as const, label: 'Rating' },
@@ -89,7 +86,10 @@ export default function FriendsPage() {
           )}
         </section>
 
-        <aside>
+        <aside className="space-y-4">
+          <div className="relative z-20">
+            <FriendSearch placeholder="Add friends" />
+          </div>
           <Card padding="18px" className="gap-4" variant="base">
             <div className="absolute inset-0 rounded-[var(--r-lg)]" style={{ background: 'linear-gradient(135deg, rgba(79,142,247,0.08), rgba(167,139,250,0.04))', border: '1px solid rgba(79,142,247,0.16)', pointerEvents: 'none' }} />
             <h2 className="relative z-10 text-sm font-semibold" style={{ color: 'var(--brand)' }}>

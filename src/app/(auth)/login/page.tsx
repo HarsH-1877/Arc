@@ -1,12 +1,12 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { getRedirectResult, GoogleAuthProvider, signInWithEmailAndPassword, signInWithRedirect } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client';
 import { EASE_OUT_FAST } from '@/lib/animations';
 
@@ -33,6 +33,17 @@ async function resolveIdentifier(identifier: string) {
   return data.email as string;
 }
 
+async function hasArcAccount(idToken: string) {
+  const response = await fetch('/api/auth/precheck', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken }),
+  });
+  if (!response.ok) throw new Error('Could not verify this Google account.');
+  const data = await response.json() as { exists: boolean };
+  return data.exists;
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -43,32 +54,15 @@ function LoginForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const handledGoogleRedirect = useRef(false);
 
   const finishSession = useCallback(async (idToken: string) => {
     const data = await createSession(idToken);
     if (redirectTo && redirectTo.startsWith('/') && data.onboarded) {
-      router.push(redirectTo);
+      router.replace(redirectTo);
       return;
     }
-    router.push(data.onboarded ? '/dashboard' : '/link-account');
+    router.replace(data.onboarded ? '/dashboard' : '/link-account');
   }, [redirectTo, router]);
-
-  useEffect(() => {
-    if (handledGoogleRedirect.current) return;
-    handledGoogleRedirect.current = true;
-
-    getRedirectResult(auth)
-      .then(async (credential) => {
-        if (!credential) return;
-        setGoogleLoading(true);
-        await finishSession(await credential.user.getIdToken(true));
-      })
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Google sign-in failed. Please try again.');
-      })
-      .finally(() => setGoogleLoading(false));
-  }, [finishSession]);
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -97,10 +91,18 @@ function LoginForm() {
     setError('');
     setGoogleLoading(true);
     try {
-      await signInWithRedirect(auth, googleProvider);
+      const credential = await signInWithPopup(auth, googleProvider);
+      const idToken = await credential.user.getIdToken(true);
+      if (!(await hasArcAccount(idToken))) {
+        router.replace('/signup?continue=1');
+        return;
+      }
+      await finishSession(idToken);
     } catch (err: unknown) {
       const code = (err as { code?: string }).code;
-      if (code !== 'auth/popup-closed-by-user') setError('Google sign-in failed. Please try again.');
+      if (code !== 'auth/popup-closed-by-user') {
+        setError(err instanceof Error ? err.message : 'Google sign-in failed. Please try again.');
+      }
     } finally {
       setGoogleLoading(false);
     }
@@ -110,7 +112,7 @@ function LoginForm() {
     <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={EASE_OUT_FAST}>
       <section className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[rgba(17,17,20,0.92)] shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
         <div className="border-b border-[var(--border-subtle)] px-7 py-5 text-center">
-          <Image src="/logo.png" width={44} height={44} alt="Arc" className="mx-auto h-11 w-11 object-contain" priority />
+          <Image src="/logo.png" width={64} height={64} alt="Arc" className="mx-auto h-16 w-16 object-contain" priority />
           <h1 className="mt-3 text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)]">Welcome back</h1>
           <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             Sign in with Google or your Arc user ID to continue linking your handles.

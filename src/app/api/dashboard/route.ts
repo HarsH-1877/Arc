@@ -40,7 +40,7 @@ export async function GET() {
         verdict: { in: ['OK', 'Accepted', 'AC'] },
         timestamp: { gte: new Date(Date.now() - 365 * 86400000) },
       },
-      select: { timestamp: true },
+      select: { timestamp: true, platform: true },
     }),
     db.contestResult.findMany({
       where: { connectionId: { in: connectionIds } },
@@ -51,12 +51,16 @@ export async function GET() {
     fetchContestSchedule(),
   ]);
 
-  const heatmapMap: Record<string, number> = {};
+  const heatmapMaps: Record<'CODEFORCES' | 'LEETCODE', Record<string, number>> = {
+    CODEFORCES: {},
+    LEETCODE: {},
+  };
   for (const sub of heatmapSubs) {
     const day = sub.timestamp.toISOString().slice(0, 10);
-    heatmapMap[day] = (heatmapMap[day] ?? 0) + 1;
+    heatmapMaps[sub.platform][day] = (heatmapMaps[sub.platform][day] ?? 0) + 1;
   }
-  const heatmapData = Object.entries(heatmapMap).map(([date, count]) => ({ date, count }));
+  const codeforcesHeatmapData = Object.entries(heatmapMaps.CODEFORCES).map(([date, count]) => ({ date, count }));
+  const leetcodeHeatmapData = Object.entries(heatmapMaps.LEETCODE).map(([date, count]) => ({ date, count }));
 
   // Build merged rating history for chart
   const cfRatingHistory = (cf?.codeforcesData?.ratingHistory ?? []) as {
@@ -99,16 +103,20 @@ export async function GET() {
     allTags[tag] = (allTags[tag] ?? 0) + count;
   }
 
-  // Normalize to 0-100
-  const maxCount = Math.max(...Object.values(allTags), 1);
-  const topicStats = Object.entries(allTags)
-    .map(([topic, rawCount]) => ({
+  const buildTopicStats = (tags: Record<string, number>) => {
+    const maxCount = Math.max(...Object.values(tags), 1);
+    return Object.entries(tags)
+      .map(([topic, rawCount]) => ({
       topic,
       rawCount,
       value: Math.round((rawCount / maxCount) * 100),
-    }))
-    .sort((a, b) => b.rawCount - a.rawCount)
-    .slice(0, 8);
+      }))
+      .sort((a, b) => b.rawCount - a.rawCount)
+      .slice(0, 8);
+  };
+  const topicStats = buildTopicStats(allTags);
+  const codeforcesTopicStats = buildTopicStats(cfTags);
+  const leetcodeTopicStats = buildTopicStats(lcTags);
 
   return NextResponse.json({
     user: {
@@ -151,11 +159,17 @@ export async function GET() {
           totalActiveDays: user.streaks.totalActiveDays,
         }
       : { currentStreak: 0, longestStreak: 0, freezeTokens: 2, totalActiveDays: 0 },
-    heatmapData,
+    // Keep the legacy field for existing consumers while exposing the two
+    // platform-specific series needed by the platform picker.
+    heatmapData: codeforcesHeatmapData,
+    codeforcesHeatmapData,
+    leetcodeHeatmapData,
     ratingChartData,
     contestCalendarEvents,
     upcomingContests: upcomingContests.slice(0, 5),
     topicStats,
+    codeforcesTopicStats,
+    leetcodeTopicStats,
     recentSubmissions: recentSubmissions.map((s) => ({
       id: s.id,
       problemName: s.problemName,

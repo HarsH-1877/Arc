@@ -4,14 +4,14 @@ import { Card } from '@/components/shared/Card';
 import { ArcDialog } from '@/components/ui/dialog';
 import { AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase/client';
 
 export default function DangerSettingsPage() {
   const [confirmText, setConfirmText] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const router = useRouter();
 
   const canDelete = confirmText === 'delete my account';
 
@@ -19,12 +19,12 @@ export default function DangerSettingsPage() {
     if (!canDelete) return;
     setIsDeleting(true);
     try {
-      await fetch('/api/auth/session', { method: 'DELETE' });
-      toast.success('Account deletion queued', {
-        description: 'Full deletion runs when DELETE /api/user is wired to Neon + Firebase.',
-      });
+      const response = await fetch('/api/user/profile', { method: 'DELETE' });
+      if (!response.ok) throw new Error('Account deletion failed');
+      await signOut(auth);
+      toast.success('Account deleted');
       setDialogOpen(false);
-      router.push('/');
+      window.location.replace('/');
     } catch {
       toast.error('Could not complete deletion');
     } finally {

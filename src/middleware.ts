@@ -19,7 +19,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Only auto-redirect away from login — signup handles existing sessions itself
-  if (isLoggedIn && pathname.startsWith('/login')) {
+  if (isLoggedIn && pathname.startsWith('/login') && request.nextUrl.searchParams.get('fresh') !== '1') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 

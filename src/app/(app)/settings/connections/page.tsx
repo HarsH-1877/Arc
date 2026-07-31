@@ -4,7 +4,7 @@ import type { SyncStatus } from '@prisma/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/shared/Card';
 import { SyncStatusDot } from '@/components/shared/SyncStatusDot';
-import { Loader2, RefreshCw, Unlink, Plus } from 'lucide-react';
+import { CheckCircle2, Loader2, RefreshCw, Unlink, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { formatRelativeTime } from '@/lib/utils';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
@@ -33,6 +33,7 @@ export default function ConnectionsSettingsPage() {
       if (!res.ok) throw new Error('Failed to fetch connections');
       return res.json();
     },
+    refetchInterval: 4000,
   });
 
   const { mutate: linkPlatform } = useMutation({
@@ -218,6 +219,7 @@ function PlatformCard({
             {data ? (
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <span className="font-mono-data rounded-md px-2 py-0.5 text-sm" style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}>{data.handle}</span>
+                <CheckCircle2 size={15} aria-label="Account linked" style={{ color: 'var(--success)' }} />
                 <SyncStatusDot status={data.syncStatus as SyncStatus} lastSyncedAt={data.lastSyncedAt} errorMessage={data.syncError ?? undefined} />
               </div>
             ) : (

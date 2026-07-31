@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { AlertCircle, ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, XCircle } from 'lucide-react';
 import {
@@ -75,8 +75,10 @@ function describeFirebaseError(error: unknown) {
   return messages[code ?? ''] ?? (error instanceof Error ? error.message : 'Something went wrong. Please try again.');
 }
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const freshSignup = searchParams.get('fresh') === '1';
   const [googleUser, setGoogleUser] = useState<User | null>(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -100,13 +102,9 @@ export default function SignupPage() {
       return true;
     }
 
-    if (status.exists && !status.onboarded && hasArcPassword(user)) {
-      await createSession(idToken);
-      router.replace('/link-account');
-      return true;
-    }
-
-    if (status.exists && !status.onboarded && !hasArcPassword(user)) {
+    if (status.exists && !status.onboarded) {
+      // Incomplete accounts must always pass through Arc credentials. This
+      // includes Firebase users created by an earlier abandoned attempt.
       await fetch('/api/auth/session', { method: 'DELETE' });
       setGoogleUser(user);
       return true;
@@ -120,6 +118,14 @@ export default function SignupPage() {
 
     async function bootstrap() {
       try {
+        if (freshSignup) {
+          await Promise.allSettled([
+            fetch('/api/auth/session', { method: 'DELETE' }),
+            signOut(auth),
+          ]);
+          return;
+        }
+
         const user = auth.currentUser;
         if (user && isGoogleUser(user)) {
           const routed = await routeExistingGoogleUser(user);
@@ -148,7 +154,7 @@ export default function SignupPage() {
     return () => {
       cancelled = true;
     };
-  }, [router, routeExistingGoogleUser]);
+  }, [freshSignup, router, routeExistingGoogleUser]);
 
   useEffect(() => {
     if (!googleUser || !debouncedUsername) {
@@ -180,7 +186,7 @@ export default function SignupPage() {
 
     await updateProfile(auth.currentUser ?? googleUser, { displayName: cleanUsername });
     await createSession(await (auth.currentUser ?? googleUser).getIdToken(true), cleanUsername);
-    router.push('/link-account');
+    router.replace('/link-account');
   }, [googleUser, password, router, username]);
 
   const handleCredentials = async (event: React.FormEvent) => {
@@ -357,6 +363,14 @@ export default function SignupPage() {
         </div>
       </section>
     </motion.div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-[320px] items-center justify-center"><Loader2 size={24} className="animate-spin text-[var(--text-muted)]" /></div>}>
+      <SignupForm />
+    </Suspense>
   );
 }
 

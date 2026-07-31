@@ -4,7 +4,7 @@ import type { Platform } from '@prisma/client';
 import { getSession } from '@/lib/session';
 import { getCFUser } from '@/lib/fetchers/codeforces';
 import { getLCSolvedStats } from '@/lib/fetchers/leetcode';
-import { queueBackgroundSync } from '@/lib/sync/background';
+import { syncPlatform } from '@/workers/syncWorker';
 
 const HANDLE_RE = /^[a-zA-Z0-9_-]{1,24}$/;
 
@@ -56,9 +56,22 @@ export async function POST(request: NextRequest) {
       update: { handle, syncStatus: 'PENDING', syncError: null },
     });
 
-    queueBackgroundSync(connection.id, true);
+    // Complete the first import within this request. A detached task can be
+    // terminated by the host and leave a connection permanently in SYNCING.
+    await syncPlatform(connection.id, { quick: true }).catch((error) => {
+      console.error('[platforms/link sync]', error);
+    });
+    const syncedConnection = await db.platformConnection.findUnique({
+      where: { id: connection.id },
+      select: { syncStatus: true, syncError: true },
+    });
 
-    return NextResponse.json({ ok: true, connectionId: connection.id, status: 'SYNCING' });
+    return NextResponse.json({
+      ok: true,
+      connectionId: connection.id,
+      status: syncedConnection?.syncStatus ?? 'ERROR',
+      syncError: syncedConnection?.syncError ?? null,
+    });
   } catch (err) {
     console.error('[platforms/link]', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

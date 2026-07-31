@@ -33,7 +33,7 @@ export async function GET() {
     db.contestResult.findMany({
       where: { connectionId: { in: connectionIds } },
       orderBy: { timestamp: 'desc' },
-      take: 40,
+      take: 100,
     }),
     fetchUpcomingContests(),
     db.submission.findMany({
@@ -65,8 +65,48 @@ export async function GET() {
     }
   }
 
-  const history = contestResultsToHistory(
-    contestRows.map((row) => {
+  // Older background imports could finish after rating history had been saved
+  // but before contest rows were inserted. Use that persisted CF history as a
+  // read-time fallback so those real contests remain visible.
+  const storedCfResultKeys = new Set(
+    contestRows
+      .filter((row) => row.platform === 'CODEFORCES')
+      .map((row) => `${row.connectionId}:${row.contestId}`),
+  );
+  const cfHistoryFallback = connections.flatMap((connection) => {
+    const history = (connection.codeforcesData?.ratingHistory ?? []) as Array<{
+      contestId: number;
+      contestName: string;
+      rank: number;
+      rating: number;
+      date: string;
+    }>;
+    let previousRating: number | null = null;
+
+    return history.flatMap((entry) => {
+      const contestId = String(entry.contestId);
+      const key = `${connection.id}:${contestId}`;
+      const before = previousRating ?? entry.rating;
+      previousRating = entry.rating;
+      if (storedCfResultKeys.has(key)) return [];
+
+      return [{
+        id: `rating-history-${connection.id}-${contestId}`,
+        connectionId: connection.id,
+        platform: 'CODEFORCES' as const,
+        contestId,
+        contestName: entry.contestName,
+        rank: entry.rank,
+        ratingChange: entry.rating - before,
+        newRating: entry.rating,
+        timestamp: new Date(entry.date),
+      }];
+    });
+  });
+  const contestRowsWithFallback = [...contestRows, ...cfHistoryFallback];
+
+  const historyByPlatform = contestResultsToHistory(
+    contestRowsWithFallback.map((row) => {
       const lcStats = lcStatsByTitle.get(row.contestName);
       const cfSolved = cfSolvedByContest.get(row.contestId);
       const ratingChange = row.ratingChange ?? 0;
@@ -80,7 +120,12 @@ export async function GET() {
         },
       };
     }),
-  ).slice(0, 10);
+  );
+  // Keep each platform's latest results before combining them. Limiting the
+  // mixed feed first can otherwise hide every CF contest behind LC results.
+  const history = (['CODEFORCES', 'LEETCODE'] as const).flatMap((platform) =>
+    historyByPlatform.filter((contest) => contest.platform === platform).slice(0, 10),
+  );
 
   const attendedKeys = new Set(
     history.map((contest) => `${contest.platform}:${contest.date}:${contest.name}`),
@@ -98,7 +143,9 @@ export async function GET() {
     })
     .filter(Boolean);
 
-  const upcomingForUser = upcoming.slice(0, 6).map((contest) => {
+  const upcomingForUser = (['CODEFORCES', 'LEETCODE'] as const).flatMap((platform) =>
+    upcoming.filter((contest) => contest.platform === platform).slice(0, 6),
+  ).map((contest) => {
     const cfRating =
       connections.find((connection) => connection.platform === 'CODEFORCES')?.codeforcesData?.currentRating ?? null;
     const lcConnection = connections.find((connection) => connection.platform === 'LEETCODE');
@@ -120,6 +167,7 @@ export async function GET() {
       solved: 0,
       total: contest.platform === 'LEETCODE' ? 4 : 7,
       href: contest.href,
+      registrationOpen: contest.registrationOpen,
     };
   });
 

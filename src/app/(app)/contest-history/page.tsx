@@ -5,6 +5,7 @@ import { PlatformLogo } from '@/components/shared/PlatformLogo';
 import { ArrowDownRight, ArrowUpRight, CalendarClock, ExternalLink, Loader2, TrendingUp, Trophy } from 'lucide-react';
 import { UpcomingContestCard } from '@/components/contest-history/UpcomingContestCard';
 import { useContestsData, type ContestItem } from '@/hooks/useContestsData';
+import { useUIStore } from '@/store/useUIStore';
 
 function formatDate(date: string) {
   return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(date));
@@ -106,6 +107,10 @@ function BestContestRow({ contest }: { contest: ContestItem }) {
 
 export default function ContestHistoryPage() {
   const { data, isLoading, error } = useContestsData();
+  const { selectedPlatform } = useUIStore();
+  const history = (data?.history ?? []).filter((contest) => contest.platform === selectedPlatform);
+  const upcoming = (data?.upcoming ?? []).filter((contest) => contest.platform === selectedPlatform);
+  const bestByPlatform = (data?.bestByPlatform ?? []).filter((contest) => contest.platform === selectedPlatform);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -123,7 +128,7 @@ export default function ContestHistoryPage() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
         <Card padding="18px" className="gap-3">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Last 10 Contests</span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Last 10 {selectedPlatform === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'} Contests</span>
             <CalendarClock size={18} style={{ color: 'var(--accent-blue)' }} />
           </div>
           {isLoading ? (
@@ -132,8 +137,8 @@ export default function ContestHistoryPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {(data?.history ?? []).length > 0 ? (
-                data?.history.map((contest) => <ContestRow key={contest.id} contest={contest} />)
+              {history.length > 0 ? (
+                history.map((contest) => <ContestRow key={contest.id} contest={contest} />)
               ) : (
                 <p className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>No contest history yet. Link Codeforces or LeetCode to sync your results.</p>
               )}
@@ -149,16 +154,13 @@ export default function ContestHistoryPage() {
             <TrendingUp size={18} style={{ color: 'var(--accent-purple)' }} />
           </div>
 
-          <div className="relative min-h-0 flex-1">
-            <div className="absolute inset-0 overflow-y-auto no-scrollbar pb-4 pr-1">
-              <div className="space-y-4">
-                {(data?.upcoming ?? []).map((contest) => <UpcomingContestCard key={contest.id} contest={contest} />)}
-                {!isLoading && (data?.upcoming ?? []).length === 0 && (
-                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No upcoming contests scheduled right now.</p>
-                )}
-              </div>
+          <div className="max-h-[420px] min-h-[96px] overflow-y-auto pr-1">
+            <div className="space-y-4">
+              {upcoming.map((contest) => <UpcomingContestCard key={contest.id} contest={contest} />)}
+              {!isLoading && upcoming.length === 0 && (
+                <p className="py-5 text-sm" style={{ color: 'var(--text-muted)' }}>No upcoming contests scheduled right now.</p>
+              )}
             </div>
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[var(--bg-base)] to-transparent" />
           </div>
 
           <Card padding="18px" className="shrink-0 gap-4 overflow-hidden mt-2">
@@ -168,8 +170,8 @@ export default function ContestHistoryPage() {
               <Trophy size={20} style={{ color: 'var(--accent-amber)' }} />
             </div>
             <div className="relative z-10 space-y-3">
-              {(data?.bestByPlatform ?? []).length > 0 ? (
-                data?.bestByPlatform.map((contest) => <BestContestRow key={contest.platform} contest={contest} />)
+              {bestByPlatform.length > 0 ? (
+                bestByPlatform.map((contest) => <BestContestRow key={contest.platform} contest={contest} />)
               ) : (
                 <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Best contest highlights appear after your first synced contests.</p>
               )}

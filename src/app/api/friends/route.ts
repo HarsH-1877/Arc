@@ -91,6 +91,16 @@ export async function POST(req: Request) {
       },
     });
 
+    await db.notification.create({
+      data: {
+        userId: friendId,
+        type: 'FRIEND_REQUEST',
+        title: 'New friend request',
+        body: `${session.displayName ?? session.username} sent you a friend request.`,
+        metadata: { requestId: request.id, senderId: session.id },
+      },
+    });
+
     return NextResponse.json(request);
   } catch (err) {
     console.error('[POST /api/friends]', err);

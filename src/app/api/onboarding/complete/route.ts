@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { getSession } from '@/lib/session';
 import { getCFUser } from '@/lib/fetchers/codeforces';
 import { getLCSolvedStats } from '@/lib/fetchers/leetcode';
-import { queueBackgroundSyncAll } from '@/lib/sync/background';
+import { syncPlatform } from '@/workers/syncWorker';
 
 const HANDLE_RE = /^[a-zA-Z0-9_-]{1,24}$/;
 
@@ -89,9 +89,11 @@ export async function POST(request: NextRequest) {
       }));
     }
 
-    queueBackgroundSyncAll(connections.map((connection) => connection.id));
+    // Keep initial imports bound to this setup request so the persisted state
+    // always becomes SYNCED or ERROR instead of being abandoned as SYNCING.
+    await Promise.allSettled(connections.map((connection) => syncPlatform(connection.id, { quick: true })));
 
-    return NextResponse.json({ ok: true, syncing: true });
+    return NextResponse.json({ ok: true, syncing: false });
   } catch (error) {
     console.error('[onboarding/complete]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

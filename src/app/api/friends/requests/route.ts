@@ -81,10 +81,28 @@ export async function PATCH(req: Request) {
             userBId: request.receiverId,
           },
         }),
+        db.notification.create({
+          data: {
+            userId: request.senderId,
+            type: 'FRIEND_ACCEPTED',
+            title: 'Friend request accepted',
+            body: `${session.displayName ?? session.username} accepted your friend request.`,
+            metadata: { requestId: request.id, friendId: session.id },
+          },
+        }),
       ]);
       return NextResponse.json({ ok: true, status: 'ACCEPTED' });
     } else if (action === 'REJECT') {
       await db.friendRequest.delete({ where: { id: requestId } });
+      await db.notification.create({
+        data: {
+          userId: request.senderId,
+          type: 'FRIEND_REQUEST',
+          title: 'Friend request declined',
+          body: `${session.displayName ?? session.username} declined your friend request.`,
+          metadata: { requestId, friendId: session.id, status: 'DECLINED' },
+        },
+      });
       return NextResponse.json({ ok: true, status: 'REJECTED' });
     } else {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

@@ -11,34 +11,6 @@ export function Hero() {
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const subRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLAnchorElement>(null);
-  const frameRef = useRef<HTMLDivElement>(null);
-
-  // Mouse parallax tilt on the screenshot frame
-  useEffect(() => {
-    const frame = frameRef.current;
-    if (!frame) return;
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReduced) return;
-
-    function onMove(e: MouseEvent) {
-      if (!frame) return;
-      const rect = frame.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dx = (e.clientX - cx) / rect.width;
-      const dy = (e.clientY - cy) / rect.height;
-      frame.style.transform = `perspective(800px) rotateY(${dx * 2}deg) rotateX(${-dy * 2}deg)`;
-    }
-    function onLeave() {
-      if (frame) frame.style.transform = '';
-    }
-    window.addEventListener('mousemove', onMove, { passive: true });
-    frame.addEventListener('mouseleave', onLeave);
-    return () => {
-      window.removeEventListener('mousemove', onMove);
-      frame?.removeEventListener('mouseleave', onLeave);
-    };
-  }, []);
 
   // Word-stagger headline reveal on load
   useEffect(() => {
@@ -124,7 +96,7 @@ export function Hero() {
             {/* CTA */}
             <Link
               ref={ctaRef}
-              href="/signup"
+              href="/signup?fresh=1"
               className="landing-connect-link relative z-20 inline-flex items-center gap-3 border font-mono text-[13px] uppercase tracking-[0.1em] px-6 py-3.5 transition-all duration-150 self-start"
               style={{
                 borderColor: 'var(--active-tier, #3B7DDB)',
@@ -154,11 +126,9 @@ export function Hero() {
           {/* Right — screenshot placeholder */}
           <div className="flex items-center justify-end">
             <div
-              ref={frameRef}
               className="relative w-full max-w-2xl"
               style={{
-                transition: 'transform 0.15s cubic-bezier(0.4,0,0.2,1)',
-                willChange: 'transform',
+                transform: 'none',
               }}
             >
               {/* Viewfinder corner brackets */}

@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ChevronDown, Minus, Plus, Target, Trophy, X } from 'lucide-react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useDismissOnOutsideClick } from '@/hooks/useDismissOnOutsideClick';
 
 type Platform = 'CODEFORCES' | 'LEETCODE';
 type GoalType = 'rating' | 'questions' | 'rank';
@@ -37,6 +38,11 @@ export function GoalSetter({ platform }: { platform: Platform }) {
   const [cfRank, setCfRank] = useState(CODEFORCES_RANKS[2]);
   const [lcRank, setLcRank] = useState(LEETCODE_RANKS[0]);
   const [rankOpen, setRankOpen] = useState(false);
+  const goalMenuRef = useRef<HTMLDivElement>(null);
+  useDismissOnOutsideClick(goalMenuRef, () => {
+    setOpen(false);
+    setRankOpen(false);
+  }, open || rankOpen);
 
   const currentRating = platform === 'CODEFORCES'
     ? data?.platforms.codeforces?.currentRating ?? 0
@@ -77,7 +83,7 @@ export function GoalSetter({ platform }: { platform: Platform }) {
   const ranks = platform === 'CODEFORCES' ? CODEFORCES_RANKS : LEETCODE_RANKS;
 
   return (
-    <div className="relative hidden min-w-[326px] md:block">
+    <div ref={goalMenuRef} className="relative hidden min-w-[326px] md:block">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}

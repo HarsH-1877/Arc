@@ -7,6 +7,7 @@ export interface UpcomingContest {
   startTime: string;
   durationSeconds: number;
   href: string;
+  registrationOpen?: boolean;
 }
 
 export interface UserContestHistoryItem {
@@ -31,4 +32,5 @@ export interface ContestCalendarEvent {
   type: 'given' | 'upcoming' | 'missed';
   delta?: number;
   contestId?: string;
+  href?: string;
 }
