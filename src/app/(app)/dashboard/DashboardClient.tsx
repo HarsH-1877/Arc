@@ -2,7 +2,6 @@
 
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { HeroStats } from '@/components/dashboard/HeroStats';
-import { ProblemLog } from '@/components/dashboard/ProblemLog';
 import { ActivityHeatmap } from '@/components/charts/ActivityHeatmap';
 import { RatingChart } from '@/components/charts/RatingChart';
 import { TopicBreakdown } from '@/components/dashboard/TopicBreakdown';
@@ -43,7 +42,7 @@ export function DashboardClient() {
 
           <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div className="min-w-0 space-y-4">
-              <Card variant="base" padding="18px" className="h-[218px] overflow-hidden">
+              <Card variant="base" padding="18px" className="h-[218px]">
                 <span style={{ fontSize: '10px', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '12px', display: 'block' }}>
                   Activity Heatmap
                 </span>
@@ -56,12 +55,7 @@ export function DashboardClient() {
                 />
               </Card>
 
-              <Card variant="base" padding="18px">
-                <span style={{ fontSize: '10px', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '12px', display: 'block' }}>
-                  Recent Problems
-                </span>
-                <ProblemLog submissions={data?.recentSubmissions ?? []} loading={isLoading} />
-              </Card>
+
             </div>
 
             <div className="min-w-0">

@@ -66,7 +66,7 @@ export function UpcomingContestCard({ contest }: { contest: ContestItem }) {
       <div className="flex flex-col p-4">
         <div className="mb-4 flex items-start justify-between gap-3">
           <h3 className="text-[18px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
-            {contest.name}
+            {contest.name.replace(/(Div\.?\s*\d)/i, '')}
           </h3>
           {displayId && (
             <span className="shrink-0 rounded-full px-3 py-1 text-[10px] font-bold tracking-widest" style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}>

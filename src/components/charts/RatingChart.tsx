@@ -35,6 +35,9 @@ interface RatingChartProps {
   data: RatingPoint[];
   loading?: boolean;
   compact?: boolean;
+  compareMode?: boolean;
+  userName?: string;
+  friendName?: string;
 }
 
 type FriendMode = 'top4' | 'avg';
@@ -87,7 +90,7 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export function RatingChart({ data, loading, compact = false }: RatingChartProps) {
+export function RatingChart({ data, loading, compact = false, compareMode = false, userName, friendName }: RatingChartProps) {
   const [friendMode, setFriendMode] = useState<FriendMode>('top4');
   const [modeOpen, setModeOpen] = useState(false);
   const modeMenuRef = useRef<HTMLDivElement>(null);
@@ -109,9 +112,16 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
 
   const activeFriendKeys = friendMode === 'avg' ? ['avgTop4'] : FRIEND_KEYS;
   const visibleSeries = SERIES.filter((series) => {
+    if (compareMode) return series.key === 'userRating' || series.key === 'friend1';
     if (series.primary) return chartData.some((point) => typeof point.userRating === 'number');
     if (!activeFriendKeys.includes(series.key as any)) return false;
     return chartData.some((point) => typeof (point as any)[series.key] === 'number');
+  }).map(series => {
+    if (compareMode) {
+      if (series.key === 'userRating' && userName) return { ...series, name: userName };
+      if (series.key === 'friend1' && friendName) return { ...series, name: friendName };
+    }
+    return series;
   });
   const bestPoint = chartData.reduce<(typeof chartData)[number] | null>((best, point) => {
     if (typeof point.userRating !== 'number') return best;
@@ -166,6 +176,7 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
           <span style={{ fontSize: '10px', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
             Rating Progress
           </span>
+          {!compareMode && (
           <div className="flex items-center gap-1">
             {TIME_FILTERS.map((filter) => {
               const active = filter === '1y';
@@ -176,9 +187,11 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
               );
             })}
           </div>
+          )}
         </div>
 
         <div className="flex min-w-0 flex-wrap items-center gap-3">
+          {!compareMode && (
           <div ref={modeMenuRef} className="relative">
             <button
               type="button"
@@ -236,6 +249,7 @@ export function RatingChart({ data, loading, compact = false }: RatingChartProps
               )}
             </AnimatePresence>
           </div>
+          )}
           {visibleSeries.some((series) => series.primary) && (
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full" style={{ background: 'var(--line-you)', boxShadow: '0 0 6px rgba(79,142,247,0.45)' }} />

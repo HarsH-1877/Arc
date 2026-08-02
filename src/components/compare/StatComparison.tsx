@@ -1,6 +1,8 @@
 'use client';
 
 import type { CompareUser } from '@/hooks/useCompareData';
+import { useUIStore } from '@/store/useUIStore';
+import { Flame, Trophy, CheckCircle2, TrendingUp } from 'lucide-react';
 
 interface StatComparisonProps {
   user: CompareUser;
@@ -40,11 +42,17 @@ function averageGap(days: { date: string; count: number }[]) {
 }
 
 export function StatComparison({ user, friend }: StatComparisonProps) {
-  const stats = [
-    { label: 'Total Solved', userValue: user.totalSolved, friendValue: friend.totalSolved, unit: 'solved', lowerWins: false },
+  const { selectedPlatform } = useUIStore();
+  const stats = selectedPlatform === 'CODEFORCES' ? [
+    { label: 'CF Rating', userValue: user.cfRating, friendValue: friend.cfRating, unit: 'rating', lowerWins: false },
+    { label: 'CF Contests', userValue: user.cfContestCount, friendValue: friend.cfContestCount, unit: 'contests', lowerWins: false },
+    { label: 'CF Solved', userValue: user.cfSolvedCount, friendValue: friend.cfSolvedCount, unit: 'solved', lowerWins: false },
     { label: 'Longest Streak', userValue: longestStreak(user.heatmapData), friendValue: longestStreak(friend.heatmapData), unit: 'days', lowerWins: false },
-    { label: 'Active Days', userValue: user.totalActiveDays, friendValue: friend.totalActiveDays, unit: 'days', lowerWins: false },
-    { label: 'Avg Gap Days', userValue: averageGap(user.heatmapData), friendValue: averageGap(friend.heatmapData), unit: 'days', lowerWins: true },
+  ] : [
+    { label: 'LC Rating', userValue: user.lcRating, friendValue: friend.lcRating, unit: 'rating', lowerWins: false },
+    { label: 'LC Contests', userValue: user.lcContestCount, friendValue: friend.lcContestCount, unit: 'contests', lowerWins: false },
+    { label: 'LC Solved', userValue: user.lcSolvedCount, friendValue: friend.lcSolvedCount, unit: 'solved', lowerWins: false },
+    { label: 'Longest Streak', userValue: longestStreak(user.heatmapData), friendValue: longestStreak(friend.heatmapData), unit: 'days', lowerWins: false },
   ];
 
   return (

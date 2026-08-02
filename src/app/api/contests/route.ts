@@ -16,6 +16,7 @@ export async function GET() {
       upcoming: [],
       calendarEvents: [],
       bestByPlatform: [],
+      stats: { totalContests: 0, avgRank: 0, bestGain: 0 },
     });
   }
 
@@ -171,10 +172,16 @@ export async function GET() {
     };
   });
 
+  const cfHistory = historyByPlatform.filter((c) => c.platform === 'CODEFORCES');
+  const avgRank = cfHistory.length ? cfHistory.reduce((sum, c) => sum + (c.rank ?? 0), 0) / cfHistory.length : 0;
+  const bestGain = Math.max(0, ...historyByPlatform.map(c => c.ratingChange ?? 0));
+  const stats = { totalContests: historyByPlatform.length, avgRank, bestGain };
+
   return NextResponse.json({
     history,
     upcoming: upcomingForUser,
     calendarEvents,
     bestByPlatform,
+    stats,
   });
 }

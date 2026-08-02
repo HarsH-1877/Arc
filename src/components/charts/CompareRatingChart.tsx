@@ -9,6 +9,6 @@ interface CompareRatingChartProps {
   loading?: boolean;
 }
 
-export function CompareRatingChart({ data, loading }: CompareRatingChartProps) {
-  return <RatingChart data={data} loading={loading} />;
+export function CompareRatingChart({ data, loading, userName, friendName }: CompareRatingChartProps) {
+  return <RatingChart data={data} loading={loading} compareMode={true} userName={userName} friendName={friendName} />;
 }

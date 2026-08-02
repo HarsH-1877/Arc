@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Card } from '@/components/shared/Card';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
 import { ArrowDownRight, ArrowUpRight, CalendarClock, ExternalLink, Loader2, TrendingUp, Trophy } from 'lucide-react';
@@ -107,10 +108,11 @@ function BestContestRow({ contest }: { contest: ContestItem }) {
 
 export default function ContestHistoryPage() {
   const { data, isLoading, error } = useContestsData();
-  const { selectedPlatform } = useUIStore();
-  const history = (data?.history ?? []).filter((contest) => contest.platform === selectedPlatform);
-  const upcoming = (data?.upcoming ?? []).filter((contest) => contest.platform === selectedPlatform);
-  const bestByPlatform = (data?.bestByPlatform ?? []).filter((contest) => contest.platform === selectedPlatform);
+  const [platformFilter, setPlatformFilter] = useState<string>('ALL');
+  
+  const history = (data?.history ?? []).filter((contest) => platformFilter === 'ALL' || contest.platform === platformFilter);
+  const upcoming = (data?.upcoming ?? []).filter((contest) => platformFilter === 'ALL' || contest.platform === platformFilter);
+  const bestByPlatform = (data?.bestByPlatform ?? []).filter((contest) => platformFilter === 'ALL' || contest.platform === platformFilter);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -118,17 +120,33 @@ export default function ContestHistoryPage() {
         <div>
           <h1 style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Contest History</h1>
           <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>Recent rating movement and upcoming contest schedule.</p>
+          {!isLoading && data?.stats && (
+            <div className="mt-2 flex gap-4 text-sm">
+              <div><span className="text-[var(--text-muted)]">Total Contests:</span> <span className="font-bold">{data.stats.totalContests}</span></div>
+              <div><span className="text-[var(--text-muted)]">Avg Rank:</span> <span className="font-bold">{Math.round(data.stats.avgRank)}</span></div>
+              <div><span className="text-[var(--text-muted)]">Best Gain:</span> <span className="font-bold">+{data.stats.bestGain}</span></div>
+            </div>
+          )}
         </div>
+        <select 
+          value={platformFilter} 
+          onChange={(e) => setPlatformFilter(e.target.value)}
+          className="rounded-md border px-3 py-1.5 text-sm outline-none"
+          style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', borderColor: 'var(--border-default)' }}
+        >
+          <option value="ALL">All Platforms</option>
+          <option value="CODEFORCES">Codeforces</option>
+          <option value="LEETCODE">LeetCode</option>
+        </select>
       </div>
 
       {error && (
         <p className="text-sm text-[var(--color-danger)]">Could not load contest data. Link your platforms and sync from Settings.</p>
       )}
-
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
         <Card padding="18px" className="gap-3">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Last 10 {selectedPlatform === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'} Contests</span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Last 10 {platformFilter === 'ALL' ? 'Platform' : platformFilter === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'} Contests</span>
             <CalendarClock size={18} style={{ color: 'var(--accent-blue)' }} />
           </div>
           {isLoading ? (
@@ -136,7 +154,7 @@ export default function ContestHistoryPage() {
               <Loader2 className="animate-spin" size={24} style={{ color: 'var(--text-muted)' }} />
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="max-h-[420px] overflow-y-auto pr-2 space-y-2">
               {history.length > 0 ? (
                 history.map((contest) => <ContestRow key={contest.id} contest={contest} />)
               ) : (

@@ -109,7 +109,7 @@ export function ProblemDistributionCard({ data, platform, loading, children }: P
           <div className="grid min-h-0 flex-1 grid-cols-[78px_minmax(0,1fr)] gap-3">
             <div className="flex flex-col justify-center rounded-[20px] px-4 py-3" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--border-default)' }}>
               <span className="text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--accent-blue)' }}>Total</span>
-              <span className="font-mono-data text-2xl font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>{cfTotal}</span>
+              <span className="font-mono-data text-xl break-all font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>{cfTotal}</span>
               <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>solved</span>
             </div>
             <div className="h-full w-full min-w-0">

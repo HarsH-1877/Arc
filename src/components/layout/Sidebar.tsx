@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { LayoutDashboard, Users, BarChart2, Settings, Plus, LogOut, FolderOpen, Edit2, Inbox, Trophy, Share, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { LayoutDashboard, Users, BarChart2, Settings, Plus, LogOut, FolderOpen, Edit2, Inbox, Trophy, Share, PanelLeftClose, PanelLeftOpen, BookOpen } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,6 +21,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Friends', href: '/friends', icon: Users },
   { label: 'Compare', href: '/compare', icon: BarChart2 },
   { label: 'Contest History', href: '/contest-history', icon: Trophy },
+  { label: 'Problems', href: '/problems', icon: BookOpen },
   { label: 'Settings', href: '/settings', icon: Settings },
 ];
 

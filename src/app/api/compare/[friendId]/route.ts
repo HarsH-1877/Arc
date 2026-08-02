@@ -21,7 +21,7 @@ function compareWinner(a: number | null | undefined, b: number | null | undefine
   return 'tie';
 }
 
-function formatUser(u: UserWithPlatforms, heatmapData: { date: string; count: number }[]) {
+async function formatUser(u: UserWithPlatforms, heatmapData: { date: string; count: number }[]) {
   const cf = u.platforms.find((p) => p.platform === 'CODEFORCES');
   const lc = u.platforms.find((p) => p.platform === 'LEETCODE');
 
@@ -41,6 +41,10 @@ function formatUser(u: UserWithPlatforms, heatmapData: { date: string; count: nu
     .slice(0, 15);
 
   const ratingHistory = (cf?.codeforcesData?.ratingHistory as Array<{ date: string; rating: number; contestId: number }>) ?? [];
+  const cfSolvedCount = cf ? await db.submission.count({ where: { connectionId: cf.id, verdict: { in: ['OK', 'AC', 'Accepted'] } } }) : 0;
+  const lcSolvedCount = lc?.leetcodeData?.totalSolved ?? 0;
+  const cfContestCount = ratingHistory.length;
+  const lcContestCount = lc?.leetcodeData?.contestsAttended ?? 0;
 
   return {
     id: u.id,
@@ -51,6 +55,10 @@ function formatUser(u: UserWithPlatforms, heatmapData: { date: string; count: nu
     cfRank: cf?.codeforcesData?.rank ?? null,
     lcRating: lc?.leetcodeData?.contestRating ?? null,
     totalSolved: lc?.leetcodeData?.totalSolved ?? 0,
+    cfSolvedCount,
+    lcSolvedCount,
+    cfContestCount,
+    lcContestCount,
     streak: u.streaks?.currentStreak ?? 0,
     totalActiveDays: heatmapData.filter((d) => d.count > 0).length,
     ratingHistory,
@@ -158,8 +166,8 @@ export async function GET(_req: Request, { params }: { params: { friendId: strin
       getHeatmapData(friend.id),
     ]);
 
-    const formattedUser = formatUser(user, userHeatmap);
-    const formattedFriend = formatUser(friend, friendHeatmap);
+    const formattedUser = await formatUser(user, userHeatmap);
+    const formattedFriend = await formatUser(friend, friendHeatmap);
 
     const verdict = {
       totalSolved: compareWinner(formattedUser.totalSolved, formattedFriend.totalSolved),

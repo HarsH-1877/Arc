@@ -10,6 +10,10 @@ export interface CompareUser {
   cfRank: string | null;
   lcRating: number | null;
   totalSolved: number;
+  cfSolvedCount: number;
+  lcSolvedCount: number;
+  cfContestCount: number;
+  lcContestCount: number;
   streak: number;
   totalActiveDays: number;
   lastSyncedAt: string | null;

@@ -200,6 +200,13 @@ export function ContestCalendar({ events = [], loading = false }: ContestCalenda
 }
 
 function ContestLogo({ item, label }: { item: ContestDay['platforms'][number]; label: string }) {
+  if (item.href) {
+    return (
+      <a href={item.href} target="_blank" rel="noreferrer" className="group inline-flex rounded-sm p-0.5 hover:bg-white/[0.08]" title={label}>
+        <PlatformLogo platform={item.platform} size={12} className="transition-transform duration-150 group-hover:scale-110" />
+      </a>
+    );
+  }
   return (
     <span className="group inline-flex rounded-sm p-0.5 hover:bg-white/[0.08]" title={label}>
       <PlatformLogo platform={item.platform} size={12} className="transition-transform duration-150 group-hover:scale-110" />

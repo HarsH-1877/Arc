@@ -21,6 +21,7 @@ interface ContestsApiData {
   history: ContestItem[];
   upcoming: ContestItem[];
   bestByPlatform: ContestItem[];
+  stats: { totalContests: number; avgRank: number; bestGain: number; };
 }
 
 async function fetchContests(): Promise<ContestsApiData> {
