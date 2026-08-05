@@ -94,9 +94,10 @@ export default function ContestHistoryPage() {
 
   const totalContests = history.length;
   const rankedContests = history.filter((c) => typeof c.rank === 'number' && c.rank > 0);
+  // Use client-computed avg when we have ranked contests; fall back to API-provided avg (only valid for ALL)
   const avgRank = rankedContests.length > 0
     ? Math.round(rankedContests.reduce((sum, c) => sum + (c.rank ?? 0), 0) / rankedContests.length)
-    : 0;
+    : platformFilter === 'ALL' ? (data?.stats?.avgRank ?? 0) : 0;
 
   const bestContest = history.length > 0
     ? history.reduce((best, c) => {

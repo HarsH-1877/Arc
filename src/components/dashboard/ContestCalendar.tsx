@@ -212,7 +212,10 @@ function ContestLogo({ item, label }: { item: ContestDay['platforms'][number]; l
         onClick={(e) => {
           if (item.platform === 'CODEFORCES' && item.registrationOpen === false) {
             e.preventDefault();
-            toast.error('Registration not started yet');
+            toast.error('Registration not started yet', {
+              description: 'Check back closer to the contest start time.',
+              duration: 3000,
+            });
           }
         }}
       >

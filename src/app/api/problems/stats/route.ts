@@ -86,9 +86,9 @@ export async function GET(req: Request) {
     const accuracyDiff = recentAccuracy - acceptanceRate;
 
     const totalSolved = solvedSet.size || totalAccepted;
-    const totalSolvedTrend = recentAccepted > 0 ? `+${recentAccepted} vs last 90 days` : '+128 vs last 90 days';
-    const accuracyTrend = `${accuracyDiff >= 0 ? '+' : ''}${Math.abs(accuracyDiff) < 0.1 ? '2.3' : accuracyDiff.toFixed(1)}% vs last 90 days`;
-    const totalSubmissionsTrend = recentAttempts > 0 ? `+${recentAttempts} vs last 90 days` : '+412 vs last 90 days';
+    const totalSolvedTrend = recentAccepted > 0 ? `+${recentAccepted} vs last 90 days` : 'All time';
+    const accuracyTrend = totalAttempts > 0 ? `${accuracyDiff >= 0 ? '+' : ''}${Math.abs(accuracyDiff) < 0.1 ? '0.0' : accuracyDiff.toFixed(1)}% vs last 90 days` : 'Submission rate';
+    const totalSubmissionsTrend = recentAttempts > 0 ? `+${recentAttempts} vs last 90 days` : 'All time';
     const avgTime = '18m 42s';
     const avgTimeTrend = '-2m 10s vs last 90 days';
     const contestsSolved = contestResults || 42;
@@ -132,10 +132,15 @@ export async function GET(req: Request) {
       }));
     }
 
-    const rawAcceptanceRate = totalAttempts > 0 ? (totalAccepted / totalAttempts) * 100 : 68.4;
-    const finalAccuracy = Math.round(rawAcceptanceRate * 10) / 10;
-    const finalSolved = totalSolved || 1284;
-    const finalSubmissions = totalAttempts || 1876;
+    const rawAcceptanceRate = totalAttempts > 0 ? (totalAccepted / totalAttempts) * 100 : 0;
+    const finalAccuracy = totalAttempts > 0 ? Math.round(rawAcceptanceRate * 10) / 10 : 0;
+    const finalSolved = totalSolved;
+    const finalSubmissions = totalAttempts;
+
+    // Convert languageStats Record into sorted array
+    const languageBreakdown = Object.entries(languageStats)
+      .map(([lang, count]) => ({ lang, count }))
+      .sort((a, b) => b.count - a.count);
 
     const defaultLangs = [
       { lang: 'C++', count: 128 },

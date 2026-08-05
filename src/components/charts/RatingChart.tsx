@@ -162,8 +162,13 @@ export function RatingChart({ data, loading, compact = false, compareMode = fals
   if (!chartData.length || !visibleSeries.length) {
     return (
       <Card variant="raised" padding={compact ? '16px' : '22px'}>
-        <div className={compact ? 'flex h-[250px] items-center justify-center' : 'flex h-[240px] items-center justify-center'}>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No rating history yet</p>
+        <div className={compact ? 'flex h-[250px] flex-col items-center justify-center gap-2' : 'flex h-[240px] flex-col items-center justify-center gap-2'}>
+          <p className="text-sm font-semibold" style={{ color: 'var(--text-muted)' }}>No rating history yet</p>
+          <p className="text-xs text-center max-w-[240px]" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
+            {selectedPlatform === 'LEETCODE'
+              ? 'Sync your LeetCode account from Settings → Connections to load contest history.'
+              : 'Sync your Codeforces account from Settings → Connections to load rating history.'}
+          </p>
         </div>
       </Card>
     );

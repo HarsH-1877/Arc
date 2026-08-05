@@ -66,14 +66,21 @@ async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
   const generated: LCUpcomingRaw[] = [];
   const now = Math.floor(Date.now() / 1000);
   
-  // Weekly contests occur every Sunday at 02:30 UTC
-  // Biweekly contests occur every 2nd Saturday at 14:30 UTC
-  const baseWeeklyNum = 438;
-  const baseWeeklyTime = 1739673000; // Feb 16, 2025
+  // Weekly contests: every Sunday at 02:30 UTC
+  // Anchor: Weekly Contest 459 on Sun Jul 6, 2025 02:30 UTC = 1751765400
+  // From that anchor, compute the nearest past Sunday and its contest number
+  const baseWeeklyNum = 459;
+  const baseWeeklyTime = 1751765400; // Jul 6, 2025 02:30 UTC
 
-  for (let i = -6; i <= 6; i++) {
-    const startTime = baseWeeklyTime + i * 7 * 86400;
-    const contestNum = baseWeeklyNum + i;
+  // Find the weekly contest number closest to now
+  const weeksSinceBase = Math.round((now - baseWeeklyTime) / (7 * 86400));
+  const nearestWeeklyNum = baseWeeklyNum + weeksSinceBase;
+  const nearestWeeklyTime = baseWeeklyTime + weeksSinceBase * 7 * 86400;
+
+  for (let i = -4; i <= 8; i++) {
+    const startTime = nearestWeeklyTime + i * 7 * 86400;
+    const contestNum = nearestWeeklyNum + i;
+    if (contestNum < 1) continue;
     generated.push({
       title: `Weekly Contest ${contestNum}`,
       titleSlug: `weekly-contest-${contestNum}`,
@@ -82,11 +89,19 @@ async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
     });
   }
 
-  const baseBiweeklyNum = 150;
-  const baseBiweeklyTime = 1739630000; // Feb 15, 2025
-  for (let i = -4; i <= 4; i++) {
-    const startTime = baseBiweeklyTime + i * 14 * 86400;
-    const contestNum = baseBiweeklyNum + i;
+  // Biweekly contests: every other Saturday at 14:30 UTC
+  // Anchor: Biweekly Contest 158 on Sat Jul 5, 2025 14:30 UTC = 1751726200
+  const baseBiweeklyNum = 158;
+  const baseBiweeklyTime = 1751726200; // Jul 5, 2025 14:30 UTC
+
+  const biweeksSinceBase = Math.round((now - baseBiweeklyTime) / (14 * 86400));
+  const nearestBiweeklyNum = baseBiweeklyNum + biweeksSinceBase;
+  const nearestBiweeklyTime = baseBiweeklyTime + biweeksSinceBase * 14 * 86400;
+
+  for (let i = -3; i <= 5; i++) {
+    const startTime = nearestBiweeklyTime + i * 14 * 86400;
+    const contestNum = nearestBiweeklyNum + i;
+    if (contestNum < 1) continue;
     generated.push({
       title: `Biweekly Contest ${contestNum}`,
       titleSlug: `biweekly-contest-${contestNum}`,
@@ -172,7 +187,8 @@ export async function fetchContestSchedule(): Promise<UpcomingContest[]> {
     for (const contest of lcContests) {
       if (contest.startTime < twoWeeksAgo) continue;
       const isUpcoming = contest.startTime > now;
-      const registrationOpen = isUpcoming; // LeetCode registrations are open leading up to start
+      // Registration opens ~2 weeks before and stays open until the contest ends
+      const registrationOpen = isUpcoming || (contest.startTime + contest.duration > now);
       contests.push({
         id: `lc-${contest.titleSlug}`,
         name: contest.title,
@@ -296,24 +312,25 @@ export function mergeRatingChartData(
   cfHistory: Array<{ date: string; rating: number; contestId?: number }>,
   lcHistory: Array<{ date: string; rating: number }>,
 ) {
-  const byDate = new Map<string, { date: string; cfRating?: number; lcRating?: number }>();
+  if (cfHistory.length === 0 && lcHistory.length === 0) return [];
 
-  for (const point of cfHistory) {
-    const day = point.date.slice(0, 10);
-    const existing = byDate.get(day) ?? { date: point.date };
-    existing.cfRating = point.rating;
-    byDate.set(day, existing);
-  }
+  // Build per-day lookup maps (keyed to YYYY-MM-DD)
+  const cfMap = new Map<string, number>();
+  for (const point of cfHistory) cfMap.set(point.date.slice(0, 10), point.rating);
 
-  for (const point of lcHistory) {
-    const day = point.date.slice(0, 10);
-    const existing = byDate.get(day) ?? { date: point.date };
-    existing.lcRating = point.rating;
-    if (!existing.date) existing.date = point.date;
-    byDate.set(day, existing);
-  }
+  const lcMap = new Map<string, number>();
+  for (const point of lcHistory) lcMap.set(point.date.slice(0, 10), point.rating);
 
-  return Array.from(byDate.values()).sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-  );
+  // Unified sorted date list
+  const allDates = Array.from(new Set([...Array.from(cfMap.keys()), ...Array.from(lcMap.keys())])).sort();
+
+  // Forward-fill so each series is continuous across the combined timeline
+  let lastCf: number | undefined;
+  let lastLc: number | undefined;
+
+  return allDates.map((date) => {
+    if (cfMap.has(date)) lastCf = cfMap.get(date);
+    if (lcMap.has(date)) lastLc = lcMap.get(date);
+    return { date, cfRating: lastCf, lcRating: lastLc };
+  });
 }

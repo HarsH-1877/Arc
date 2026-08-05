@@ -236,7 +236,8 @@ async function syncLeetCode(connectionId: string, username: string, userId: stri
     getLCContestInfo(username),
     getLCRecentSubmissions(username, submissionLimit),
     getLCTagStats(username),
-    quick ? Promise.resolve([]) : getLCContestHistory(username),
+    // Always fetch contest history — it's a single lightweight call and drives rating charts
+    getLCContestHistory(username),
     quick ? Promise.resolve(null) : getLCProfile(username).catch(() => null),
   ]);
 

@@ -80,6 +80,10 @@ export default function ConnectionsSettingsPage() {
       return res.json();
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+    onSettled: () => {
+      // Force an immediate refetch so syncStatus reflects the latest DB state
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
   });
 
   const handleLink = (platform: 'CODEFORCES' | 'LEETCODE', handle: string) => {
@@ -207,7 +211,9 @@ function PlatformCard({
   onSync: (platform: 'CODEFORCES' | 'LEETCODE') => void;
   onUnlink: (platform: 'CODEFORCES' | 'LEETCODE') => void;
 }) {
-  const syncing = isSyncing || data?.syncStatus === 'SYNCING';
+  // Only animate while our own mutation is in-flight. Once it settles, stop spinning
+  // even if the DB poll hasn't caught up yet — avoids stuck spinner.
+  const syncing = isSyncing;
 
   return (
     <div className="flex flex-col gap-4 rounded-lg p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)' }}>
@@ -241,7 +247,7 @@ function PlatformCard({
               </button>
               {data.lastSyncedAt && <p className="mt-2 text-[11px]" style={{ color: 'var(--text-muted)' }}>Last synced {formatRelativeTime(data.lastSyncedAt)}</p>}
             </div>
-            <button onClick={() => onUnlink(platform)} disabled={isUnlinking} className="flex h-9 w-9 items-center justify-center rounded-md disabled:opacity-50" style={{ background: 'transparent', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', cursor: 'pointer' }} title="Unlink account" aria-label={'Unlink ' + name}>
+            <button onClick={() => onUnlink(platform)} disabled={isUnlinking} className="flex h-9 w-9 items-center justify-center rounded-md disabled:opacity-50 hover:bg-red-500/10 transition-colors" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--danger)', cursor: 'pointer' }} title="Unlink account" aria-label={'Unlink ' + name}>
               <Unlink size={16} />
             </button>
           </div>

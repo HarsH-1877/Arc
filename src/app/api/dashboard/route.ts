@@ -3,6 +3,7 @@ import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import { USE_MOCK_DATA, MOCK_DASHBOARD } from '@/lib/mock';
 import { fetchUpcomingContests, fetchContestSchedule, buildContestCalendarEvents, contestResultsToHistory, mergeRatingChartData } from '@/lib/contests/schedule';
+import { getLCContestHistory } from '@/lib/fetchers/leetcode';
 
 // GET /api/dashboard
 export async function GET() {
@@ -45,7 +46,7 @@ export async function GET() {
     db.contestResult.findMany({
       where: { connectionId: { in: connectionIds } },
       orderBy: { timestamp: 'desc' },
-      take: 20,
+      take: 200,
     }),
     fetchUpcomingContests(),
     fetchContestSchedule(),
@@ -62,20 +63,97 @@ export async function GET() {
   const codeforcesHeatmapData = Object.entries(heatmapMaps.CODEFORCES).map(([date, count]) => ({ date, count }));
   const leetcodeHeatmapData = Object.entries(heatmapMaps.LEETCODE).map(([date, count]) => ({ date, count }));
 
-  // Build merged rating history for chart
+  // ── Build LC rating history ──────────────────────────────────────────────
+  // Fallback chain (most to least preferred):
+  //   1. streakData.ratingHistory  — written by full sync
+  //   2. ContestResult DB rows     — written by every sync (including quick)
+  //   3. Live LeetCode API fetch   — for users whose quick sync stored nothing
+  //      (also backfills DB so this only happens once)
+
   const cfRatingHistory = (cf?.codeforcesData?.ratingHistory ?? []) as {
     date: string;
     rating: number;
     contestId: number;
   }[];
 
-  const lcRatingHistory = (
+  const streakRatingHistory = (
     (lc?.leetcodeData?.streakData as { ratingHistory?: Array<{ startTime: number; rating: number }> } | null)
       ?.ratingHistory ?? []
-  ).map((entry) => ({
-    date: new Date(entry.startTime * 1000).toISOString(),
-    rating: entry.rating,
-  }));
+  );
+
+  let lcRatingHistory: Array<{ date: string; rating: number }> = [];
+
+  if (streakRatingHistory.length > 0) {
+    // Source 1: streakData
+    lcRatingHistory = streakRatingHistory.map((entry) => ({
+      date: new Date(entry.startTime * 1000).toISOString(),
+      rating: Math.round(entry.rating),
+    }));
+  } else if (lc) {
+    // Source 2: ContestResult rows (already fetched, just filter them)
+    const lcContestRows = contestRows
+      .filter((r) => r.connectionId === lc.id && r.platform === 'LEETCODE' && r.newRating != null)
+      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+    if (lcContestRows.length > 0) {
+      lcRatingHistory = lcContestRows.map((row) => ({
+        date: row.timestamp.toISOString(),
+        rating: row.newRating!,
+      }));
+    } else {
+      // Source 3: Live fetch + backfill DB so this only runs once
+      try {
+        const liveHistory = await getLCContestHistory(lc.handle);
+        if (liveHistory.length > 0) {
+          lcRatingHistory = liveHistory.map((entry) => ({
+            date: new Date(entry.startTime * 1000).toISOString(),
+            rating: entry.rating,
+          }));
+
+          // Backfill streakData (fire-and-forget — don't block response)
+          const ratingHistoryPayload = liveHistory.map((entry, index) => {
+            const prev = liveHistory[index - 1]?.rating ?? entry.rating;
+            return {
+              contestTitle: entry.contestTitle,
+              startTime: entry.startTime,
+              rating: entry.rating,
+              ratingChange: entry.rating - prev,
+              ranking: entry.ranking,
+              problemsSolved: entry.problemsSolved,
+              totalProblems: entry.totalProblems,
+            };
+          });
+          db.leetcodeData.update({
+            where: { connectionId: lc.id },
+            data: { streakData: { ratingHistory: ratingHistoryPayload } },
+          }).catch(() => {});
+
+          // Backfill ContestResult rows (fire-and-forget)
+          for (let i = 0; i < liveHistory.length; i++) {
+            const entry = liveHistory[i];
+            const prevRating = liveHistory[i - 1]?.rating ?? entry.rating;
+            const contestId = `${entry.startTime}-${entry.contestTitle.replace(/\s+/g, '-').slice(0, 48)}`;
+            db.contestResult.upsert({
+              where: { connectionId_contestId_platform: { connectionId: lc.id, contestId, platform: 'LEETCODE' } },
+              create: {
+                connectionId: lc.id,
+                platform: 'LEETCODE',
+                contestId,
+                contestName: entry.contestTitle,
+                rank: entry.ranking,
+                ratingChange: entry.rating - prevRating,
+                newRating: entry.rating,
+                timestamp: new Date(entry.startTime * 1000),
+              },
+              update: { rank: entry.ranking, ratingChange: entry.rating - prevRating, newRating: entry.rating },
+            }).catch(() => {});
+          }
+        }
+      } catch {
+        // Live fetch failed — chart will show empty state with sync prompt
+      }
+    }
+  }
 
   const ratingChartData = mergeRatingChartData(cfRatingHistory, lcRatingHistory);
 
@@ -107,9 +185,9 @@ export async function GET() {
     const maxCount = Math.max(...Object.values(tags), 1);
     return Object.entries(tags)
       .map(([topic, rawCount]) => ({
-      topic,
-      rawCount,
-      value: Math.round((rawCount / maxCount) * 100),
+        topic,
+        rawCount,
+        value: Math.round((rawCount / maxCount) * 100),
       }))
       .sort((a, b) => b.rawCount - a.rawCount)
       .slice(0, 8);
@@ -159,8 +237,6 @@ export async function GET() {
           totalActiveDays: user.streaks.totalActiveDays,
         }
       : { currentStreak: 0, longestStreak: 0, freezeTokens: 2, totalActiveDays: 0 },
-    // Keep the legacy field for existing consumers while exposing the two
-    // platform-specific series needed by the platform picker.
     heatmapData: codeforcesHeatmapData,
     codeforcesHeatmapData,
     leetcodeHeatmapData,

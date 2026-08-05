@@ -6,6 +6,7 @@ import {
   contestResultsToHistory,
   fetchUpcomingContests,
 } from '@/lib/contests/schedule';
+import type { UserContestHistoryItem } from '@/lib/contests/types';
 import { USE_MOCK_DATA } from '@/lib/mock';
 
 // GET /api/contests — user contest history + global upcoming schedule
@@ -107,7 +108,53 @@ export async function GET() {
       }];
     });
   });
-  const contestRowsWithFallback = [...contestRows, ...cfHistoryFallback];
+  let contestRowsWithFallback = [...contestRows, ...cfHistoryFallback];
+
+  // If no LC ContestResult rows exist in DB, live-fetch and backfill
+  const hasLcRows = contestRowsWithFallback.some((r) => r.platform === 'LEETCODE');
+  if (!hasLcRows) {
+    const lcConnection = connections.find((c) => c.platform === 'LEETCODE');
+    if (lcConnection) {
+      try {
+        const { getLCContestHistory } = await import('@/lib/fetchers/leetcode');
+        const liveHistory = await getLCContestHistory(lcConnection.handle);
+        for (let i = 0; i < liveHistory.length; i++) {
+          const entry = liveHistory[i];
+          const prevRating = liveHistory[i - 1]?.rating ?? entry.rating;
+          const contestId = `${entry.startTime}-${entry.contestTitle.replace(/\s+/g, '-').slice(0, 48)}`;
+          contestRowsWithFallback.push({
+            id: `live-lc-${contestId}`,
+            connectionId: lcConnection.id,
+            platform: 'LEETCODE' as const,
+            contestId,
+            contestName: entry.contestTitle,
+            rank: entry.ranking,
+            ratingChange: entry.rating - prevRating,
+            newRating: entry.rating,
+            timestamp: new Date(entry.startTime * 1000),
+          });
+          // Backfill to DB (fire-and-forget)
+          db.contestResult.upsert({
+            where: { connectionId_contestId_platform: { connectionId: lcConnection.id, contestId, platform: 'LEETCODE' } },
+            create: {
+              connectionId: lcConnection.id, platform: 'LEETCODE', contestId,
+              contestName: entry.contestTitle, rank: entry.ranking,
+              ratingChange: entry.rating - prevRating, newRating: entry.rating,
+              timestamp: new Date(entry.startTime * 1000),
+            },
+            update: { rank: entry.ranking, ratingChange: entry.rating - prevRating, newRating: entry.rating },
+          }).catch(() => {});
+        }
+        // Also populate lcStatsByTitle from live data
+        for (const entry of liveHistory) {
+          lcStatsByTitle.set(entry.contestTitle, {
+            solved: entry.problemsSolved,
+            total: entry.totalProblems,
+          });
+        }
+      } catch { /* live fetch failed */ }
+    }
+  }
 
   const historyByPlatform = contestResultsToHistory(
     contestRowsWithFallback.map((row) => {
@@ -236,7 +283,7 @@ export async function GET() {
   });
 
   const rankedContests = history.filter((c) => typeof c.rank === 'number' && c.rank! > 0);
-  const avgRank = rankedContests.length ? Math.round(rankedContests.reduce((sum, c) => sum + c.rank!, 0) / rankedContests.length) : 380;
+  const avgRank = rankedContests.length ? Math.round(rankedContests.reduce((sum, c) => sum + c.rank!, 0) / rankedContests.length) : 0;
   const bestGain = Math.max(0, ...history.map(c => c.ratingChange ?? 0));
   const stats = { totalContests: history.length, avgRank, bestGain };
 

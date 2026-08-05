@@ -270,58 +270,58 @@ export function ProblemsClient() {
       {/* 1. Top 4 Stats Cards Row - sleek compact height */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-stretch">
         {/* Card 1: Total Solved */}
-        <Card padding="14px 18px" className="flex flex-col justify-between min-h-[125px]">
+        <Card padding="12px 16px" className="flex flex-col justify-between min-h-[100px]">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Total Solved</span>
             <div className="p-1.5 rounded-lg" style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
-              <Target size={15} style={{ color: 'var(--accent-green)' }} />
+              <Target size={14} style={{ color: 'var(--accent-green)' }} />
             </div>
           </div>
           {statsLoading ? (
-            <div className="skeleton h-10 w-28 my-1" />
+            <div className="skeleton h-9 w-24 my-1" />
           ) : (
-            <div className="font-mono-data text-4xl sm:text-5xl font-black leading-none whitespace-nowrap truncate" style={{ color: 'var(--text-primary)' }} title={String(stats?.totalSolved ?? 0)}>
-              {(stats?.totalSolved ?? stats?.totalAccepted ?? 1284).toLocaleString()}
+            <div className="font-mono-data text-3xl sm:text-4xl font-black leading-none whitespace-nowrap truncate" style={{ color: 'var(--text-primary)' }} title={String(stats?.totalSolved ?? 0)}>
+              {(stats?.totalSolved ?? stats?.totalAccepted ?? 0).toLocaleString()}
             </div>
           )}
-          <div className="flex items-center gap-1 mt-2 text-[11px] font-semibold px-2 py-0.5 rounded-full w-fit" style={{ background: 'rgba(52,211,153,0.1)', color: 'var(--accent-green)', border: '1px solid rgba(52,211,153,0.2)' }}>
-            <TrendingUp size={12} />
+          <div className="flex items-center gap-1 mt-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full w-fit" style={{ background: 'rgba(52,211,153,0.1)', color: 'var(--accent-green)', border: '1px solid rgba(52,211,153,0.2)' }}>
+            <TrendingUp size={11} />
             <span>{stats?.totalSolvedTrend ?? 'All time'}</span>
           </div>
         </Card>
 
         {/* Card 2: Accuracy */}
-        <Card padding="14px 18px" className="flex flex-col justify-between min-h-[125px]">
+        <Card padding="12px 16px" className="flex flex-col justify-between min-h-[100px]">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Accuracy</span>
             <div className="p-1.5 rounded-lg" style={{ background: 'rgba(79,142,247,0.1)', border: '1px solid rgba(79,142,247,0.2)' }}>
-              <Activity size={15} style={{ color: 'var(--accent-blue)' }} />
+              <Activity size={14} style={{ color: 'var(--accent-blue)' }} />
             </div>
           </div>
           {statsLoading ? (
-            <div className="skeleton h-10 w-28 my-1" />
+            <div className="skeleton h-9 w-24 my-1" />
           ) : (
-            <div className="font-mono-data text-4xl sm:text-5xl font-black leading-none" style={{ color: 'var(--text-primary)' }}>
-              {(stats?.accuracy ?? stats?.acceptanceRate ?? 68.4).toFixed(1)}%
+            <div className="font-mono-data text-3xl sm:text-4xl font-black leading-none" style={{ color: 'var(--text-primary)' }}>
+              {(stats?.accuracy ?? stats?.acceptanceRate ?? 0).toFixed(1)}%
             </div>
           )}
-          <div className="flex items-center gap-1 mt-2 text-[11px] font-semibold px-2 py-0.5 rounded-full w-fit" style={{ background: 'rgba(52,211,153,0.1)', color: 'var(--accent-green)', border: '1px solid rgba(52,211,153,0.2)' }}>
-            <TrendingUp size={12} />
+          <div className="flex items-center gap-1 mt-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full w-fit" style={{ background: 'rgba(52,211,153,0.1)', color: 'var(--accent-green)', border: '1px solid rgba(52,211,153,0.2)' }}>
+            <TrendingUp size={11} />
             <span>{stats?.accuracyTrend ?? 'Submission rate'}</span>
           </div>
         </Card>
 
         {/* Card 3: Topic Weakness */}
-        <Card padding="14px 16px" className="flex flex-col min-h-[125px]">
+        <Card padding="12px 14px" className="flex flex-col min-h-[100px]">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Topic Weakness</span>
             <div className="p-1 rounded-lg" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)' }}>
-              <AlertTriangle size={14} style={{ color: 'var(--accent-amber)' }} />
+              <AlertTriangle size={13} style={{ color: 'var(--accent-amber)' }} />
             </div>
           </div>
           {statsLoading ? (
             <div className="space-y-1.5 flex-1">
-              {[0,1,2].map(i => <div key={i} className="skeleton h-7 w-full rounded" />)}
+              {[0,1,2].map(i => <div key={i} className="skeleton h-6 w-full rounded" />)}
             </div>
           ) : (
             <div className="flex flex-col gap-1.5 flex-1 overflow-y-auto">
@@ -342,7 +342,7 @@ export function ProblemsClient() {
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-bold truncate" style={{ color: 'var(--text-primary)' }}>{item.topic}</p>
                     </div>
-                    <span className="font-mono-data text-[10px] font-bold" style={{ color: c.text }}>{item.accuracy}%</span>
+                    <span className="font-mono-data text-[11px] font-bold" style={{ color: c.text }}>{item.accuracy}%</span>
                   </div>
                 );
               })}
@@ -351,11 +351,11 @@ export function ProblemsClient() {
         </Card>
 
         {/* Card 4: Language Distribution */}
-        <Card padding="14px 16px" className="flex flex-col min-h-[125px]">
+        <Card padding="12px 14px" className="flex flex-col min-h-[100px]">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Language Distribution</span>
             <div className="p-1 rounded-lg" style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)' }}>
-              <Code2 size={14} style={{ color: 'var(--accent-purple)' }} />
+              <Code2 size={13} style={{ color: 'var(--accent-purple)' }} />
             </div>
           </div>
           {statsLoading ? (
@@ -390,7 +390,7 @@ export function ProblemsClient() {
       <Card padding="0" className="overflow-hidden">
         {/* Filters Bar Header */}
         <div className="p-4 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]/40 flex flex-col gap-4">
-          {/* Row 1: Search + Platform Pills + Difficulty Pills + Reset Filters */}
+          {/* Row 1: Search + Platform Pills + Reset Filters + Difficulty Pills */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             {/* Search Input Box */}
             <div className="relative flex-1 min-w-[220px] max-w-md">
@@ -435,7 +435,16 @@ export function ProblemsClient() {
               ))}
             </div>
 
-            {/* Difficulty Pills */}
+            {/* Reset Filters Button (moved before Difficulty) */}
+            <button
+              onClick={resetFilters}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-[var(--bg-elevated)] hover:bg-white/10 text-[var(--text-secondary)] border border-[var(--border-default)] transition-colors"
+            >
+              <RotateCcw size={13} />
+              <span>Reset Filters</span>
+            </button>
+
+            {/* Difficulty Pills (moved after Reset) */}
             <div className="flex items-center bg-[var(--bg-input)] p-1 rounded-lg border border-[var(--border-default)]">
               <span className="text-xs font-semibold text-[var(--text-muted)] px-2">Difficulty:</span>
               {['All', 'Easy', 'Medium', 'Hard'].map((d) => (
@@ -455,15 +464,6 @@ export function ProblemsClient() {
                 </button>
               ))}
             </div>
-
-            {/* Swapped Position: Reset Filters Button */}
-            <button
-              onClick={resetFilters}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-[var(--bg-elevated)] hover:bg-white/10 text-[var(--text-secondary)] border border-[var(--border-default)] transition-colors"
-            >
-              <RotateCcw size={13} />
-              <span>Reset Filters</span>
-            </button>
           </div>
 
           {/* Row 2: Tags, Status, Language, Sort By, Filters/Reset Button */}
@@ -539,6 +539,7 @@ export function ProblemsClient() {
                 <option value="difficulty_asc">Difficulty: Easy to Hard</option>
                 <option value="difficulty_desc">Difficulty: Hard to Easy</option>
               </select>
+            </div>
           </div>
         </div>
 

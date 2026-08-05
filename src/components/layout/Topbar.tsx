@@ -3,7 +3,7 @@
 import { Bell, CalendarClock, CheckCircle2, ChevronDown, Sun, RefreshCw, Menu, UserPlus } from 'lucide-react';
 import { useUIStore } from '@/store/useUIStore';
 import { useQueryClient } from '@tanstack/react-query';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { GoalSetter } from '@/components/layout/GoalSetter';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
@@ -39,6 +39,13 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
   const availablePlatforms = isContestHistoryPage
     ? (['ALL', 'CODEFORCES', 'LEETCODE'] as const)
     : (['CODEFORCES', 'LEETCODE'] as const);
+
+  // When leaving contest-history, reset ALL → CODEFORCES so other pages get a valid platform
+  useEffect(() => {
+    if (!isContestHistoryPage && selectedPlatform === 'ALL') {
+      setSelectedPlatform('CODEFORCES');
+    }
+  }, [isContestHistoryPage, selectedPlatform, setSelectedPlatform]);
 
   const displayPlatform = (!isContestHistoryPage && selectedPlatform === 'ALL') ? 'CODEFORCES' : selectedPlatform;
 

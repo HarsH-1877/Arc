@@ -54,10 +54,72 @@ async function formatUser(
 
   const cfRatingHistory = (cf?.codeforcesData?.ratingHistory as Array<{ date: string; rating: number; contestId: number }>) ?? [];
   const lcStreakData = lc?.leetcodeData?.streakData as { ratingHistory?: Array<{ startTime: number; rating: number }> } | null;
-  const lcRatingHistory = (lcStreakData?.ratingHistory ?? []).map((entry) => ({
-    date: new Date(entry.startTime * 1000).toISOString(),
-    rating: Math.round(entry.rating),
-  }));
+  const streakRatingHistory = lcStreakData?.ratingHistory ?? [];
+
+  // 3-source fallback: streakData → ContestResult rows → live fetch
+  let lcRatingHistory: Array<{ date: string; rating: number }> = [];
+  if (streakRatingHistory.length > 0) {
+    lcRatingHistory = streakRatingHistory.map((entry) => ({
+      date: new Date(entry.startTime * 1000).toISOString(),
+      rating: Math.round(entry.rating),
+    }));
+  } else if (lc) {
+    const lcContestRows = await db.contestResult.findMany({
+      where: { connectionId: lc.id, platform: 'LEETCODE' },
+      orderBy: { timestamp: 'asc' },
+    });
+    if (lcContestRows.length > 0) {
+      lcRatingHistory = lcContestRows
+        .filter((row) => row.newRating != null)
+        .map((row) => ({
+          date: row.timestamp.toISOString(),
+          rating: row.newRating!,
+        }));
+    } else {
+      // Live fetch fallback + backfill
+      try {
+        const { getLCContestHistory } = await import('@/lib/fetchers/leetcode');
+        const liveHistory = await getLCContestHistory(lc.handle);
+        if (liveHistory.length > 0) {
+          lcRatingHistory = liveHistory.map((entry) => ({
+            date: new Date(entry.startTime * 1000).toISOString(),
+            rating: entry.rating,
+          }));
+          const ratingHistoryPayload = liveHistory.map((entry, index) => {
+            const prev = liveHistory[index - 1]?.rating ?? entry.rating;
+            return {
+              contestTitle: entry.contestTitle,
+              startTime: entry.startTime,
+              rating: entry.rating,
+              ratingChange: entry.rating - prev,
+              ranking: entry.ranking,
+              problemsSolved: entry.problemsSolved,
+              totalProblems: entry.totalProblems,
+            };
+          });
+          db.leetcodeData.update({
+            where: { connectionId: lc.id },
+            data: { streakData: { ratingHistory: ratingHistoryPayload } },
+          }).catch(() => {});
+          for (let i = 0; i < liveHistory.length; i++) {
+            const entry = liveHistory[i];
+            const prevRating = liveHistory[i - 1]?.rating ?? entry.rating;
+            const contestId = `${entry.startTime}-${entry.contestTitle.replace(/\s+/g, '-').slice(0, 48)}`;
+            db.contestResult.upsert({
+              where: { connectionId_contestId_platform: { connectionId: lc.id, contestId, platform: 'LEETCODE' } },
+              create: {
+                connectionId: lc.id, platform: 'LEETCODE', contestId,
+                contestName: entry.contestTitle, rank: entry.ranking,
+                ratingChange: entry.rating - prevRating, newRating: entry.rating,
+                timestamp: new Date(entry.startTime * 1000),
+              },
+              update: { rank: entry.ranking, ratingChange: entry.rating - prevRating, newRating: entry.rating },
+            }).catch(() => {});
+          }
+        }
+      } catch { /* live fetch failed */ }
+    }
+  }
 
   const cfSolvedCount = cf ? await db.submission.count({ where: { connectionId: cf.id, verdict: { in: ['OK', 'AC', 'Accepted'] } } }) : 0;
   const lcSolvedCount = lc?.leetcodeData?.totalSolved ?? 0;

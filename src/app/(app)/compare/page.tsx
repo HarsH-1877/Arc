@@ -29,7 +29,6 @@ function ComparePageContent() {
 
   const mergedRatingData = useMemo(() => {
     if (!data) return [];
-    const map = new Map<string, { date: string; userRating?: number; friendRating?: number }>();
 
     const userHistory = (selectedPlatform === 'CODEFORCES'
       ? (data.user.cfRatingHistory?.length ? data.user.cfRatingHistory : data.user.ratingHistory)
@@ -39,20 +38,38 @@ function ComparePageContent() {
       ? (data.friend.cfRatingHistory?.length ? data.friend.cfRatingHistory : data.friend.ratingHistory)
       : (data.friend.lcRatingHistory?.length ? data.friend.lcRatingHistory : data.friend.ratingHistory)) ?? [];
 
-    for (const r of userHistory) {
-      map.set(r.date, { date: r.date, userRating: r.rating });
-    }
-    for (const r of friendHistory) {
-      const existing = map.get(r.date);
-      if (existing) {
-        existing.friendRating = r.rating;
-        (existing as any).friend1 = r.rating;
-      } else {
-        map.set(r.date, { date: r.date, friendRating: r.rating, friend1: r.rating } as any);
-      }
-    }
+    if (userHistory.length === 0 && friendHistory.length === 0) return [];
 
-    return Array.from(map.values()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    // Collect all unique dates (normalised to YYYY-MM-DD) from both series
+    const allDates = Array.from(
+      new Set([
+        ...userHistory.map((r) => r.date.slice(0, 10)),
+        ...friendHistory.map((r) => r.date.slice(0, 10)),
+      ])
+    ).sort();
+
+    // Build lookup maps keyed by YYYY-MM-DD
+    const userMap = new Map<string, number>();
+    for (const r of userHistory) userMap.set(r.date.slice(0, 10), r.rating);
+
+    const friendMap = new Map<string, number>();
+    for (const r of friendHistory) friendMap.set(r.date.slice(0, 10), r.rating);
+
+    // Forward-fill: walk dates in order, carry last known rating for each series
+    let lastUser: number | undefined;
+    let lastFriend: number | undefined;
+
+    return allDates.map((date) => {
+      if (userMap.has(date)) lastUser = userMap.get(date);
+      if (friendMap.has(date)) lastFriend = friendMap.get(date);
+
+      return {
+        date,
+        userRating: lastUser,
+        friend1: lastFriend,
+        friendRating: lastFriend,
+      } as { date: string; userRating?: number; friend1?: number; friendRating?: number };
+    });
   }, [data, selectedPlatform]);
 
   const tabTransition = reducedMotion ? { duration: 0 } : { duration: 0.2 };
