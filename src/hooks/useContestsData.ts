@@ -11,6 +11,7 @@ export interface ContestItem {
   before: number;
   after: number;
   ratingChange?: number;
+  rank?: number | null;
   solved: number;
   total: number;
   href: string;

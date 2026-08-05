@@ -21,29 +21,47 @@ function compareWinner(a: number | null | undefined, b: number | null | undefine
   return 'tie';
 }
 
-async function formatUser(u: UserWithPlatforms, heatmapData: { date: string; count: number }[]) {
+async function formatUser(
+  u: UserWithPlatforms,
+  heatmaps: { all: { date: string; count: number }[]; cf: { date: string; count: number }[]; lc: { date: string; count: number }[] }
+) {
   const cf = u.platforms.find((p) => p.platform === 'CODEFORCES');
   const lc = u.platforms.find((p) => p.platform === 'LEETCODE');
 
+  const cfTags = (cf?.codeforcesData?.tagStats as Record<string, number>) ?? {};
+  const lcTags = (lc?.leetcodeData?.tagStats as Record<string, number>) ?? {};
+
   const topicStatsRaw: Record<string, number> = {
-    ...((cf?.codeforcesData?.tagStats as Record<string, number>) ?? {}),
-    ...((lc?.leetcodeData?.tagStats as Record<string, number>) ?? {}),
+    ...cfTags,
+    ...lcTags,
   };
 
-  const maxCount = Math.max(...Object.values(topicStatsRaw), 1);
-  const topicStats = Object.entries(topicStatsRaw)
-    .map(([topic, rawCount]) => ({
-      topic,
-      rawCount,
-      value: Math.round((rawCount / maxCount) * 100),
-    }))
-    .sort((a, b) => b.rawCount - a.rawCount)
-    .slice(0, 15);
+  const buildTopics = (tags: Record<string, number>) => {
+    const maxCount = Math.max(...Object.values(tags), 1);
+    return Object.entries(tags)
+      .map(([topic, rawCount]) => ({
+        topic,
+        rawCount,
+        value: Math.round((rawCount / maxCount) * 100),
+      }))
+      .sort((a, b) => b.rawCount - a.rawCount)
+      .slice(0, 15);
+  };
 
-  const ratingHistory = (cf?.codeforcesData?.ratingHistory as Array<{ date: string; rating: number; contestId: number }>) ?? [];
+  const topicStats = buildTopics(topicStatsRaw);
+  const cfTopicStats = buildTopics(cfTags);
+  const lcTopicStats = buildTopics(lcTags);
+
+  const cfRatingHistory = (cf?.codeforcesData?.ratingHistory as Array<{ date: string; rating: number; contestId: number }>) ?? [];
+  const lcStreakData = lc?.leetcodeData?.streakData as { ratingHistory?: Array<{ startTime: number; rating: number }> } | null;
+  const lcRatingHistory = (lcStreakData?.ratingHistory ?? []).map((entry) => ({
+    date: new Date(entry.startTime * 1000).toISOString(),
+    rating: Math.round(entry.rating),
+  }));
+
   const cfSolvedCount = cf ? await db.submission.count({ where: { connectionId: cf.id, verdict: { in: ['OK', 'AC', 'Accepted'] } } }) : 0;
   const lcSolvedCount = lc?.leetcodeData?.totalSolved ?? 0;
-  const cfContestCount = ratingHistory.length;
+  const cfContestCount = cfRatingHistory.length;
   const lcContestCount = lc?.leetcodeData?.contestsAttended ?? 0;
 
   return {
@@ -54,16 +72,22 @@ async function formatUser(u: UserWithPlatforms, heatmapData: { date: string; cou
     cfRating: cf?.codeforcesData?.currentRating ?? null,
     cfRank: cf?.codeforcesData?.rank ?? null,
     lcRating: lc?.leetcodeData?.contestRating ?? null,
-    totalSolved: lc?.leetcodeData?.totalSolved ?? 0,
+    totalSolved: cfSolvedCount + lcSolvedCount,
     cfSolvedCount,
     lcSolvedCount,
     cfContestCount,
     lcContestCount,
     streak: u.streaks?.currentStreak ?? 0,
-    totalActiveDays: heatmapData.filter((d) => d.count > 0).length,
-    ratingHistory,
+    totalActiveDays: heatmaps.all.filter((d) => d.count > 0).length,
+    ratingHistory: cfRatingHistory,
+    cfRatingHistory,
+    lcRatingHistory,
     topicStats,
-    heatmapData,
+    cfTopicStats,
+    lcTopicStats,
+    heatmapData: heatmaps.all,
+    cfHeatmapData: heatmaps.cf,
+    lcHeatmapData: heatmaps.lc,
     lastSyncedAt: cf?.lastSyncedAt?.toISOString() ?? lc?.lastSyncedAt?.toISOString() ?? null,
   };
 }
@@ -143,7 +167,7 @@ export async function GET(_req: Request, { params }: { params: { friendId: strin
     const getHeatmapData = async (userId: string) => {
       const connections = await db.platformConnection.findMany({
         where: { userId },
-        select: { id: true },
+        select: { id: true, platform: true },
       });
       const subs = await db.submission.findMany({
         where: {
@@ -151,14 +175,27 @@ export async function GET(_req: Request, { params }: { params: { friendId: strin
           verdict: { in: ['OK', 'Accepted', 'AC'] },
           timestamp: { gte: oneYearAgo },
         },
-        select: { timestamp: true },
+        select: { timestamp: true, connectionId: true },
       });
-      const map: Record<string, number> = {};
+
+      const cfConnId = connections.find((c) => c.platform === 'CODEFORCES')?.id;
+      const lcConnId = connections.find((c) => c.platform === 'LEETCODE')?.id;
+
+      const mapAll: Record<string, number> = {};
+      const mapCf: Record<string, number> = {};
+      const mapLc: Record<string, number> = {};
+
       for (const s of subs) {
         const day = s.timestamp.toISOString().slice(0, 10);
-        map[day] = (map[day] ?? 0) + 1;
+        mapAll[day] = (mapAll[day] ?? 0) + 1;
+        if (s.connectionId === cfConnId) mapCf[day] = (mapCf[day] ?? 0) + 1;
+        if (s.connectionId === lcConnId) mapLc[day] = (mapLc[day] ?? 0) + 1;
       }
-      return Object.entries(map).map(([date, count]) => ({ date, count }));
+      return {
+        all: Object.entries(mapAll).map(([date, count]) => ({ date, count })),
+        cf: Object.entries(mapCf).map(([date, count]) => ({ date, count })),
+        lc: Object.entries(mapLc).map(([date, count]) => ({ date, count })),
+      };
     };
 
     const [userHeatmap, friendHeatmap] = await Promise.all([

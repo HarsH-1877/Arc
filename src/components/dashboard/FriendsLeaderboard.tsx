@@ -19,7 +19,7 @@ function rankClass(rank: number) {
   return 'rank-badge rank-badge-default';
 }
 
-export function getRankAbbr(platform: 'CODEFORCES' | 'LEETCODE', rating: number) {
+export function getRankAbbr(platform: 'ALL' | 'CODEFORCES' | 'LEETCODE', rating: number) {
   if (platform === 'CODEFORCES') {
     if (rating < 1200) return 'NB';
     if (rating < 1400) return 'PPL';

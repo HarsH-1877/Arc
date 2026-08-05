@@ -6,7 +6,7 @@ import { useDashboardData } from '@/hooks/useDashboardData';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDismissOnOutsideClick } from '@/hooks/useDismissOnOutsideClick';
 
-type Platform = 'CODEFORCES' | 'LEETCODE';
+type Platform = 'ALL' | 'CODEFORCES' | 'LEETCODE';
 type GoalType = 'rating' | 'questions' | 'rank';
 
 interface RankGoal {

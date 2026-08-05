@@ -33,4 +33,5 @@ export interface ContestCalendarEvent {
   delta?: number;
   contestId?: string;
   href?: string;
+  registrationOpen?: boolean;
 }

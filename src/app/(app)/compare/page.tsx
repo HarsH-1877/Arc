@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Card } from '@/components/shared/Card';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { GitCompare } from 'lucide-react';
+import { useUIStore } from '@/store/useUIStore';
 
 const TABS = ['Overview', 'Topics', 'Consistency'] as const;
 type Tab = (typeof TABS)[number];
@@ -23,21 +24,36 @@ function ComparePageContent() {
   const friendId = searchParams.get('friend');
   const reducedMotion = useReducedMotion();
   const [activeTab, setActiveTab] = useState<Tab>('Overview');
+  const { selectedPlatform } = useUIStore();
   const { data, isLoading, error } = useCompareData(friendId);
 
   const mergedRatingData = useMemo(() => {
     if (!data) return [];
     const map = new Map<string, { date: string; userRating?: number; friendRating?: number }>();
 
-    for (const r of data.user.ratingHistory) map.set(r.date, { date: r.date, userRating: r.rating });
-    for (const r of data.friend.ratingHistory) {
+    const userHistory = (selectedPlatform === 'CODEFORCES'
+      ? (data.user.cfRatingHistory?.length ? data.user.cfRatingHistory : data.user.ratingHistory)
+      : (data.user.lcRatingHistory?.length ? data.user.lcRatingHistory : data.user.ratingHistory)) ?? [];
+
+    const friendHistory = (selectedPlatform === 'CODEFORCES'
+      ? (data.friend.cfRatingHistory?.length ? data.friend.cfRatingHistory : data.friend.ratingHistory)
+      : (data.friend.lcRatingHistory?.length ? data.friend.lcRatingHistory : data.friend.ratingHistory)) ?? [];
+
+    for (const r of userHistory) {
+      map.set(r.date, { date: r.date, userRating: r.rating });
+    }
+    for (const r of friendHistory) {
       const existing = map.get(r.date);
-      if (existing) existing.friendRating = r.rating;
-      else map.set(r.date, { date: r.date, friendRating: r.rating });
+      if (existing) {
+        existing.friendRating = r.rating;
+        (existing as any).friend1 = r.rating;
+      } else {
+        map.set(r.date, { date: r.date, friendRating: r.rating, friend1: r.rating } as any);
+      }
     }
 
     return Array.from(map.values()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [data]);
+  }, [data, selectedPlatform]);
 
   const tabTransition = reducedMotion ? { duration: 0 } : { duration: 0.2 };
 

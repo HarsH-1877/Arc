@@ -17,7 +17,13 @@ function ContestRow({ contest, upcoming = false }: { contest: ContestItem; upcom
   const positive = delta >= 0;
 
   return (
-    <a href={contest.href} target="_blank" rel="noreferrer" className="grid grid-cols-[1fr_130px_130px] items-center gap-6 rounded-[24px] px-5 py-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:bg-[var(--bg-card-hover)]" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}>
+    <a
+      href={contest.href}
+      target="_blank"
+      rel="noreferrer"
+      className="grid grid-cols-[1fr_130px_130px] items-center gap-6 rounded-[24px] px-5 py-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:bg-[var(--bg-card-hover)]"
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}
+    >
       <div className="flex min-w-0 items-center gap-4">
         <div className="flex shrink-0 items-center justify-center rounded-full p-3.5" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)' }}>
           <PlatformLogo platform={contest.platform} size={20} />
@@ -55,98 +61,131 @@ function ContestRow({ contest, upcoming = false }: { contest: ContestItem; upcom
   );
 }
 
-function SolvedMarkers({ solved, total }: { solved: number; total: number }) {
+function SolvedMarkers({ solved = 0, total = 5 }: { solved?: number; total?: number }) {
+  const safeTotal = Math.max(1, total || 5);
+  const safeSolved = Math.min(Math.max(0, solved || 0), safeTotal);
+
   return (
-    <div className="hidden shrink-0 items-center gap-2 sm:flex" title={`${solved}/${total} solved`}>
+    <div className="hidden shrink-0 items-center gap-2 sm:flex" title={`${safeSolved}/${safeTotal} solved`}>
       <div className="flex gap-1">
-        {Array.from({ length: total }).map((_, index) => (
+        {Array.from({ length: safeTotal }).map((_, index) => (
           <div
             key={index}
             className="h-1.5 w-3 rounded-sm"
             style={{
-              background: index < solved ? '#4ade80' : 'var(--bg-elevated)',
-              boxShadow: index < solved ? '0 0 8px rgba(74,222,128,0.45)' : 'none',
+              background: index < safeSolved ? '#4ade80' : 'var(--bg-elevated)',
+              boxShadow: index < safeSolved ? '0 0 8px rgba(74,222,128,0.45)' : 'none',
             }}
           />
         ))}
       </div>
-      <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>{solved}/{total}</span>
+      <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>{safeSolved}/{safeTotal}</span>
     </div>
-  );
-}
-
-function BestContestRow({ contest }: { contest: ContestItem }) {
-  const delta = contest.after - contest.before;
-  const positive = delta >= 0;
-  return (
-    <a href={contest.href} target="_blank" rel="noreferrer" className="flex items-center justify-between gap-3 rounded-[24px] p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:bg-[var(--bg-card-hover)]" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}>
-      <div className="flex min-w-0 flex-1 flex-col gap-4">
-        <div className="flex min-w-0 items-center gap-4">
-          <div className="flex shrink-0 items-center justify-center rounded-full p-3.5" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)' }}>
-            <PlatformLogo platform={contest.platform} size={20} />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-[20px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>{contest.name}</p>
-            <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(contest.date)} at {contest.time}</p>
-            <div className="mt-3">
-              <SolvedMarkers solved={contest.solved} total={contest.total} />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="shrink-0 text-right">
-        <div className="flex justify-end">
-          <span className="rounded-md px-3 py-1.5 font-mono-data text-[18px] font-black leading-none" style={{ border: positive ? '1px solid rgba(52,211,153,0.3)' : '1px solid rgba(244,63,94,0.3)', background: positive ? 'rgba(52,211,153,0.1)' : 'rgba(244,63,94,0.1)', color: positive ? 'var(--success)' : 'var(--danger)' }}>
-            {positive ? '+' : ''}{delta}
-          </span>
-        </div>
-        <p className="mt-2 font-mono-data text-xs font-black" style={{ color: 'var(--text-secondary)' }}>{contest.before} to {contest.after}</p>
-      </div>
-    </a>
   );
 }
 
 export default function ContestHistoryPage() {
   const { data, isLoading, error } = useContestsData();
-  const [platformFilter, setPlatformFilter] = useState<string>('ALL');
-  
+  const { selectedPlatform } = useUIStore();
+  const platformFilter = selectedPlatform;
+
   const history = (data?.history ?? []).filter((contest) => platformFilter === 'ALL' || contest.platform === platformFilter);
   const upcoming = (data?.upcoming ?? []).filter((contest) => platformFilter === 'ALL' || contest.platform === platformFilter);
-  const bestByPlatform = (data?.bestByPlatform ?? []).filter((contest) => platformFilter === 'ALL' || contest.platform === platformFilter);
+
+  const totalContests = history.length;
+  const rankedContests = history.filter((c) => typeof c.rank === 'number' && c.rank > 0);
+  const avgRank = rankedContests.length > 0
+    ? Math.round(rankedContests.reduce((sum, c) => sum + (c.rank ?? 0), 0) / rankedContests.length)
+    : 0;
+
+  const bestContest = history.length > 0
+    ? history.reduce((best, c) => {
+        const deltaC = c.after - c.before;
+        const deltaB = best.after - best.before;
+        return deltaC > deltaB ? c : best;
+      }, history[0])
+    : null;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div>
-          <h1 style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Contest History</h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>Recent rating movement and upcoming contest schedule.</p>
-          {!isLoading && data?.stats && (
-            <div className="mt-2 flex gap-4 text-sm">
-              <div><span className="text-[var(--text-muted)]">Total Contests:</span> <span className="font-bold">{data.stats.totalContests}</span></div>
-              <div><span className="text-[var(--text-muted)]">Avg Rank:</span> <span className="font-bold">{Math.round(data.stats.avgRank)}</span></div>
-              <div><span className="text-[var(--text-muted)]">Best Gain:</span> <span className="font-bold">+{data.stats.bestGain}</span></div>
-            </div>
-          )}
-        </div>
-        <select 
-          value={platformFilter} 
-          onChange={(e) => setPlatformFilter(e.target.value)}
-          className="rounded-md border px-3 py-1.5 text-sm outline-none"
-          style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', borderColor: 'var(--border-default)' }}
-        >
-          <option value="ALL">All Platforms</option>
-          <option value="CODEFORCES">Codeforces</option>
-          <option value="LEETCODE">LeetCode</option>
-        </select>
-      </div>
 
       {error && (
         <p className="text-sm text-[var(--color-danger)]">Could not load contest data. Link your platforms and sync from Settings.</p>
       )}
+
+      {/* Top 3 Stats Cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Card padding="18px" className="gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>
+              Total Contests
+            </span>
+            <Trophy size={18} style={{ color: 'var(--accent-blue)' }} />
+          </div>
+          <div className="mt-1">
+            <span className="font-mono-data text-2xl font-black" style={{ color: 'var(--text-primary)' }}>
+              {isLoading ? '...' : totalContests}
+            </span>
+            <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+              {platformFilter === 'ALL' ? 'Across all platforms' : platformFilter === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
+            </p>
+          </div>
+        </Card>
+
+        <Card padding="18px" className="gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>
+              Avg Rank
+            </span>
+            <TrendingUp size={18} style={{ color: 'var(--accent-purple)' }} />
+          </div>
+          <div className="mt-1">
+            <span className="font-mono-data text-2xl font-black" style={{ color: 'var(--text-primary)' }}>
+              {isLoading ? '...' : avgRank > 0 ? `#${avgRank.toLocaleString()}` : 'N/A'}
+            </span>
+            <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+              {rankedContests.length > 0 ? `From ${rankedContests.length} ranked contests` : 'No ranked contests'}
+            </p>
+          </div>
+        </Card>
+
+        <Card padding="18px" className="gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>
+              Best Contest
+            </span>
+            <Trophy size={18} style={{ color: 'var(--accent-amber)' }} />
+          </div>
+          {isLoading ? (
+            <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>Loading...</p>
+          ) : bestContest ? (
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold" style={{ color: 'var(--text-primary)' }} title={bestContest.name}>
+                  {bestContest.name}
+                </p>
+                <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {formatDate(bestContest.date)}
+                </p>
+              </div>
+              <div className="shrink-0 text-right">
+                <span className="rounded-md px-2 py-0.5 font-mono-data text-xs font-black" style={{ border: '1px solid rgba(52,211,153,0.3)', background: 'rgba(52,211,153,0.1)', color: 'var(--success)' }}>
+                  +{bestContest.after - bestContest.before}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>No contest data</p>
+          )}
+        </Card>
+      </div>
+
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
         <Card padding="18px" className="gap-3">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Last 10 {platformFilter === 'ALL' ? 'Platform' : platformFilter === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'} Contests</span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>
+              Past {platformFilter === 'ALL' ? 'Platform' : platformFilter === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'} Contests
+            </span>
             <CalendarClock size={18} style={{ color: 'var(--accent-blue)' }} />
           </div>
           {isLoading ? (
@@ -154,7 +193,7 @@ export default function ContestHistoryPage() {
               <Loader2 className="animate-spin" size={24} style={{ color: 'var(--text-muted)' }} />
             </div>
           ) : (
-            <div className="max-h-[420px] overflow-y-auto pr-2 space-y-2">
+            <div className="max-h-[500px] overflow-y-auto pr-2 space-y-2">
               {history.length > 0 ? (
                 history.map((contest) => <ContestRow key={contest.id} contest={contest} />)
               ) : (
@@ -172,7 +211,7 @@ export default function ContestHistoryPage() {
             <TrendingUp size={18} style={{ color: 'var(--accent-purple)' }} />
           </div>
 
-          <div className="max-h-[420px] min-h-[96px] overflow-y-auto pr-1">
+          <div className="max-h-[500px] min-h-[96px] overflow-y-auto pr-1">
             <div className="space-y-4">
               {upcoming.map((contest) => <UpcomingContestCard key={contest.id} contest={contest} />)}
               {!isLoading && upcoming.length === 0 && (
@@ -180,21 +219,6 @@ export default function ContestHistoryPage() {
               )}
             </div>
           </div>
-
-          <Card padding="18px" className="shrink-0 gap-4 overflow-hidden mt-2">
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(52,211,153,0.10), rgba(79,142,247,0.06))', pointerEvents: 'none' }} />
-            <div className="relative z-10 flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Best Contest</span>
-              <Trophy size={20} style={{ color: 'var(--accent-amber)' }} />
-            </div>
-            <div className="relative z-10 space-y-3">
-              {bestByPlatform.length > 0 ? (
-                bestByPlatform.map((contest) => <BestContestRow key={contest.platform} contest={contest} />)
-              ) : (
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Best contest highlights appear after your first synced contests.</p>
-              )}
-            </div>
-          </Card>
         </div>
       </div>
     </div>

@@ -26,15 +26,22 @@ interface TopicRow {
   max: number;
 }
 
+import { useUIStore } from '@/store/useUIStore';
+
 export function TopicComparison({ user, friend }: TopicComparisonProps) {
+  const { selectedPlatform } = useUIStore();
+
   const rows = useMemo<TopicRow[]>(() => {
-    const allTopics = new Set([...user.topicStats.map((t) => t.topic), ...friend.topicStats.map((t) => t.topic)]);
+    const userStats = selectedPlatform === 'CODEFORCES' ? (user.cfTopicStats ?? user.topicStats) : (user.lcTopicStats ?? user.topicStats);
+    const friendStats = selectedPlatform === 'CODEFORCES' ? (friend.cfTopicStats ?? friend.topicStats) : (friend.lcTopicStats ?? friend.topicStats);
+    
+    const allTopics = new Set([...userStats.map((t) => t.topic), ...friendStats.map((t) => t.topic)]);
     return Array.from(allTopics).map((topic) => {
-      const uStat = user.topicStats.find((t) => t.topic === topic)?.rawCount ?? 0;
-      const fStat = friend.topicStats.find((t) => t.topic === topic)?.rawCount ?? 0;
+      const uStat = userStats.find((t) => t.topic === topic)?.rawCount ?? 0;
+      const fStat = friendStats.find((t) => t.topic === topic)?.rawCount ?? 0;
       return { topic, uStat, fStat, max: Math.max(uStat, fStat, 1) };
     }).sort((a, b) => Math.max(b.uStat, b.fStat) - Math.max(a.uStat, a.fStat));
-  }, [user.topicStats, friend.topicStats]);
+  }, [user, friend, selectedPlatform]);
 
   const [selectedTopics, setSelectedTopics] = useState(() => rows.slice(0, Math.min(6, Math.max(3, rows.length))).map((row) => row.topic));
 

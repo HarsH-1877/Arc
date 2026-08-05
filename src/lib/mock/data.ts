@@ -186,16 +186,50 @@ export function getMockCompare(friendId: string): CompareData | null {
   if (!friend) return null;
 
   const userHeatmap = MOCK_DASHBOARD.heatmapData;
+  const userCfHeatmap = userHeatmap.filter((_, i) => i % 2 === 0);
+  const userLcHeatmap = userHeatmap.filter((_, i) => i % 3 === 0);
+
   const friendHeatmap = genHeatmap().slice(0, 120);
+  const friendCfHeatmap = friendHeatmap.filter((_, i) => i % 2 === 0);
+  const friendLcHeatmap = friendHeatmap.filter((_, i) => i % 3 !== 0);
 
   const userRatingHistory = genRatingHistory(1823, 40);
+  const userLcRatingHistory = genRatingHistory(2450, 30);
   const friendRatingHistory = genRatingHistory(friend.cfRating ?? 2000, 45);
+  const friendLcRatingHistory = genRatingHistory(friend.lcRating ?? 2200, 35);
 
   const userTopics = MOCK_DASHBOARD.topicStats;
+  const userCfTopics = [
+    { topic: 'dp', value: 100, rawCount: 45 },
+    { topic: 'graphs', value: 78, rawCount: 35 },
+    { topic: 'greedy', value: 65, rawCount: 29 },
+    { topic: 'math', value: 52, rawCount: 23 },
+    { topic: 'trees', value: 48, rawCount: 22 },
+    { topic: 'binary search', value: 42, rawCount: 19 },
+  ];
+  const userLcTopics = [
+    { topic: 'Arrays', value: 100, rawCount: 120 },
+    { topic: 'String', value: 80, rawCount: 96 },
+    { topic: 'Hash Table', value: 65, rawCount: 78 },
+    { topic: 'Dynamic Programming', value: 50, rawCount: 60 },
+    { topic: 'Two Pointers', value: 40, rawCount: 48 },
+    { topic: 'Sliding Window', value: 35, rawCount: 42 },
+  ];
+
   const friendTopics = userTopics.map((t) => ({
     ...t,
     rawCount: Math.max(1, t.rawCount - Math.floor(Math.random() * 15)),
     value: Math.max(10, t.value - Math.floor(Math.random() * 20)),
+  }));
+  const friendCfTopics = userCfTopics.map((t) => ({
+    ...t,
+    rawCount: Math.max(1, t.rawCount - Math.floor(Math.random() * 10)),
+    value: Math.max(10, t.value - Math.floor(Math.random() * 15)),
+  }));
+  const friendLcTopics = userLcTopics.map((t) => ({
+    ...t,
+    rawCount: Math.max(1, t.rawCount - Math.floor(Math.random() * 20)),
+    value: Math.max(10, t.value - Math.floor(Math.random() * 25)),
   }));
 
   return {
@@ -216,8 +250,14 @@ export function getMockCompare(friendId: string): CompareData | null {
       totalActiveDays: userHeatmap.filter((d) => d.count > 0).length,
       lastSyncedAt: daysAgo(0),
       ratingHistory: userRatingHistory,
+      cfRatingHistory: userRatingHistory,
+      lcRatingHistory: userLcRatingHistory,
       topicStats: userTopics,
+      cfTopicStats: userCfTopics,
+      lcTopicStats: userLcTopics,
       heatmapData: userHeatmap,
+      cfHeatmapData: userCfHeatmap,
+      lcHeatmapData: userLcHeatmap,
     },
     friend: {
       id: friend.id,
@@ -236,8 +276,14 @@ export function getMockCompare(friendId: string): CompareData | null {
       totalActiveDays: friendHeatmap.filter((d) => d.count > 0).length,
       lastSyncedAt: daysAgo(1),
       ratingHistory: friendRatingHistory,
+      cfRatingHistory: friendRatingHistory,
+      lcRatingHistory: friendLcRatingHistory,
       topicStats: friendTopics,
+      cfTopicStats: friendCfTopics,
+      lcTopicStats: friendLcTopics,
       heatmapData: friendHeatmap,
+      cfHeatmapData: friendCfHeatmap,
+      lcHeatmapData: friendLcHeatmap,
     },
     verdict: {
       totalSolved: 'friend',

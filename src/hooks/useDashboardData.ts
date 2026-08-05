@@ -51,6 +51,7 @@ export interface DashboardApiData {
     delta?: number;
     contestId?: string;
     href?: string;
+    registrationOpen?: boolean;
   }>;
   upcomingContests: Array<{
     id: string;

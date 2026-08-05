@@ -17,9 +17,15 @@ export interface CompareUser {
   streak: number;
   totalActiveDays: number;
   lastSyncedAt: string | null;
-  ratingHistory: { date: string; rating: number; contestId: number }[];
+  ratingHistory: { date: string; rating: number; contestId?: number }[];
+  cfRatingHistory?: { date: string; rating: number; contestId?: number }[];
+  lcRatingHistory?: { date: string; rating: number; contestId?: number }[];
   topicStats: { topic: string; rawCount: number; value: number }[];
+  cfTopicStats?: { topic: string; rawCount: number; value: number }[];
+  lcTopicStats?: { topic: string; rawCount: number; value: number }[];
   heatmapData: { date: string; count: number }[];
+  cfHeatmapData?: { date: string; count: number }[];
+  lcHeatmapData?: { date: string; count: number }[];
 }
 
 export interface CompareData {

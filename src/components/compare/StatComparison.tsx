@@ -47,12 +47,12 @@ export function StatComparison({ user, friend }: StatComparisonProps) {
     { label: 'CF Rating', userValue: user.cfRating, friendValue: friend.cfRating, unit: 'rating', lowerWins: false },
     { label: 'CF Contests', userValue: user.cfContestCount, friendValue: friend.cfContestCount, unit: 'contests', lowerWins: false },
     { label: 'CF Solved', userValue: user.cfSolvedCount, friendValue: friend.cfSolvedCount, unit: 'solved', lowerWins: false },
-    { label: 'Longest Streak', userValue: longestStreak(user.heatmapData), friendValue: longestStreak(friend.heatmapData), unit: 'days', lowerWins: false },
+    { label: 'Longest Streak', userValue: longestStreak(user.cfHeatmapData || user.heatmapData), friendValue: longestStreak(friend.cfHeatmapData || friend.heatmapData), unit: 'days', lowerWins: false },
   ] : [
     { label: 'LC Rating', userValue: user.lcRating, friendValue: friend.lcRating, unit: 'rating', lowerWins: false },
     { label: 'LC Contests', userValue: user.lcContestCount, friendValue: friend.lcContestCount, unit: 'contests', lowerWins: false },
     { label: 'LC Solved', userValue: user.lcSolvedCount, friendValue: friend.lcSolvedCount, unit: 'solved', lowerWins: false },
-    { label: 'Longest Streak', userValue: longestStreak(user.heatmapData), friendValue: longestStreak(friend.heatmapData), unit: 'days', lowerWins: false },
+    { label: 'Longest Streak', userValue: longestStreak(user.lcHeatmapData || user.heatmapData), friendValue: longestStreak(friend.lcHeatmapData || friend.heatmapData), unit: 'days', lowerWins: false },
   ];
 
   return (

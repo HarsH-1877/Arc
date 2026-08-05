@@ -3,6 +3,7 @@
 import { Card } from '@/components/shared/Card';
 import { ActivityHeatmap } from '@/components/charts/ActivityHeatmap';
 import type { CompareUser } from '@/hooks/useCompareData';
+import { useUIStore } from '@/store/useUIStore';
 
 interface ConsistencyComparisonProps {
   user: CompareUser;
@@ -10,20 +11,24 @@ interface ConsistencyComparisonProps {
 }
 
 export function ConsistencyComparison({ user, friend }: ConsistencyComparisonProps) {
-  const uTotal = user.heatmapData.reduce((acc, curr) => acc + curr.count, 0);
-  const fTotal = friend.heatmapData.reduce((acc, curr) => acc + curr.count, 0);
-  const uActive = user.heatmapData.filter((d) => d.count > 0).length;
-  const fActive = friend.heatmapData.filter((d) => d.count > 0).length;
+  const { selectedPlatform } = useUIStore();
+  const uHeatmap = selectedPlatform === 'CODEFORCES' ? user.cfHeatmapData || user.heatmapData : user.lcHeatmapData || user.heatmapData;
+  const fHeatmap = selectedPlatform === 'CODEFORCES' ? friend.cfHeatmapData || friend.heatmapData : friend.lcHeatmapData || friend.heatmapData;
+
+  const uTotal = uHeatmap.reduce((acc, curr) => acc + curr.count, 0);
+  const fTotal = fHeatmap.reduce((acc, curr) => acc + curr.count, 0);
+  const uActive = uHeatmap.filter((d) => d.count > 0).length;
+  const fActive = fHeatmap.filter((d) => d.count > 0).length;
 
   return (
     <Card padding="22px" className="gap-6">
       <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Consistency</h3>
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <HeatmapPanel title="You" accent="var(--accent-blue)" total={uTotal} active={uActive}>
-          <ActivityHeatmap data={user.heatmapData} accentColor="blue" compact />
+          <ActivityHeatmap data={uHeatmap} accentColor="blue" compact />
         </HeatmapPanel>
         <HeatmapPanel title="Friend" accent="var(--accent-rose)" total={fTotal} active={fActive}>
-          <ActivityHeatmap data={friend.heatmapData} accentColor="rose" compact />
+          <ActivityHeatmap data={fHeatmap} accentColor="rose" compact />
         </HeatmapPanel>
       </div>
     </Card>

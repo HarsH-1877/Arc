@@ -3,6 +3,7 @@
 import { Card } from '@/components/shared/Card';
 import { Clock3, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
 import type { DashboardApiData } from '@/hooks/useDashboardData';
 
@@ -16,7 +17,7 @@ interface ContestDay {
   label: string;
   delta?: number;
   type: 'given' | 'upcoming' | 'missed';
-  platforms: Array<{ platform: 'CODEFORCES' | 'LEETCODE'; href?: string }>;
+  platforms: Array<{ platform: 'CODEFORCES' | 'LEETCODE'; href?: string; registrationOpen?: boolean }>;
 }
 
 function buildContestDays(events: NonNullable<DashboardApiData['contestCalendarEvents']> = []): ContestDay[] {
@@ -29,7 +30,7 @@ function buildContestDays(events: NonNullable<DashboardApiData['contestCalendarE
 
     if (existing) {
       if (!existing.platforms.some((item) => item.platform === event.platform)) {
-        existing.platforms.push({ platform: event.platform, href: event.href });
+        existing.platforms.push({ platform: event.platform, href: event.href, registrationOpen: event.registrationOpen });
       }
       if (event.type === 'given' && typeof event.delta === 'number') existing.delta = event.delta;
       if (event.type !== 'upcoming') existing.type = event.type;
@@ -40,7 +41,7 @@ function buildContestDays(events: NonNullable<DashboardApiData['contestCalendarE
         label: event.label,
         delta: event.delta,
         type: event.type,
-        platforms: [{ platform: event.platform, href: event.href }],
+        platforms: [{ platform: event.platform, href: event.href, registrationOpen: event.registrationOpen }],
       });
     }
   }
@@ -202,7 +203,19 @@ export function ContestCalendar({ events = [], loading = false }: ContestCalenda
 function ContestLogo({ item, label }: { item: ContestDay['platforms'][number]; label: string }) {
   if (item.href) {
     return (
-      <a href={item.href} target="_blank" rel="noreferrer" className="group inline-flex rounded-sm p-0.5 hover:bg-white/[0.08]" title={label}>
+      <a
+        href={item.href}
+        target="_blank"
+        rel="noreferrer"
+        className="group inline-flex rounded-sm p-0.5 hover:bg-white/[0.08]"
+        title={label}
+        onClick={(e) => {
+          if (item.platform === 'CODEFORCES' && item.registrationOpen === false) {
+            e.preventDefault();
+            toast.error('Registration not started yet');
+          }
+        }}
+      >
         <PlatformLogo platform={item.platform} size={12} className="transition-transform duration-150 group-hover:scale-110" />
       </a>
     );

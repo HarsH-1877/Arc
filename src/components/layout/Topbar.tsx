@@ -11,6 +11,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useDismissOnOutsideClick } from '@/hooks/useDismissOnOutsideClick';
 import { useMarkNotificationRead, useNotifications } from '@/hooks/useNotifications';
 import { formatRelativeTime } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
 
 interface TopbarProps {
   notificationCount?: number;
@@ -18,8 +19,11 @@ interface TopbarProps {
 }
 
 export function Topbar({ notificationCount = 0 }: TopbarProps) {
-  const { toggleMobileSidebar } = useUIStore();
-  const { selectedPlatform, setSelectedPlatform } = useUIStore();
+  const pathname = usePathname();
+  const isProblemsPage = pathname === '/problems' || pathname.startsWith('/problems/');
+  const isContestHistoryPage = pathname === '/contest-history' || pathname.startsWith('/contest-history/');
+
+  const { toggleMobileSidebar, selectedPlatform, setSelectedPlatform } = useUIStore();
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [platformOpen, setPlatformOpen] = useState(false);
@@ -31,6 +35,12 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
   useDismissOnOutsideClick(platformMenuRef, () => setPlatformOpen(false), platformOpen);
   useDismissOnOutsideClick(notificationMenuRef, () => setNotificationsOpen(false), notificationsOpen);
   const unreadCount = notifications.filter((notification) => !notification.read).length || notificationCount;
+
+  const availablePlatforms = isContestHistoryPage
+    ? (['ALL', 'CODEFORCES', 'LEETCODE'] as const)
+    : (['CODEFORCES', 'LEETCODE'] as const);
+
+  const displayPlatform = (!isContestHistoryPage && selectedPlatform === 'ALL') ? 'CODEFORCES' : selectedPlatform;
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -49,48 +59,50 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-3">
-        <div ref={platformMenuRef} className="relative">
-          <button
-            type="button"
-            onClick={() => setPlatformOpen((value) => !value)}
-            className="flex min-w-[140px] items-center justify-between gap-2 rounded-full"
-            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: '7px 13px', fontSize: 'var(--text-sm)', color: 'var(--text-primary)', cursor: 'pointer' }}
-          >
-            <div className="flex items-center gap-2">
-              <PlatformLogo platform={selectedPlatform} size={24} active={true} />
-              {selectedPlatform === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
-            </div>
-            <ChevronDown size={14} className={cn('opacity-50 transition-transform duration-200', platformOpen && 'rotate-180')} />
-          </button>
-          <AnimatePresence>
-          {platformOpen && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className="absolute right-0 top-[calc(100%+4px)] z-50 w-full origin-top rounded-[18px] p-1.5"
-              style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', boxShadow: '0 18px 48px rgba(0,0,0,0.56)' }}
+        {!isProblemsPage && (
+          <div ref={platformMenuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setPlatformOpen((value) => !value)}
+              className="flex min-w-[148px] items-center justify-between gap-2 rounded-full"
+              style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: '7px 13px', fontSize: 'var(--text-sm)', color: 'var(--text-primary)', cursor: 'pointer' }}
             >
-              {(['CODEFORCES', 'LEETCODE'] as const).filter(item => item !== selectedPlatform).map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => {
-                    setSelectedPlatform(item);
-                    setPlatformOpen(false);
-                  }}
-                  className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-sm hover:bg-[var(--bg-card-hover)] transition-colors"
-                  style={{ background: 'transparent', color: 'var(--text-primary)' }}
-                >
-                  <PlatformLogo platform={item} size={22} active={true} />
-                  {item === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
-                </button>
-              ))}
-            </motion.div>
-          )}
-          </AnimatePresence>
-        </div>
+              <div className="flex items-center gap-2">
+                {displayPlatform !== 'ALL' && <PlatformLogo platform={displayPlatform} size={22} active={true} />}
+                {displayPlatform === 'ALL' ? '🌐 All Platforms' : displayPlatform === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
+              </div>
+              <ChevronDown size={14} className={cn('opacity-50 transition-transform duration-200', platformOpen && 'rotate-180')} />
+            </button>
+            <AnimatePresence>
+            {platformOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                className="absolute right-0 top-[calc(100%+4px)] z-50 w-full origin-top rounded-[18px] p-1.5"
+                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', boxShadow: '0 18px 48px rgba(0,0,0,0.56)' }}
+              >
+                {availablePlatforms.filter(item => item !== displayPlatform).map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => {
+                      setSelectedPlatform(item);
+                      setPlatformOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-sm hover:bg-[var(--bg-card-hover)] transition-colors"
+                    style={{ background: 'transparent', color: 'var(--text-primary)' }}
+                  >
+                    {item !== 'ALL' && <PlatformLogo platform={item} size={20} active={true} />}
+                    {item === 'ALL' ? '🌐 All Platforms' : item === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+            </AnimatePresence>
+          </div>
+        )}
 
         <div ref={notificationMenuRef} className="relative">
           <button
