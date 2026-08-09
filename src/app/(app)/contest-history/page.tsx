@@ -99,6 +99,22 @@ export default function ContestHistoryPage() {
     ? Math.round(rankedContests.reduce((sum, c) => sum + (c.rank ?? 0), 0) / rankedContests.length)
     : platformFilter === 'ALL' ? (data?.stats?.avgRank ?? 0) : 0;
 
+  const bestContestCF = history.filter(c => c.platform === 'CODEFORCES').length > 0
+    ? history.filter(c => c.platform === 'CODEFORCES').reduce((best, c) => {
+        const deltaC = c.after - c.before;
+        const deltaB = best.after - best.before;
+        return deltaC > deltaB ? c : best;
+      }, history.filter(c => c.platform === 'CODEFORCES')[0])
+    : null;
+
+  const bestContestLC = history.filter(c => c.platform === 'LEETCODE').length > 0
+    ? history.filter(c => c.platform === 'LEETCODE').reduce((best, c) => {
+        const deltaC = c.after - c.before;
+        const deltaB = best.after - best.before;
+        return deltaC > deltaB ? c : best;
+      }, history.filter(c => c.platform === 'LEETCODE')[0])
+    : null;
+
   const bestContest = history.length > 0
     ? history.reduce((best, c) => {
         const deltaC = c.after - c.before;
@@ -159,22 +175,68 @@ export default function ContestHistoryPage() {
           </div>
           {isLoading ? (
             <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>Loading...</p>
+          ) : platformFilter === 'ALL' ? (
+            // Show both CF and LC best when ALL is selected
+            <div className="mt-1 flex flex-col gap-2">
+              {[bestContestCF, bestContestLC].map((bc) => bc ? (
+                <a
+                  key={bc.id}
+                  href={bc.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between gap-2 rounded-xl px-3 py-2 transition-all hover:-translate-y-0.5"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(251,191,36,0.08), rgba(79,142,247,0.04))',
+                    border: '1px solid rgba(251,191,36,0.25)',
+                    textDecoration: 'none',
+                    boxShadow: '0 0 12px rgba(251,191,36,0.08)',
+                  }}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <PlatformLogo platform={bc.platform} size={14} />
+                    <p className="truncate text-xs font-bold" style={{ color: 'var(--text-primary)' }} title={bc.name}>
+                      {bc.name.replace(/\s*\([^)]*\)/g, '')}
+                    </p>
+                  </div>
+                  <div className="shrink-0 flex items-center gap-1">
+                    <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>{bc.before}</span>
+                    <ArrowUpRight size={12} style={{ color: 'var(--success)' }} />
+                    <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--text-primary)' }}>{bc.after}</span>
+                  </div>
+                </a>
+              ) : null)}
+              {!bestContestCF && !bestContestLC && (
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>No contest data</p>
+              )}
+            </div>
           ) : bestContest ? (
-            <div className="mt-1 flex items-center justify-between gap-2">
+            <a
+              href={bestContest.href}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 transition-all hover:-translate-y-0.5"
+              style={{
+                background: 'linear-gradient(135deg, rgba(251,191,36,0.10), rgba(79,142,247,0.04))',
+                border: '1px solid rgba(251,191,36,0.30)',
+                textDecoration: 'none',
+                boxShadow: '0 0 16px rgba(251,191,36,0.10)',
+              }}
+            >
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold" style={{ color: 'var(--text-primary)' }} title={bestContest.name}>
-                  {bestContest.name}
+                  {bestContest.name.replace(/\s*\([^)]*\)/g, '')}
                 </p>
-                <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {formatDate(bestContest.date)}
-                </p>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <span className="font-mono-data text-xs font-bold" style={{ color: 'var(--text-secondary)' }}>{bestContest.before}</span>
+                  <ArrowUpRight size={13} style={{ color: 'var(--success)' }} />
+                  <span className="font-mono-data text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{bestContest.after}</span>
+                  <span className="rounded-md px-1.5 py-0.5 font-mono-data text-[10px] font-black" style={{ border: '1px solid rgba(52,211,153,0.3)', background: 'rgba(52,211,153,0.1)', color: 'var(--success)' }}>
+                    +{bestContest.after - bestContest.before}
+                  </span>
+                </div>
               </div>
-              <div className="shrink-0 text-right">
-                <span className="rounded-md px-2 py-0.5 font-mono-data text-xs font-black" style={{ border: '1px solid rgba(52,211,153,0.3)', background: 'rgba(52,211,153,0.1)', color: 'var(--success)' }}>
-                  +{bestContest.after - bestContest.before}
-                </span>
-              </div>
-            </div>
+              <ExternalLink size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+            </a>
           ) : (
             <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>No contest data</p>
           )}

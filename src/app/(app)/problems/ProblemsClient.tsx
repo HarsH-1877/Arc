@@ -18,6 +18,7 @@ import {
   Target,
   CheckCircle2,
   XCircle,
+  MinusCircle,
   RotateCcw,
 } from 'lucide-react';
 
@@ -97,13 +98,7 @@ function TopicWeaknessSection({
   items?: TopicWeaknessItem[];
   loading: boolean;
 }) {
-  const defaultItems: TopicWeaknessItem[] = [
-    { topic: 'Graph Theory', accuracy: 32, score: 82, solved: 48, recommendation: 'Focus more on this topic' },
-    { topic: 'Dynamic Programming', accuracy: 41, score: 68, solved: 62, recommendation: 'Practice more medium problems' },
-    { topic: 'Data Structures', accuracy: 47, score: 54, solved: 75, recommendation: 'Revise and strengthen basics' },
-  ];
-
-  const list = items && items.length > 0 ? items : defaultItems;
+  const list = items && items.length > 0 ? items : [];
 
   const rankConfig = [
     {
@@ -157,6 +152,10 @@ function TopicWeaknessSection({
           <div className="skeleton h-16 w-full rounded-xl" />
           <div className="skeleton h-16 w-full rounded-xl" />
         </div>
+      ) : list.length === 0 ? (
+        <p className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+          Not enough data yet. Solve more problems to see your weak topics.
+        </p>
       ) : (
         <div className="grid grid-cols-1 gap-3">
           {list.slice(0, 3).map((item, idx) => {
@@ -230,6 +229,8 @@ export function ProblemsClient() {
   const [platform, setPlatform] = useState<string>('ALL');
   const [verdict, setVerdict] = useState<string>('All');
   const [difficulty, setDifficulty] = useState<string>('All');
+  const [difficultyMin, setDifficultyMin] = useState<number>(800);
+  const [difficultyMax, setDifficultyMax] = useState<number>(3500);
   const [tag, setTag] = useState<string>('All Tags');
   const [lang, setLang] = useState<string>('All Languages');
   const [search, setSearch] = useState<string>('');
@@ -239,11 +240,22 @@ export function ProblemsClient() {
 
   const selectedTags = useMemo(() => (tag !== 'All Tags' ? [tag] : []), [tag]);
 
+  // Derive the difficulty param to send to the API
+  // CF: convert slider range to a filter string; LC/ALL: use pill value
+  const apiDifficulty = useMemo(() => {
+    if (platform === 'CODEFORCES') {
+      if (difficultyMin <= 800 && difficultyMax >= 3500) return 'All';
+      return `${difficultyMin}-${difficultyMax}`;
+    }
+    // For LC and ALL, map Easy/Med/Hard labels
+    return difficulty;
+  }, [platform, difficulty, difficultyMin, difficultyMax]);
+
   const { data: stats, isLoading: statsLoading } = useProblemsStats(platform);
   const { data: problems, isLoading: problemsLoading } = useProblemsList({
     platform,
     verdict,
-    difficulty,
+    difficulty: apiDifficulty,
     tags: selectedTags,
     lang,
     search,
@@ -256,6 +268,8 @@ export function ProblemsClient() {
     setPlatform('ALL');
     setVerdict('All');
     setDifficulty('All');
+    setDifficultyMin(800);
+    setDifficultyMax(3500);
     setTag('All Tags');
     setLang('All Languages');
     setSearch('');
@@ -325,11 +339,7 @@ export function ProblemsClient() {
             </div>
           ) : (
             <div className="flex flex-col gap-1.5 flex-1 overflow-y-auto">
-              {(stats?.topicWeakness?.slice(0, 3) ?? [
-                { topic: 'Graph Theory', accuracy: 32, score: 82, solved: 48, recommendation: 'Focus more on this topic' },
-                { topic: 'Dynamic Programming', accuracy: 41, score: 68, solved: 62, recommendation: 'Practice more medium problems' },
-                { topic: 'Data Structures', accuracy: 47, score: 54, solved: 75, recommendation: 'Revise and strengthen basics' },
-              ]).map((item, idx) => {
+              {(stats?.topicWeakness?.slice(0, 3) ?? []).map((item, idx) => {
                 const colors = [
                   { gauge: '#ef4444', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.2)', text: '#ef4444' },
                   { gauge: '#f97316', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.2)', text: '#f97316' },
@@ -363,9 +373,7 @@ export function ProblemsClient() {
               {[0,1,2].map(i => <div key={i} className="skeleton h-5 w-full rounded" />)}
             </div>
           ) : (() => {
-            const langs = stats?.languageBreakdown ?? [
-              { lang: 'C++', count: 128 }, { lang: 'Python', count: 64 }, { lang: 'Java', count: 32 }
-            ];
+            const langs = stats?.languageBreakdown ?? [];
             const total = langs.reduce((s, l) => s + l.count, 0) || 1;
             return (
               <div className="flex flex-col gap-1.5 flex-1 overflow-y-auto">
@@ -410,29 +418,46 @@ export function ProblemsClient() {
               />
             </div>
 
-            {/* Platform Filter Pills */}
+            {/* Platform Filter Pills — logos only, platform-specific active color */}
             <div className="flex items-center bg-[var(--bg-input)] p-1 rounded-lg border border-[var(--border-default)]">
               <span className="text-xs font-semibold text-[var(--text-muted)] px-2">Platform:</span>
               {[
                 { id: 'ALL', label: 'All' },
                 { id: 'CODEFORCES', label: 'Codeforces' },
                 { id: 'LEETCODE', label: 'LeetCode' },
-              ].map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => {
-                    setPlatform(p.id);
-                    setPage(1);
-                  }}
-                  className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
-                    platform === p.id
-                      ? 'bg-purple-600 text-white shadow-sm'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5'
-                  }`}
-                >
-                  {p.label}
-                </button>
-              ))}
+              ].map((p) => {
+                const isActive = platform === p.id;
+                const activeColor = p.id === 'CODEFORCES'
+                  ? 'rgba(30,136,229,0.18)'
+                  : p.id === 'LEETCODE'
+                  ? 'rgba(255,161,22,0.18)'
+                  : 'rgba(255,255,255,0.10)';
+                const activeBorder = p.id === 'CODEFORCES'
+                  ? '1px solid rgba(30,136,229,0.45)'
+                  : p.id === 'LEETCODE'
+                  ? '1px solid rgba(255,161,22,0.45)'
+                  : '1px solid rgba(255,255,255,0.2)';
+                const activeText = p.id === 'CODEFORCES'
+                  ? '#4f8ef7'
+                  : p.id === 'LEETCODE'
+                  ? '#ffa116'
+                  : 'var(--text-primary)';
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => { setPlatform(p.id); setDifficultyMin(800); setDifficultyMax(3500); setDifficulty('All'); setPage(1); }}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all"
+                    style={{
+                      background: isActive ? activeColor : 'transparent',
+                      border: isActive ? activeBorder : '1px solid transparent',
+                      color: isActive ? activeText : 'var(--text-secondary)',
+                    }}
+                  >
+                    {p.id !== 'ALL' && <PlatformLogo platform={p.id as 'CODEFORCES' | 'LEETCODE'} size={14} active={isActive} />}
+                    <span>{p.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Reset Filters Button (moved before Difficulty) */}
@@ -444,26 +469,71 @@ export function ProblemsClient() {
               <span>Reset Filters</span>
             </button>
 
-            {/* Difficulty Pills (moved after Reset) */}
-            <div className="flex items-center bg-[var(--bg-input)] p-1 rounded-lg border border-[var(--border-default)]">
-              <span className="text-xs font-semibold text-[var(--text-muted)] px-2">Difficulty:</span>
-              {['All', 'Easy', 'Medium', 'Hard'].map((d) => (
-                <button
-                  key={d}
-                  onClick={() => {
-                    setDifficulty(d);
-                    setPage(1);
-                  }}
-                  className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
-                    difficulty === d
-                      ? 'bg-purple-600 text-white shadow-sm'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5'
-                  }`}
-                >
-                  {d}
-                </button>
-              ))}
-            </div>
+            {/* Dynamic Difficulty Filter — slider for CF, pills for LC/All */}
+            {platform === 'CODEFORCES' ? (
+              <div className="flex flex-col gap-1 bg-[var(--bg-input)] px-3 py-2 rounded-lg border border-[var(--border-default)] min-w-[200px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[var(--text-muted)]">Rating:</span>
+                  <span className="text-xs font-bold font-mono-data" style={{ color: '#4f8ef7' }}>
+                    {difficultyMin === 800 && difficultyMax === 3500 ? 'All' : `${difficultyMin}–${difficultyMax}`}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-[var(--text-muted)] font-mono-data w-8 shrink-0">800</span>
+                  <div className="relative flex-1 h-5 flex items-center">
+                    <div className="absolute h-1.5 w-full rounded-full" style={{ background: 'var(--border-subtle)' }} />
+                    <div
+                      className="absolute h-1.5 rounded-full"
+                      style={{
+                        background: '#4f8ef7',
+                        left: `${((difficultyMin - 800) / (3500 - 800)) * 100}%`,
+                        right: `${100 - ((difficultyMax - 800) / (3500 - 800)) * 100}%`,
+                      }}
+                    />
+                    <input
+                      type="range" min={800} max={3500} step={100}
+                      value={difficultyMin}
+                      onChange={(e) => { const v = Math.min(Number(e.target.value), difficultyMax - 100); setDifficultyMin(v); setPage(1); }}
+                      className="absolute w-full h-1.5 opacity-0 cursor-pointer"
+                      style={{ zIndex: 3 }}
+                    />
+                    <input
+                      type="range" min={800} max={3500} step={100}
+                      value={difficultyMax}
+                      onChange={(e) => { const v = Math.max(Number(e.target.value), difficultyMin + 100); setDifficultyMax(v); setPage(1); }}
+                      className="absolute w-full h-1.5 opacity-0 cursor-pointer"
+                      style={{ zIndex: 4 }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-[var(--text-muted)] font-mono-data w-8 shrink-0 text-right">3500</span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center bg-[var(--bg-input)] p-1 rounded-lg border border-[var(--border-default)]">
+                <span className="text-xs font-semibold text-[var(--text-muted)] px-2">Difficulty:</span>
+                {['All', 'Easy', 'Medium', 'Hard'].map((d) => {
+                  const isActive = difficulty === d;
+                  // For ALL platform, map pills to CF equivalents too
+                  const activeColor = d === 'Easy' ? 'rgba(52,211,153,0.15)' : d === 'Medium' ? 'rgba(251,191,36,0.15)' : d === 'Hard' ? 'rgba(244,63,94,0.15)' : 'rgba(255,255,255,0.10)';
+                  const activeBorder = d === 'Easy' ? '1px solid rgba(52,211,153,0.4)' : d === 'Medium' ? '1px solid rgba(251,191,36,0.4)' : d === 'Hard' ? '1px solid rgba(244,63,94,0.4)' : '1px solid rgba(255,255,255,0.2)';
+                  const activeText = d === 'Easy' ? 'var(--accent-green)' : d === 'Medium' ? 'var(--accent-amber)' : d === 'Hard' ? 'var(--danger)' : 'var(--text-primary)';
+                  return (
+                    <button
+                      key={d}
+                      onClick={() => { setDifficulty(d); setPage(1); }}
+                      className="px-3 py-1 rounded-md text-xs font-semibold transition-all"
+                      style={{
+                        background: isActive ? activeColor : 'transparent',
+                        border: isActive ? activeBorder : '1px solid transparent',
+                        color: isActive ? activeText : 'var(--text-secondary)',
+                      }}
+                    >
+                      {d}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Row 2: Tags, Status, Language, Sort By, Filters/Reset Button */}
@@ -500,6 +570,7 @@ export function ProblemsClient() {
               >
                 <option value="All">All Status</option>
                 <option value="AC">Accepted (AC)</option>
+                <option value="ATTEMPTED">Attempted</option>
                 <option value="WA">Wrong Answer (WA)</option>
               </select>
             </div>
@@ -579,6 +650,8 @@ export function ProblemsClient() {
               ) : (
                 problems?.items.map((p) => {
                   const isAc = ['OK', 'Accepted', 'AC'].includes(p.verdict);
+                  // Attempted = submitted but not accepted (has WA/TLE/MLE/RE — tried at least once)
+                  const isAttempted = !isAc && ['WA', 'TLE', 'MLE', 'RE', 'Wrong Answer', 'Time Limit Exceeded', 'Memory Limit Exceeded', 'Runtime Error', 'PARTIAL'].some(v => p.verdict.toUpperCase().includes(v.toUpperCase()));
                   const href =
                     p.platform === 'CODEFORCES' && p.contestId
                       ? `https://codeforces.com/contest/${p.contestId}/problem/${p.externalId.split('-')[1] || 'A'}`
@@ -675,11 +748,15 @@ export function ProblemsClient() {
                       {/* Column 8: Status */}
                       <td className="px-5 py-3.5 text-center">
                         {isAc ? (
-                          <div className="inline-flex items-center justify-center p-1 rounded-full bg-emerald-500/10 text-emerald-400">
+                          <div className="inline-flex items-center justify-center p-1 rounded-full bg-emerald-500/10 text-emerald-400" title="Accepted">
                             <CheckCircle2 size={18} />
                           </div>
+                        ) : isAttempted ? (
+                          <div className="inline-flex items-center justify-center p-1 rounded-full bg-amber-500/10 text-amber-400" title="Attempted (not accepted)">
+                            <MinusCircle size={18} />
+                          </div>
                         ) : (
-                          <div className="inline-flex items-center justify-center p-1 rounded-full bg-rose-500/10 text-rose-400">
+                          <div className="inline-flex items-center justify-center p-1 rounded-full bg-rose-500/10 text-rose-400" title="Wrong Answer / Error">
                             <XCircle size={18} />
                           </div>
                         )}

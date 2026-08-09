@@ -103,33 +103,43 @@ export async function GET(req: Request) {
       const accuracy = stats.attempts > 0 ? stats.accepted / stats.attempts : 0;
       const normalizedSolved = Math.min(stats.accepted / maxSolved, 1);
       
-      const weaknessScore = ((1 - accuracy) * 50) + ((1 - normalizedSolved) * 50);
+      // Fair weakness score:
+      // - Low accuracy is the primary signal (weighted 60%)
+      // - Low solved count (relative to your most-solved topic) adds secondary signal (weighted 40%)
+      // - Dampen topics with very few attempts (< 5) since they may just be unexplored
+      const attemptConfidence = Math.min(stats.attempts / 5, 1); // 0..1, confident at 5+ attempts
+      const accuracyScore = (1 - accuracy) * 60;
+      const volumeScore = (1 - normalizedSolved) * 40;
+      const weaknessScore = (accuracyScore + volumeScore) * (0.4 + 0.6 * attemptConfidence);
+
       return {
         topic,
         accuracy: Math.round(accuracy * 100),
         score: Math.round(weaknessScore),
         solved: stats.accepted,
+        attempts: stats.attempts,
         recommendation: '',
       };
-    }).sort((a, b) => b.score - a.score);
+    })
+    // Only include topics with at least 2 attempts so single-attempt flukes don't dominate
+    .filter(w => w.attempts >= 2)
+    .sort((a, b) => b.score - a.score);
 
     // Default template top 3 topic weaknesses if not enough user data
-    if (weaknessList.length === 0) {
-      weaknessList = [
-        { topic: 'Graph Theory', accuracy: 32, score: 82, solved: 48, recommendation: 'Focus more on this topic' },
-        { topic: 'Dynamic Programming', accuracy: 41, score: 68, solved: 62, recommendation: 'Practice more medium problems' },
-        { topic: 'Data Structures', accuracy: 47, score: 54, solved: 75, recommendation: 'Revise and strengthen basics' },
-      ];
-    } else {
-      const recommendations = [
-        'Focus more on this topic',
-        'Practice more medium problems',
-        'Revise and strengthen basics',
-      ];
-      weaknessList = weaknessList.slice(0, 3).map((w, idx) => ({
-        ...w,
-        recommendation: recommendations[idx] || 'Practice more problems',
-      }));
+    if (weaknessList.length > 0) {
+      weaknessList = weaknessList.slice(0, 3).map((w) => {
+        let recommendation: string;
+        if (w.accuracy < 40) {
+          recommendation = 'Low accuracy — review core concepts';
+        } else if (w.accuracy < 65) {
+          recommendation = 'Practice more medium problems';
+        } else if (w.solved < 10) {
+          recommendation = 'Under-explored — attempt more problems';
+        } else {
+          recommendation = 'Revise and strengthen basics';
+        }
+        return { ...w, recommendation };
+      });
     }
 
     const rawAcceptanceRate = totalAttempts > 0 ? (totalAccepted / totalAttempts) * 100 : 0;

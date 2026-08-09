@@ -155,7 +155,106 @@ export async function GET() {
     }
   }
 
-  const ratingChartData = mergeRatingChartData(cfRatingHistory, lcRatingHistory);
+  // ── Fetch top-4 friends' rating history for the dashboard chart ─────────
+  let friendChartData: Array<{ date: string; friend1?: number; friend2?: number; friend3?: number; friend4?: number }> = [];
+  try {
+    const friendships = await db.friendship.findMany({
+      where: { OR: [{ userAId: user.id }, { userBId: user.id }] },
+      take: 4,
+      include: {
+        userA: { include: { platforms: { include: { codeforcesData: true, leetcodeData: true } } } },
+        userB: { include: { platforms: { include: { codeforcesData: true, leetcodeData: true } } } },
+      },
+    });
+
+    const friendUsers = friendships
+      .map((f) => (f.userAId === user.id ? f.userB : f.userA))
+      .slice(0, 4);
+
+    // For each friend, get their rating history for the current platform
+    const friendHistories: Array<Array<{ date: string; rating: number }>> = [];
+    for (const friend of friendUsers) {
+      const friendCf = friend.platforms.find((p) => p.platform === 'CODEFORCES');
+      const friendLc = friend.platforms.find((p) => p.platform === 'LEETCODE');
+
+      const cfHistory = (friendCf?.codeforcesData?.ratingHistory ?? []) as Array<{ date: string; rating: number }>;
+      const lcStreakRaw = (friendLc?.leetcodeData?.streakData as { ratingHistory?: Array<{ startTime: number; rating: number }> } | null)?.ratingHistory ?? [];
+      let lcHistory: Array<{ date: string; rating: number }> = lcStreakRaw.length > 0
+        ? lcStreakRaw.map((e) => ({ date: new Date(e.startTime * 1000).toISOString(), rating: Math.round(e.rating) }))
+        : [];
+
+      if (lcHistory.length === 0 && friendLc) {
+        const rows = await db.contestResult.findMany({
+          where: { connectionId: friendLc.id, platform: 'LEETCODE', newRating: { not: null } },
+          orderBy: { timestamp: 'asc' },
+        });
+        lcHistory = rows.map((r) => ({ date: r.timestamp.toISOString(), rating: r.newRating! }));
+      }
+
+      friendHistories.push(cfHistory.length > 0 ? cfHistory : lcHistory);
+    }
+
+    // Collect all unique dates across user and all friends
+    const baseData = mergeRatingChartData(cfRatingHistory, lcRatingHistory);
+    const allDates = Array.from(new Set([
+      ...baseData.map((d) => d.date.slice(0, 10)),
+      ...friendHistories.flatMap((h) => h.map((p) => p.date.slice(0, 10))),
+    ])).sort();
+
+    // Build lookup maps for each friend
+    const friendMaps = friendHistories.map((history) => {
+      const m = new Map<string, number>();
+      for (const p of history) m.set(p.date.slice(0, 10), p.rating);
+      return m;
+    });
+
+    // Forward-fill friend ratings
+    const lastFriendRating = new Array(friendHistories.length).fill(undefined) as Array<number | undefined>;
+    const friendKeys = ['friend1', 'friend2', 'friend3', 'friend4'] as const;
+
+    friendChartData = allDates.map((date) => {
+      const point: Record<string, number | string> = { date };
+      for (let i = 0; i < friendHistories.length; i++) {
+        if (friendMaps[i].has(date)) lastFriendRating[i] = friendMaps[i].get(date);
+        if (lastFriendRating[i] !== undefined) point[friendKeys[i]] = lastFriendRating[i]!;
+      }
+      return point as { date: string; friend1?: number; friend2?: number; friend3?: number; friend4?: number };
+    });
+  } catch {
+    // Friend data is non-critical — fall through with empty array
+  }
+
+  const baseRatingData = mergeRatingChartData(cfRatingHistory, lcRatingHistory);
+
+  // Merge friend data into the base rating chart data
+  const friendDataMap = new Map(friendChartData.map((d) => [d.date, d]));
+  const allDatesSet = new Set([
+    ...baseRatingData.map((d) => d.date.slice(0, 10)),
+    ...friendChartData.map((d) => d.date),
+  ]);
+  const allDatesSorted = Array.from(allDatesSet).sort();
+
+  const baseMap = new Map(baseRatingData.map((d) => [d.date.slice(0, 10), d]));
+  let lastCf: number | undefined;
+  let lastLc: number | undefined;
+
+  const ratingChartData = allDatesSorted.map((date) => {
+    const base = baseMap.get(date);
+    const friendPoint = friendDataMap.get(date);
+    if (base?.cfRating !== undefined) lastCf = base.cfRating;
+    if (base?.lcRating !== undefined) lastLc = base.lcRating;
+    return {
+      date,
+      cfRating: lastCf,
+      lcRating: lastLc,
+      ...(friendPoint ? {
+        friend1: friendPoint.friend1,
+        friend2: friendPoint.friend2,
+        friend3: friendPoint.friend3,
+        friend4: friendPoint.friend4,
+      } : {}),
+    };
+  });
 
   const contestHistory = contestResultsToHistory(
     contestRows.map((row) => {

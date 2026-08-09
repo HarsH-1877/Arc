@@ -135,8 +135,18 @@ export function RatingChart({ data, loading, compact = false, compareMode = fals
   ]).filter((value): value is number => typeof value === 'number');
   const minRating = Math.min(...chartRatings);
   const maxRating = Math.max(...chartRatings);
-  const domainMin = Math.max(0, Math.floor((minRating - 120) / 100) * 100);
-  const domainMax = Math.ceil((maxRating + 120) / 100) * 100;
+
+  // Platform-aware domain: LC ratings start at ~1500+ so use tighter bounds
+  // to avoid the large empty left-side gap that 100-interval rounding causes
+  let domainMin: number;
+  let domainMax: number;
+  if (selectedPlatform === 'LEETCODE') {
+    domainMin = Math.max(1400, Math.floor((minRating - 60) / 50) * 50);
+    domainMax = Math.ceil((maxRating + 60) / 50) * 50;
+  } else {
+    domainMin = Math.max(0, Math.floor((minRating - 120) / 100) * 100);
+    domainMax = Math.ceil((maxRating + 120) / 100) * 100;
+  }
   const axisTickCandidates = selectedPlatform === 'CODEFORCES'
     ? CF_MILESTONES.map((milestone) => milestone.value)
     : LC_AXIS_TICKS;

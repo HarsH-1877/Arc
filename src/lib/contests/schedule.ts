@@ -68,16 +68,15 @@ async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
   
   // Weekly contests: every Sunday at 02:30 UTC
   // Anchor: Weekly Contest 459 on Sun Jul 6, 2025 02:30 UTC = 1751765400
-  // From that anchor, compute the nearest past Sunday and its contest number
   const baseWeeklyNum = 459;
-  const baseWeeklyTime = 1751765400; // Jul 6, 2025 02:30 UTC
+  const baseWeeklyTime = 1751765400;
 
-  // Find the weekly contest number closest to now
   const weeksSinceBase = Math.round((now - baseWeeklyTime) / (7 * 86400));
   const nearestWeeklyNum = baseWeeklyNum + weeksSinceBase;
   const nearestWeeklyTime = baseWeeklyTime + weeksSinceBase * 7 * 86400;
 
-  for (let i = -4; i <= 8; i++) {
+  // Extend backward range to -8 weeks so the current month always has full coverage
+  for (let i = -8; i <= 8; i++) {
     const startTime = nearestWeeklyTime + i * 7 * 86400;
     const contestNum = nearestWeeklyNum + i;
     if (contestNum < 1) continue;
@@ -92,13 +91,14 @@ async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
   // Biweekly contests: every other Saturday at 14:30 UTC
   // Anchor: Biweekly Contest 158 on Sat Jul 5, 2025 14:30 UTC = 1751726200
   const baseBiweeklyNum = 158;
-  const baseBiweeklyTime = 1751726200; // Jul 5, 2025 14:30 UTC
+  const baseBiweeklyTime = 1751726200;
 
   const biweeksSinceBase = Math.round((now - baseBiweeklyTime) / (14 * 86400));
   const nearestBiweeklyNum = baseBiweeklyNum + biweeksSinceBase;
   const nearestBiweeklyTime = baseBiweeklyTime + biweeksSinceBase * 14 * 86400;
 
-  for (let i = -3; i <= 5; i++) {
+  // Extend backward range to -6 biweeks
+  for (let i = -6; i <= 5; i++) {
     const startTime = nearestBiweeklyTime + i * 14 * 86400;
     const contestNum = nearestBiweeklyNum + i;
     if (contestNum < 1) continue;
@@ -133,13 +133,13 @@ function lcContestHref(slug: string) {
 /** Global contest schedule from Codeforces and LeetCode (cached ~5 min via fetch revalidate). */
 export async function fetchContestSchedule(): Promise<UpcomingContest[]> {
   const now = Math.floor(Date.now() / 1000);
-  const twoWeeksAgo = now - 14 * 86400;
+  const twoMonthsAgo = now - 60 * 86400; // 60 days back so full calendar month is always covered
   const contests: UpcomingContest[] = [];
 
   try {
     const cfContests = await getCFContests();
     for (const contest of cfContests) {
-      if (contest.startTimeSeconds < twoWeeksAgo) continue;
+      if (contest.startTimeSeconds < twoMonthsAgo) continue;
       if (contest.phase === 'BEFORE' && contest.startTimeSeconds > now) {
         const registrationOpen = contest.startTimeSeconds - now <= 7 * 24 * 60 * 60; // 7 days
         contests.push({
@@ -185,7 +185,7 @@ export async function fetchContestSchedule(): Promise<UpcomingContest[]> {
   try {
     const lcContests = await fetchLCUpcomingContests();
     for (const contest of lcContests) {
-      if (contest.startTime < twoWeeksAgo) continue;
+      if (contest.startTime < twoMonthsAgo) continue;
       const isUpcoming = contest.startTime > now;
       // Registration opens ~2 weeks before and stays open until the contest ends
       const registrationOpen = isUpcoming || (contest.startTime + contest.duration > now);
@@ -254,7 +254,7 @@ export function buildContestCalendarEvents(
     }
 
     const endedMs = startMs + contest.durationSeconds * 1000;
-    if (endedMs >= now - 14 * 86400000) {
+    if (endedMs >= now - 60 * 86400000) {
       events.push({
         date,
         label: contest.name,
