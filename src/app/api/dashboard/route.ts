@@ -156,7 +156,12 @@ export async function GET() {
   }
 
   // ── Fetch top-4 friends' rating history for the dashboard chart ─────────
-  let friendChartData: Array<{ date: string; friend1?: number; friend2?: number; friend3?: number; friend4?: number }> = [];
+  // Store both CF and LC histories per friend so the chart can pick based on selectedPlatform
+  let friendChartData: Array<{
+    date: string;
+    friend1?: number; friend2?: number; friend3?: number; friend4?: number;
+    lcFriend1?: number; lcFriend2?: number; lcFriend3?: number; lcFriend4?: number;
+  }> = [];
   try {
     const friendships = await db.friendship.findMany({
       where: { OR: [{ userAId: user.id }, { userBId: user.id }] },
@@ -171,8 +176,10 @@ export async function GET() {
       .map((f) => (f.userAId === user.id ? f.userB : f.userA))
       .slice(0, 4);
 
-    // For each friend, get their rating history for the current platform
-    const friendHistories: Array<Array<{ date: string; rating: number }>> = [];
+    // For each friend, get BOTH CF and LC rating histories
+    const cfFriendHistories: Array<Array<{ date: string; rating: number }>> = [];
+    const lcFriendHistories: Array<Array<{ date: string; rating: number }>> = [];
+
     for (const friend of friendUsers) {
       const friendCf = friend.platforms.find((p) => p.platform === 'CODEFORCES');
       const friendLc = friend.platforms.find((p) => p.platform === 'LEETCODE');
@@ -191,34 +198,47 @@ export async function GET() {
         lcHistory = rows.map((r) => ({ date: r.timestamp.toISOString(), rating: r.newRating! }));
       }
 
-      friendHistories.push(cfHistory.length > 0 ? cfHistory : lcHistory);
+      cfFriendHistories.push(cfHistory);
+      lcFriendHistories.push(lcHistory);
     }
 
     // Collect all unique dates across user and all friends
     const baseData = mergeRatingChartData(cfRatingHistory, lcRatingHistory);
     const allDates = Array.from(new Set([
       ...baseData.map((d) => d.date.slice(0, 10)),
-      ...friendHistories.flatMap((h) => h.map((p) => p.date.slice(0, 10))),
+      ...cfFriendHistories.flatMap((h) => h.map((p) => p.date.slice(0, 10))),
+      ...lcFriendHistories.flatMap((h) => h.map((p) => p.date.slice(0, 10))),
     ])).sort();
 
-    // Build lookup maps for each friend
-    const friendMaps = friendHistories.map((history) => {
+    // Build lookup maps for each friend (CF)
+    const cfFriendMaps = cfFriendHistories.map((history) => {
+      const m = new Map<string, number>();
+      for (const p of history) m.set(p.date.slice(0, 10), p.rating);
+      return m;
+    });
+    // Build lookup maps for each friend (LC)
+    const lcFriendMaps = lcFriendHistories.map((history) => {
       const m = new Map<string, number>();
       for (const p of history) m.set(p.date.slice(0, 10), p.rating);
       return m;
     });
 
-    // Forward-fill friend ratings
-    const lastFriendRating = new Array(friendHistories.length).fill(undefined) as Array<number | undefined>;
-    const friendKeys = ['friend1', 'friend2', 'friend3', 'friend4'] as const;
+    const lastCfFriend = new Array(cfFriendHistories.length).fill(undefined) as Array<number | undefined>;
+    const lastLcFriend = new Array(lcFriendHistories.length).fill(undefined) as Array<number | undefined>;
+    const cfKeys = ['friend1', 'friend2', 'friend3', 'friend4'] as const;
+    const lcKeys = ['lcFriend1', 'lcFriend2', 'lcFriend3', 'lcFriend4'] as const;
 
     friendChartData = allDates.map((date) => {
       const point: Record<string, number | string> = { date };
-      for (let i = 0; i < friendHistories.length; i++) {
-        if (friendMaps[i].has(date)) lastFriendRating[i] = friendMaps[i].get(date);
-        if (lastFriendRating[i] !== undefined) point[friendKeys[i]] = lastFriendRating[i]!;
+      for (let i = 0; i < cfFriendHistories.length; i++) {
+        if (cfFriendMaps[i].has(date)) lastCfFriend[i] = cfFriendMaps[i].get(date);
+        if (lastCfFriend[i] !== undefined) point[cfKeys[i]] = lastCfFriend[i]!;
       }
-      return point as { date: string; friend1?: number; friend2?: number; friend3?: number; friend4?: number };
+      for (let i = 0; i < lcFriendHistories.length; i++) {
+        if (lcFriendMaps[i].has(date)) lastLcFriend[i] = lcFriendMaps[i].get(date);
+        if (lastLcFriend[i] !== undefined) point[lcKeys[i]] = lastLcFriend[i]!;
+      }
+      return point as typeof friendChartData[number];
     });
   } catch {
     // Friend data is non-critical — fall through with empty array
@@ -247,14 +267,19 @@ export async function GET() {
       date,
       cfRating: lastCf,
       lcRating: lastLc,
-      ...(friendPoint ? {
-        friend1: friendPoint.friend1,
-        friend2: friendPoint.friend2,
-        friend3: friendPoint.friend3,
-        friend4: friendPoint.friend4,
-      } : {}),
+      // CF friends (shown when selectedPlatform === 'CODEFORCES')
+      friend1: friendPoint?.friend1,
+      friend2: friendPoint?.friend2,
+      friend3: friendPoint?.friend3,
+      friend4: friendPoint?.friend4,
+      // LC friends (shown when selectedPlatform === 'LEETCODE')
+      lcFriend1: friendPoint?.lcFriend1,
+      lcFriend2: friendPoint?.lcFriend2,
+      lcFriend3: friendPoint?.lcFriend3,
+      lcFriend4: friendPoint?.lcFriend4,
     };
   });
+
 
   const contestHistory = contestResultsToHistory(
     contestRows.map((row) => {

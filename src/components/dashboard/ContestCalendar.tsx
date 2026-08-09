@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/shared/Card';
 import { Clock3, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
@@ -18,6 +19,96 @@ interface ContestDay {
   delta?: number;
   type: 'given' | 'upcoming' | 'missed';
   platforms: Array<{ platform: 'CODEFORCES' | 'LEETCODE'; href?: string; registrationOpen?: boolean }>;
+}
+
+function LiveContestTimer({ nextContest }: { nextContest?: ContestDay }) {
+  const [timeLeft, setTimeLeft] = useState<string>('--:--:--');
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  useEffect(() => {
+    if (!nextContest) {
+      setTimeLeft('No contests');
+      return;
+    }
+
+    const updateTimer = () => {
+      const diffMs = nextContest.date.getTime() - Date.now();
+      if (diffMs <= 0) {
+        setTimeLeft('Live');
+        return;
+      }
+      const totalSec = Math.floor(diffMs / 1000);
+      const days = Math.floor(totalSec / 86400);
+      const hours = Math.floor((totalSec % 86400) / 3600);
+      const minutes = Math.floor((totalSec % 3600) / 60);
+      const seconds = totalSec % 60;
+
+      const pad = (n: number) => n.toString().padStart(2, '0');
+
+      if (days > 0) {
+        setTimeLeft(`${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`);
+      } else {
+        setTimeLeft(`${pad(hours)}:${pad(minutes)}:${pad(seconds)}`);
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [nextContest]);
+
+  const platformInfo = nextContest?.platforms[0];
+
+  return (
+    <div className="relative">
+      <div
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-mono-data font-bold cursor-pointer transition-all hover:scale-105"
+        style={{
+          background: 'var(--bg-elevated)',
+          color: 'var(--text-primary)',
+          border: '1px solid var(--border-default)',
+        }}
+      >
+        <Clock3 size={13} className="text-amber-400" />
+        <span>{timeLeft}</span>
+      </div>
+
+      {showTooltip && nextContest && (
+        <div
+          className="absolute right-0 top-9 z-50 w-64 rounded-xl p-3 shadow-xl text-xs space-y-1.5"
+          style={{
+            background: 'rgba(17,19,29,0.95)',
+            border: '1px solid var(--border-default)',
+            backdropFilter: 'blur(12px)',
+          }}
+        >
+          <div className="flex items-center justify-between font-bold border-b border-[var(--border-subtle)] pb-1.5">
+            <span style={{ color: 'var(--text-primary)' }}>Next Contest</span>
+            {platformInfo && (
+              <PlatformLogo platform={platformInfo.platform} size={14} />
+            )}
+          </div>
+          <p className="font-semibold text-[var(--text-primary)] truncate">
+            {nextContest.label}
+          </p>
+          <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+            <span>Date:</span>
+            <span className="font-mono-data font-semibold text-[var(--text-secondary)]">
+              {format(nextContest.date, 'MMM d, yyyy HH:mm')}
+            </span>
+          </div>
+          <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+            <span>Status:</span>
+            <span className="font-semibold text-amber-400">
+              {platformInfo?.registrationOpen ? 'Registration Open' : 'Upcoming'}
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function buildContestDays(events: NonNullable<DashboardApiData['contestCalendarEvents']> = []): ContestDay[] {
@@ -67,15 +158,6 @@ export function ContestCalendar({ events = [], loading = false }: ContestCalenda
 
   const now = new Date();
   const nextContest = contests.find((contest) => contest.type === 'upcoming' && contest.date.getTime() >= now.getTime());
-  const nextDeltaMs = nextContest ? nextContest.date.getTime() - now.getTime() : 0;
-  const isLive = nextContest ? nextDeltaMs <= 2 * 60 * 60 * 1000 : false;
-  const countdown = nextContest
-    ? isLive
-      ? 'Live'
-      : nextDeltaMs > 24 * 60 * 60 * 1000
-        ? Math.ceil(nextDeltaMs / (24 * 60 * 60 * 1000)) + 'd'
-        : Math.max(1, Math.ceil(nextDeltaMs / (60 * 60 * 1000))) + 'h'
-    : 'No contests';
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const gridStart = new Date(monthStart);
   gridStart.setDate(monthStart.getDate() - monthStart.getDay());
@@ -109,13 +191,7 @@ export function ContestCalendar({ events = [], loading = false }: ContestCalenda
             <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
           </button>
         </div>
-        <span
-          className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-semibold"
-          style={{ background: isLive ? 'rgba(52,211,153,0.12)' : 'var(--bg-elevated)', color: isLive ? 'var(--success)' : 'var(--text-secondary)', border: isLive ? '1px solid rgba(52,211,153,0.24)' : '1px solid var(--border-default)' }}
-        >
-          <Clock3 size={13} />
-          {countdown}
-        </span>
+        <LiveContestTimer nextContest={nextContest} />
       </div>
 
       <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase" style={{ color: 'var(--text-muted)' }}>

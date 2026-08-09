@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { getCFUser, getCFRatingHistory, getCFSubmissions } from '@/lib/fetchers/codeforces';
-import { getLCSolvedStats, getLCContestInfo, getLCRecentSubmissions, getLCTagStats, getLCContestHistory, getLCProfile } from '@/lib/fetchers/leetcode';
+import { getLCSolvedStats, getLCContestInfo, getLCAllAcSubmissions, getLCRecentSubmissions, getLCProblemTags, getLCTagStats, getLCContestHistory, getLCProfile } from '@/lib/fetchers/leetcode';
 import type { Platform } from '@prisma/client';
 
 // ─── Streak calculation ──────────────────────────────────────────────────────
@@ -189,9 +189,16 @@ async function syncCodeforces(connectionId: string, handle: string, userId: stri
     },
   });
 
-  // Upsert submissions (only AC)
-  const acSubs = submissions.filter((s) => s.verdict === 'OK');
-  for (const sub of acSubs) {
+  // Upsert all submissions (AC and non-AC)
+  for (const sub of submissions) {
+    let verdict = 'AC';
+    if (sub.verdict === 'OK') verdict = 'AC';
+    else if (sub.verdict === 'WRONG_ANSWER') verdict = 'WA';
+    else if (sub.verdict === 'TIME_LIMIT_EXCEEDED') verdict = 'TLE';
+    else if (sub.verdict === 'MEMORY_LIMIT_EXCEEDED') verdict = 'MLE';
+    else if (sub.verdict === 'RUNTIME_ERROR') verdict = 'RE';
+    else verdict = sub.verdict || 'ATTEMPTED';
+
     await db.submission.upsert({
       where: { connectionId_externalId: { connectionId, externalId: String(sub.id) } },
       create: {
@@ -199,14 +206,14 @@ async function syncCodeforces(connectionId: string, handle: string, userId: stri
         externalId: String(sub.id),
         problemName: sub.problem.name,
         platform: 'CODEFORCES',
-        verdict: 'AC',
+        verdict,
         language: sub.programmingLanguage,
         timestamp: new Date(sub.creationTimeSeconds * 1000),
         contestId: sub.contestId ? String(sub.contestId) : null,
         difficulty: sub.problem.rating ? String(sub.problem.rating) : null,
         tags: sub.problem.tags,
       },
-      update: {},
+      update: { verdict, tags: sub.problem.tags },
     });
   }
 
@@ -230,13 +237,13 @@ async function syncCodeforces(connectionId: string, handle: string, userId: stri
 }
 
 async function syncLeetCode(connectionId: string, username: string, userId: string, quick = false) {
-  const submissionLimit = quick ? 30 : 100;
-  const [solvedStats, contestInfo, recentSubs, tagStats, contestHistory, profile] = await Promise.all([
+  const submissionLimit = quick ? 100 : 2000;
+  const [solvedStats, contestInfo, allAcSubs, recentSubs, tagStats, contestHistory, profile] = await Promise.all([
     getLCSolvedStats(username),
     getLCContestInfo(username),
-    getLCRecentSubmissions(username, submissionLimit),
+    getLCAllAcSubmissions(username, submissionLimit),
+    getLCRecentSubmissions(username, 50).catch(() => []),
     getLCTagStats(username),
-    // Always fetch contest history — it's a single lightweight call and drives rating charts
     getLCContestHistory(username),
     quick ? Promise.resolve(null) : getLCProfile(username).catch(() => null),
   ]);
@@ -290,9 +297,43 @@ async function syncLeetCode(connectionId: string, username: string, userId: stri
     },
   });
 
-  // Upsert recent AC submissions
-  for (const sub of recentSubs) {
-    if (sub.statusDisplay !== 'Accepted') continue;
+  // Fetch problem tags for unique LC problem slugs
+  const allSubmissionsToSave = [
+    ...allAcSubs.map((s) => ({ ...s, statusDisplay: 'Accepted' })),
+    ...recentSubs,
+  ];
+
+  const uniqueSlugs = Array.from(new Set(allSubmissionsToSave.map((s) => s.titleSlug).filter(Boolean)));
+  const slugTagsMap = new Map<string, string[]>();
+
+  // Fetch tags in chunks of 10
+  for (let i = 0; i < uniqueSlugs.length; i += 10) {
+    const chunk = uniqueSlugs.slice(i, i + 10);
+    await Promise.all(
+      chunk.map(async (slug) => {
+        const tags = await getLCProblemTags(slug);
+        if (tags.length > 0) slugTagsMap.set(slug, tags);
+      })
+    );
+  }
+
+  // Upsert all LC submissions (AC + non-AC like WA, TLE, RE)
+  const seenIds = new Set<string>();
+  for (const sub of allSubmissionsToSave) {
+    if (seenIds.has(sub.id)) continue;
+    seenIds.add(sub.id);
+
+    let verdict = 'AC';
+    const statusLower = (sub.statusDisplay || '').toLowerCase();
+    if (statusLower.includes('accepted')) verdict = 'AC';
+    else if (statusLower.includes('wrong answer')) verdict = 'WA';
+    else if (statusLower.includes('time limit')) verdict = 'TLE';
+    else if (statusLower.includes('memory limit')) verdict = 'MLE';
+    else if (statusLower.includes('runtime error')) verdict = 'RE';
+    else verdict = 'ATTEMPTED';
+
+    const problemTags = sub.titleSlug ? (slugTagsMap.get(sub.titleSlug) ?? []) : [];
+
     await db.submission.upsert({
       where: { connectionId_externalId: { connectionId, externalId: sub.id } },
       create: {
@@ -301,12 +342,12 @@ async function syncLeetCode(connectionId: string, username: string, userId: stri
         problemName: sub.title,
         problemSlug: sub.titleSlug,
         platform: 'LEETCODE',
-        verdict: 'AC',
+        verdict,
         language: sub.lang,
         timestamp: new Date(Number(sub.timestamp) * 1000),
-        tags: [],
+        tags: problemTags,
       },
-      update: {},
+      update: { verdict, tags: problemTags },
     });
   }
 

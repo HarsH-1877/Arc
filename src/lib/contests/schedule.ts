@@ -20,6 +20,8 @@ interface LCUpcomingRaw {
 }
 
 async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
+  const liveContests: LCUpcomingRaw[] = [];
+
   try {
     const res = await fetch('https://leetcode.com/graphql', {
       method: 'POST',
@@ -34,38 +36,16 @@ async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
 
     if (res.ok) {
       const body = (await res.json()) as { data?: { upcomingContests?: LCUpcomingRaw[] } };
-      const contests = body.data?.upcomingContests ?? [];
-      if (contests.length > 0) return contests;
+      liveContests.push(...(body.data?.upcomingContests ?? []));
     }
   } catch {
-    // Continue to fallback
+    // Continue
   }
 
-  try {
-    const fallback = await fetch('https://leetcode.com/contest/api/list/', {
-      headers: { Referer: 'https://leetcode.com', 'User-Agent': 'Mozilla/5.0' },
-      next: { revalidate: 300 },
-    });
-    if (fallback.ok) {
-      const body = (await fallback.json()) as {
-        contest?: Array<{ title: string; title_slug: string; start_time: number; duration: number }>;
-      };
-      const contests = (body.contest ?? []).map((contest) => ({
-        title: contest.title,
-        titleSlug: contest.title_slug,
-        startTime: contest.start_time,
-        duration: contest.duration,
-      }));
-      if (contests.length > 0) return contests;
-    }
-  } catch {
-    // Continue to generator fallback
-  }
-
-  // Generator fallback for robust display of LC Weekly & Biweekly contests
+  // Always generate past and upcoming weekly/biweekly contests so the calendar has complete coverage
   const generated: LCUpcomingRaw[] = [];
   const now = Math.floor(Date.now() / 1000);
-  
+
   // Weekly contests: every Sunday at 02:30 UTC
   // Anchor: Weekly Contest 459 on Sun Jul 6, 2025 02:30 UTC = 1751765400
   const baseWeeklyNum = 459;
@@ -75,8 +55,7 @@ async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
   const nearestWeeklyNum = baseWeeklyNum + weeksSinceBase;
   const nearestWeeklyTime = baseWeeklyTime + weeksSinceBase * 7 * 86400;
 
-  // Extend backward range to -8 weeks so the current month always has full coverage
-  for (let i = -8; i <= 8; i++) {
+  for (let i = -10; i <= 8; i++) {
     const startTime = nearestWeeklyTime + i * 7 * 86400;
     const contestNum = nearestWeeklyNum + i;
     if (contestNum < 1) continue;
@@ -97,8 +76,7 @@ async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
   const nearestBiweeklyNum = baseBiweeklyNum + biweeksSinceBase;
   const nearestBiweeklyTime = baseBiweeklyTime + biweeksSinceBase * 14 * 86400;
 
-  // Extend backward range to -6 biweeks
-  for (let i = -6; i <= 5; i++) {
+  for (let i = -8; i <= 6; i++) {
     const startTime = nearestBiweeklyTime + i * 14 * 86400;
     const contestNum = nearestBiweeklyNum + i;
     if (contestNum < 1) continue;
@@ -110,7 +88,12 @@ async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
     });
   }
 
-  return generated;
+  // Deduplicate by titleSlug, preferring liveContests
+  const map = new Map<string, LCUpcomingRaw>();
+  for (const c of generated) map.set(c.titleSlug, c);
+  for (const c of liveContests) map.set(c.titleSlug, c);
+
+  return Array.from(map.values());
 }
 
 function formatContestTime(isoDate: string): string {

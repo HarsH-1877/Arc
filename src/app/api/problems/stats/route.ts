@@ -13,7 +13,14 @@ export async function GET(req: Request) {
 
     const user = await db.user.findUnique({
       where: { id: session.id },
-      include: { platforms: true },
+      include: {
+        platforms: {
+          include: {
+            codeforcesData: true,
+            leetcodeData: true,
+          },
+        },
+      },
     });
     if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
@@ -35,23 +42,25 @@ export async function GET(req: Request) {
           language: true,
           timestamp: true,
           problemName: true,
-        }
+          platform: true,
+        },
       }),
       db.contestResult.count({
         where: {
           connectionId: { in: connectionIds },
           ...(platform && platform !== 'ALL' ? { platform: platform as any } : {}),
-        }
-      })
+        },
+      }),
     ]);
 
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
     let totalAttempts = 0;
     let totalAccepted = 0;
-    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
     let recentAttempts = 0;
     let recentAccepted = 0;
 
-    const topicStats: Record<string, { attempts: number; accepted: number }> = {};
+    // topicStats from CF submissions (which have real tags)
+    const cfTopicStats: Record<string, { attempts: number; accepted: number }> = {};
     const languageStats: Record<string, number> = {};
     const solvedSet = new Set<string>();
 
@@ -74,109 +83,135 @@ export async function GET(req: Request) {
         languageStats[sub.language] = (languageStats[sub.language] || 0) + 1;
       }
 
-      for (const tag of sub.tags) {
-        if (!topicStats[tag]) topicStats[tag] = { attempts: 0, accepted: 0 };
-        topicStats[tag].attempts++;
-        if (isAc) topicStats[tag].accepted++;
+      // Only accumulate tag stats from CF (LC submissions have tags:[])
+      if (sub.platform === 'CODEFORCES') {
+        for (const tag of sub.tags) {
+          if (!cfTopicStats[tag]) cfTopicStats[tag] = { attempts: 0, accepted: 0 };
+          cfTopicStats[tag].attempts++;
+          if (isAc) cfTopicStats[tag].accepted++;
+        }
       }
     }
 
-    const acceptanceRate = totalAttempts > 0 ? (totalAccepted / totalAttempts) * 100 : 0;
-    const recentAccuracy = recentAttempts > 0 ? (recentAccepted / recentAttempts) * 100 : acceptanceRate;
-    const accuracyDiff = recentAccuracy - acceptanceRate;
+    // ─── Compute accurate totals using platform data ───────────────────────────
 
-    const totalSolved = solvedSet.size || totalAccepted;
+    // For LC: use totalSolved + acceptanceRate directly from LeetcodeData
+    const cfConn = user.platforms.find((p) => p.platform === 'CODEFORCES');
+    const lcConn = user.platforms.find((p) => p.platform === 'LEETCODE');
+
+    const shouldIncludeCF = !platform || platform === 'ALL' || platform === 'CODEFORCES';
+    const shouldIncludeLC = !platform || platform === 'ALL' || platform === 'LEETCODE';
+
+    // Use authoritative solved counts from platform data
+    const cfSolved = shouldIncludeCF ? (cfConn?.codeforcesData ? totalAccepted : 0) : 0;
+    // For LC, use the totalSolved from LeetcodeData (authoritative, not just recent 2000)
+    const lcSolved = shouldIncludeLC ? (lcConn?.leetcodeData?.totalSolved ?? 0) : 0;
+    const lcAcceptanceRate = shouldIncludeLC ? (lcConn?.leetcodeData?.acceptanceRate ?? 0) : 0;
+
+    // Final totalSolved: for ALL use DB count (includes both), for specific platform use authoritative data
+    let finalTotalSolved: number;
+    let finalAccuracy: number;
+
+    if (platform === 'LEETCODE') {
+      finalTotalSolved = lcSolved;
+      finalAccuracy = Math.round(lcAcceptanceRate * 10) / 10;
+    } else if (platform === 'CODEFORCES') {
+      finalTotalSolved = solvedSet.size || totalAccepted;
+      finalAccuracy = totalAttempts > 0 ? Math.round((totalAccepted / totalAttempts) * 1000) / 10 : 0;
+    } else {
+      // ALL: combine
+      const cfSolvedCount = solvedSet.size ? solvedSet.size - lcSolved : totalAccepted;
+      finalTotalSolved = Math.max(solvedSet.size, (cfConn?.codeforcesData ? cfSolvedCount : 0) + lcSolved);
+      // Blended accuracy — weighted by submission counts
+      finalAccuracy = totalAttempts > 0 ? Math.round((totalAccepted / totalAttempts) * 1000) / 10 : 0;
+      // If LC dominates, blend with LC's authoritative rate
+      if (lcSolved > 0 && lcAcceptanceRate > 0) {
+        const lcWeight = lcSolved / (finalTotalSolved || 1);
+        const cfWeight = 1 - lcWeight;
+        finalAccuracy = Math.round((lcAcceptanceRate * lcWeight + finalAccuracy * cfWeight) * 10) / 10;
+      }
+    }
+
     const totalSolvedTrend = recentAccepted > 0 ? `+${recentAccepted} vs last 90 days` : 'All time';
-    const accuracyTrend = totalAttempts > 0 ? `${accuracyDiff >= 0 ? '+' : ''}${Math.abs(accuracyDiff) < 0.1 ? '0.0' : accuracyDiff.toFixed(1)}% vs last 90 days` : 'Submission rate';
-    const totalSubmissionsTrend = recentAttempts > 0 ? `+${recentAttempts} vs last 90 days` : 'All time';
-    const avgTime = '18m 42s';
-    const avgTimeTrend = '-2m 10s vs last 90 days';
-    const contestsSolved = contestResults || 42;
-    const contestsTrend = '+6 vs last 90 days';
+    const recentAccuracy = recentAttempts > 0 ? (recentAccepted / recentAttempts) * 100 : finalAccuracy;
+    const accuracyDiff = recentAccuracy - finalAccuracy;
+    const accuracyTrend = totalAttempts > 0
+      ? `${accuracyDiff >= 0 ? '+' : ''}${Math.abs(accuracyDiff) < 0.1 ? '0.0' : accuracyDiff.toFixed(1)}% vs 90d`
+      : 'Submission rate';
+
+    // ─── Topic Weakness ────────────────────────────────────────────────────────
+
+    // Merge CF submission-based topic stats with LC tagStats from LeetcodeData
+    const mergedTopicStats: Record<string, { attempts: number; accepted: number }> = { ...cfTopicStats };
+
+    if (shouldIncludeLC && lcConn?.leetcodeData?.tagStats) {
+      const lcTagStats = lcConn.leetcodeData.tagStats as Record<string, number>;
+      for (const [tag, solved] of Object.entries(lcTagStats)) {
+        if (!mergedTopicStats[tag]) mergedTopicStats[tag] = { attempts: 0, accepted: 0 };
+        // LC tagStats only gives solved count, not attempts — assume 70% acceptance baseline
+        mergedTopicStats[tag].accepted += solved;
+        mergedTopicStats[tag].attempts += Math.ceil(solved / 0.7);
+      }
+    }
 
     let maxSolved = 1;
-    for (const tag in topicStats) {
-      if (topicStats[tag].accepted > maxSolved) maxSolved = topicStats[tag].accepted;
+    for (const tag in mergedTopicStats) {
+      if (mergedTopicStats[tag].accepted > maxSolved) maxSolved = mergedTopicStats[tag].accepted;
     }
 
-    let weaknessList = Object.entries(topicStats).map(([topic, stats]) => {
-      const accuracy = stats.attempts > 0 ? stats.accepted / stats.attempts : 0;
-      const normalizedSolved = Math.min(stats.accepted / maxSolved, 1);
-      
-      // Fair weakness score:
-      // - Low accuracy is the primary signal (weighted 60%)
-      // - Low solved count (relative to your most-solved topic) adds secondary signal (weighted 40%)
-      // - Dampen topics with very few attempts (< 5) since they may just be unexplored
-      const attemptConfidence = Math.min(stats.attempts / 5, 1); // 0..1, confident at 5+ attempts
-      const accuracyScore = (1 - accuracy) * 60;
-      const volumeScore = (1 - normalizedSolved) * 40;
-      const weaknessScore = (accuracyScore + volumeScore) * (0.4 + 0.6 * attemptConfidence);
+    // Filter out very niche tags (< 3 accepted) and compute weakness scores
+    const weaknessList = Object.entries(mergedTopicStats)
+      .filter(([, s]) => s.accepted >= 1 && s.attempts >= 2)
+      .map(([topic, s]) => {
+        const accuracy = s.attempts > 0 ? s.accepted / s.attempts : 0;
+        const normalizedSolved = Math.min(s.accepted / maxSolved, 1);
+        const confidence = Math.min(s.attempts / 5, 1);
+        // Low accuracy = weak. Low volume relative to your best topic = secondary signal.
+        const score = ((1 - accuracy) * 60 + (1 - normalizedSolved) * 40) * (0.4 + 0.6 * confidence);
 
-      return {
-        topic,
-        accuracy: Math.round(accuracy * 100),
-        score: Math.round(weaknessScore),
-        solved: stats.accepted,
-        attempts: stats.attempts,
-        recommendation: '',
-      };
-    })
-    // Only include topics with at least 2 attempts so single-attempt flukes don't dominate
-    .filter(w => w.attempts >= 2)
-    .sort((a, b) => b.score - a.score);
-
-    // Default template top 3 topic weaknesses if not enough user data
-    if (weaknessList.length > 0) {
-      weaknessList = weaknessList.slice(0, 3).map((w) => {
         let recommendation: string;
-        if (w.accuracy < 40) {
-          recommendation = 'Low accuracy — review core concepts';
-        } else if (w.accuracy < 65) {
-          recommendation = 'Practice more medium problems';
-        } else if (w.solved < 10) {
-          recommendation = 'Under-explored — attempt more problems';
-        } else {
-          recommendation = 'Revise and strengthen basics';
-        }
-        return { ...w, recommendation };
-      });
-    }
+        if (accuracy < 0.4) recommendation = 'Low accuracy — review core concepts';
+        else if (accuracy < 0.65) recommendation = 'Practice more medium problems';
+        else if (s.accepted < 10) recommendation = 'Under-explored — attempt more';
+        else recommendation = 'Revise and strengthen basics';
 
-    const rawAcceptanceRate = totalAttempts > 0 ? (totalAccepted / totalAttempts) * 100 : 0;
-    const finalAccuracy = totalAttempts > 0 ? Math.round(rawAcceptanceRate * 10) / 10 : 0;
-    const finalSolved = totalSolved;
-    const finalSubmissions = totalAttempts;
+        return {
+          topic,
+          accuracy: Math.round(accuracy * 100),
+          score: Math.round(score),
+          solved: s.accepted,
+          attempts: s.attempts,
+          recommendation,
+        };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
 
-    // Convert languageStats Record into sorted array
+    // ─── Language Breakdown ────────────────────────────────────────────────────
+
     const languageBreakdown = Object.entries(languageStats)
       .map(([lang, count]) => ({ lang, count }))
       .sort((a, b) => b.count - a.count);
 
-    const defaultLangs = [
-      { lang: 'C++', count: 128 },
-      { lang: 'Python', count: 64 },
-      { lang: 'Java', count: 32 },
-    ];
-    const finalLangs = languageBreakdown.length > 0 ? languageBreakdown : defaultLangs;
-
     return NextResponse.json({
-      totalAttempts: finalSubmissions,
-      totalAccepted: finalSolved,
+      totalAttempts,
+      totalAccepted: finalTotalSolved,
       acceptanceRate: finalAccuracy,
-      totalSolved: finalSolved,
+      totalSolved: finalTotalSolved,
       totalSolvedTrend,
       accuracy: finalAccuracy,
       accuracyTrend,
-      totalSubmissions: finalSubmissions,
-      totalSubmissionsTrend,
-      avgTime,
-      avgTimeTrend,
-      contestsSolved,
-      contestsTrend,
-      topicWeakness: weaknessList.slice(0, 3),
-      languageBreakdown: finalLangs,
+      totalSubmissions: totalAttempts,
+      totalSubmissionsTrend: recentAttempts > 0 ? `+${recentAttempts} vs last 90 days` : 'All time',
+      avgTime: '—',
+      avgTimeTrend: '—',
+      contestsSolved: contestResults,
+      contestsTrend: '+0 vs last 90 days',
+      topicWeakness: weaknessList,
+      languageBreakdown: languageBreakdown.length > 0 ? languageBreakdown : [],
     });
   } catch (error) {
+    console.error('[problems/stats] error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

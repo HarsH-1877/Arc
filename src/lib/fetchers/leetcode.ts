@@ -399,3 +399,68 @@ export async function getLCContestHistory(username: string): Promise<LCContestHi
     }))
     .sort((a, b) => a.startTime - b.startTime);
 }
+
+/**
+ * Fetch all accepted submissions for a user (up to limit).
+ * Uses recentAcSubmissionList which returns ALL accepted submissions historically.
+ */
+export async function getLCAllAcSubmissions(
+  username: string,
+  limit = 2000,
+): Promise<LCSubmission[]> {
+  const query = `
+    query getAcSubmissions($username: String!, $limit: Int!) {
+      recentAcSubmissionList(username: $username, limit: $limit) {
+        id
+        title
+        titleSlug
+        timestamp
+        lang
+      }
+    }
+  `;
+
+  const data = await lcQuery<{
+    recentAcSubmissionList: Array<{
+      id: string;
+      title: string;
+      titleSlug: string;
+      timestamp: string;
+      lang: string;
+    }> | null;
+  }>(query, { username, limit });
+
+  return (data.recentAcSubmissionList ?? []).map((s) => ({
+    id: s.id,
+    title: s.title,
+    titleSlug: s.titleSlug,
+    timestamp: s.timestamp,
+    statusDisplay: 'Accepted',
+    lang: s.lang,
+  }));
+}
+
+/**
+ * Fetch topic tags for a specific problem by its slug.
+ */
+export async function getLCProblemTags(titleSlug: string): Promise<string[]> {
+  const query = `
+    query getProblemTags($titleSlug: String!) {
+      question(titleSlug: $titleSlug) {
+        topicTags {
+          name
+        }
+      }
+    }
+  `;
+
+  try {
+    const data = await lcQuery<{
+      question: { topicTags: Array<{ name: string }> } | null;
+    }>(query, { titleSlug });
+    return (data.question?.topicTags ?? []).map((t) => t.name);
+  } catch {
+    return [];
+  }
+}
+

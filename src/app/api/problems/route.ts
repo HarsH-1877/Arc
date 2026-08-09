@@ -3,6 +3,34 @@ import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import type { Prisma } from '@prisma/client';
 
+const TAG_ALIASES: Record<string, string[]> = {
+  'Graph Theory': ['Graph Theory', 'graphs', 'graph', 'trees', 'shortest paths'],
+  'Dynamic Programming': ['Dynamic Programming', 'dp', 'dynamic programming'],
+  'Data Structures': ['Data Structures', 'data structures', 'dsu', 'trees'],
+  'Trees': ['Trees', 'trees', 'tree'],
+  'Math': ['Math', 'math', 'number theory', 'matrices'],
+  'Greedy': ['Greedy', 'greedy'],
+  'Strings': ['Strings', 'strings', 'string'],
+  'Two Pointers': ['Two Pointers', 'two pointers'],
+  'Binary Search': ['Binary Search', 'binary search'],
+  'Sorting': ['Sorting', 'sortings', 'sorting'],
+  'DFS/BFS': ['DFS/BFS', 'dfs and similar', 'dfs', 'bfs'],
+  'Arrays': ['Arrays', 'arrays', 'array'],
+  'Recursion': ['Recursion', 'recursion'],
+  'Bit Manipulation': ['Bit Manipulation', 'bitmasks', 'bit manipulation'],
+};
+
+function getDifficultyValue(d: string | null): number {
+  if (!d) return 1400;
+  const num = parseInt(d, 10);
+  if (!isNaN(num)) return num;
+  const lower = d.toLowerCase();
+  if (lower === 'easy') return 800;
+  if (lower === 'medium') return 1400;
+  if (lower === 'hard') return 2000;
+  return 1400;
+}
+
 export async function GET(req: Request) {
   try {
     const session = await getSession();
@@ -38,22 +66,17 @@ export async function GET(req: Request) {
       if (verdict === 'AC') {
         where.verdict = { in: ['OK', 'Accepted', 'AC'] };
       } else if (verdict === 'ATTEMPTED') {
-        // Attempted = submitted but not accepted
         where.verdict = { notIn: ['OK', 'Accepted', 'AC'] };
-        // Must have at least one WA/TLE/RE type verdict (not just skipped)
       } else if (verdict === 'WA') {
-        where.verdict = { contains: 'Wrong Answer', mode: 'insensitive' };
+        where.verdict = { in: ['WA', 'Wrong Answer', 'WRONG_ANSWER'] };
       }
     }
 
     if (difficulty && difficulty !== 'All') {
-      // Check if it's a CF rating range like "800-1600"
       const rangeMatch = difficulty.match(/^(\d+)-(\d+)$/);
       if (rangeMatch) {
-        // CF numeric range filter — difficulty stored as string like "800", "1200"
         const minD = rangeMatch[1];
         const maxD = rangeMatch[2];
-        // Use a raw filter on numeric comparison for the difficulty field
         where.AND = [
           ...(Array.isArray(where.AND) ? where.AND : []),
           { difficulty: { gte: minD } },
@@ -64,11 +87,12 @@ export async function GET(req: Request) {
       }
     }
 
-    if (tags.length > 0 && tags[0] !== '') {
-      where.tags = { hasSome: tags };
+    if (tags.length > 0 && tags[0] !== '' && tags[0] !== 'All Tags') {
+      const expandedTags = tags.flatMap((t) => TAG_ALIASES[t] ?? [t, t.toLowerCase()]);
+      where.tags = { hasSome: expandedTags };
     }
 
-    if (language && language !== 'All') {
+    if (language && language !== 'All' && !language.startsWith('All')) {
       where.language = { contains: language, mode: 'insensitive' };
     }
 
@@ -81,26 +105,34 @@ export async function GET(req: Request) {
       ];
     }
 
-    let orderBy: Prisma.SubmissionOrderByWithRelationInput = { timestamp: 'desc' };
-    if (sort === 'oldest') {
-      orderBy = { timestamp: 'asc' };
-    } else if (sort === 'difficulty_asc') {
-      orderBy = { difficulty: 'asc' };
-    } else if (sort === 'difficulty_desc') {
-      orderBy = { difficulty: 'desc' };
+    let rawItems: any[] = [];
+    let total = 0;
+
+    if (sort === 'difficulty_asc' || sort === 'difficulty_desc') {
+      const allSubmissions = await db.submission.findMany({ where });
+      allSubmissions.sort((a, b) => {
+        const diffA = getDifficultyValue(a.difficulty);
+        const diffB = getDifficultyValue(b.difficulty);
+        return sort === 'difficulty_asc' ? diffA - diffB : diffB - diffA;
+      });
+      total = allSubmissions.length;
+      rawItems = allSubmissions.slice((page - 1) * pageSize, page * pageSize);
+    } else {
+      let orderBy: Prisma.SubmissionOrderByWithRelationInput = { timestamp: 'desc' };
+      if (sort === 'oldest') {
+        orderBy = { timestamp: 'asc' };
+      }
+      [rawItems, total] = await Promise.all([
+        db.submission.findMany({
+          where,
+          orderBy,
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+        }),
+        db.submission.count({ where }),
+      ]);
     }
 
-    const [rawItems, total] = await Promise.all([
-      db.submission.findMany({
-        where,
-        orderBy,
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-      db.submission.count({ where }),
-    ]);
-
-    // No mock fallback — return real DB data only
     const items = rawItems.map((p) => {
       let contestName: string | null = null;
       if (p.contestId) {

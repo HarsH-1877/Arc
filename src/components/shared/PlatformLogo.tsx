@@ -45,7 +45,7 @@ export function PlatformLogo({ platform, size = 24, className, active = true }: 
           className={cn(
             'h-full w-full object-contain transition-all duration-200',
             isCodeforces && 'scale-90',
-            !active && 'opacity-60 grayscale group-hover:opacity-100 group-hover:grayscale-0'
+            !active && 'opacity-70'
           )}
           onError={() => setFailed(true)}
         />

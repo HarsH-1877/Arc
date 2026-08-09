@@ -56,8 +56,13 @@ const CF_MILESTONES = [
   { value: 3000, label: 'LGM' },
 ];
 const LC_MILESTONES = [
+  { value: 1500, label: '1500' },
+  { value: 1650, label: '1650' },
   { value: 1850, label: 'KNT' },
+  { value: 2000, label: '2000' },
   { value: 2200, label: 'GRD' },
+  { value: 2350, label: '2350' },
+  { value: 2500, label: 'LGD' },
 ];
 const LC_AXIS_TICKS = [1500, 1650, 1850, 2000, 2200, 2350, 2500];
 
@@ -99,10 +104,14 @@ export function RatingChart({ data, loading, compact = false, compareMode = fals
   const milestones = selectedPlatform === 'CODEFORCES' ? CF_MILESTONES : LC_MILESTONES;
 
   const chartData = useMemo(() => data.map((d) => {
+    const isLc = selectedPlatform === 'LEETCODE';
     const point = {
       ...d,
-      userRating: d.userRating ?? (selectedPlatform === 'CODEFORCES' ? d.cfRating : d.lcRating),
-      friend1: d.friend1 ?? d.friendRating,
+      userRating: d.userRating ?? (isLc ? d.lcRating : d.cfRating),
+      friend1: isLc ? ((d as any).lcFriend1 ?? d.friend1) : (d.friend1 ?? d.friendRating),
+      friend2: isLc ? ((d as any).lcFriend2 ?? d.friend2) : d.friend2,
+      friend3: isLc ? ((d as any).lcFriend3 ?? d.friend3) : d.friend3,
+      friend4: isLc ? ((d as any).lcFriend4 ?? d.friend4) : d.friend4,
       avgTop4: undefined as number | undefined,
     };
     const friendValues = FRIEND_KEYS.map((key) => point[key]).filter((value): value is number => typeof value === 'number');
@@ -329,7 +338,7 @@ export function RatingChart({ data, loading, compact = false, compareMode = fals
               domain={[domainMin, domainMax]}
               allowDecimals={false}
               ticks={axisTicks}
-              tickFormatter={(val) => activeMilestones.find(m => m.value === val)?.label ?? ''}
+              tickFormatter={(val) => activeMilestones.find(m => m.value === val)?.label ?? String(val)}
             />
             <Tooltip content={<CustomTooltip />} />
             {visibleSeries.filter((series) => !series.primary).map((series) => (

@@ -3,6 +3,8 @@
 import { useState, useMemo } from 'react';
 import { Card } from '@/components/shared/Card';
 import { useProblemsList, useProblemsStats, TopicWeaknessItem } from '@/hooks/useProblemsData';
+import { useDashboardData } from '@/hooks/useDashboardData';
+import { ProblemDistributionCard } from '@/components/dashboard/ProblemDistributionCard';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
 import { useUIStore } from '@/store/useUIStore';
 import {
@@ -251,6 +253,7 @@ export function ProblemsClient() {
     return difficulty;
   }, [platform, difficulty, difficultyMin, difficultyMax]);
 
+  const { data: dashboardData, isLoading: dashboardLoading } = useDashboardData();
   const { data: stats, isLoading: statsLoading } = useProblemsStats(platform);
   const { data: problems, isLoading: problemsLoading } = useProblemsList({
     platform,
@@ -283,26 +286,12 @@ export function ProblemsClient() {
     <div className="flex flex-col gap-6">
       {/* 1. Top 4 Stats Cards Row - sleek compact height */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-stretch">
-        {/* Card 1: Total Solved */}
-        <Card padding="12px 16px" className="flex flex-col justify-between min-h-[100px]">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Total Solved</span>
-            <div className="p-1.5 rounded-lg" style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
-              <Target size={14} style={{ color: 'var(--accent-green)' }} />
-            </div>
-          </div>
-          {statsLoading ? (
-            <div className="skeleton h-9 w-24 my-1" />
-          ) : (
-            <div className="font-mono-data text-3xl sm:text-4xl font-black leading-none whitespace-nowrap truncate" style={{ color: 'var(--text-primary)' }} title={String(stats?.totalSolved ?? 0)}>
-              {(stats?.totalSolved ?? stats?.totalAccepted ?? 0).toLocaleString()}
-            </div>
-          )}
-          <div className="flex items-center gap-1 mt-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full w-fit" style={{ background: 'rgba(52,211,153,0.1)', color: 'var(--accent-green)', border: '1px solid rgba(52,211,153,0.2)' }}>
-            <TrendingUp size={11} />
-            <span>{stats?.totalSolvedTrend ?? 'All time'}</span>
-          </div>
-        </Card>
+        {/* Card 1: Total Solved (Pie Chart for LC, Histogram for CF, Solved Count for ALL) */}
+        <ProblemDistributionCard
+          data={dashboardData}
+          platform={platform as any}
+          loading={dashboardLoading}
+        />
 
         {/* Card 2: Accuracy */}
         <Card padding="12px 16px" className="flex flex-col justify-between min-h-[100px]">
@@ -418,9 +407,8 @@ export function ProblemsClient() {
               />
             </div>
 
-            {/* Platform Filter Pills — logos only, platform-specific active color */}
-            <div className="flex items-center bg-[var(--bg-input)] p-1 rounded-lg border border-[var(--border-default)]">
-              <span className="text-xs font-semibold text-[var(--text-muted)] px-2">Platform:</span>
+            {/* Platform Filter Pills — logos only */}
+            <div className="flex items-center bg-[var(--bg-input)] p-1 rounded-lg border border-[var(--border-default)] gap-0.5">
               {[
                 { id: 'ALL', label: 'All' },
                 { id: 'CODEFORCES', label: 'Codeforces' },
@@ -446,15 +434,19 @@ export function ProblemsClient() {
                   <button
                     key={p.id}
                     onClick={() => { setPlatform(p.id); setDifficultyMin(800); setDifficultyMax(3500); setDifficulty('All'); setPage(1); }}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all"
+                    title={p.label}
+                    className="flex items-center justify-center px-2.5 py-1.5 rounded-md transition-all"
                     style={{
                       background: isActive ? activeColor : 'transparent',
                       border: isActive ? activeBorder : '1px solid transparent',
                       color: isActive ? activeText : 'var(--text-secondary)',
                     }}
                   >
-                    {p.id !== 'ALL' && <PlatformLogo platform={p.id as 'CODEFORCES' | 'LEETCODE'} size={14} active={isActive} />}
-                    <span>{p.label}</span>
+                    {p.id !== 'ALL' ? (
+                      <PlatformLogo platform={p.id as 'CODEFORCES' | 'LEETCODE'} size={16} active={isActive} />
+                    ) : (
+                      <span className="text-[11px] font-bold">All</span>
+                    )}
                   </button>
                 );
               })}
@@ -471,41 +463,59 @@ export function ProblemsClient() {
 
             {/* Dynamic Difficulty Filter — slider for CF, pills for LC/All */}
             {platform === 'CODEFORCES' ? (
-              <div className="flex flex-col gap-1 bg-[var(--bg-input)] px-3 py-2 rounded-lg border border-[var(--border-default)] min-w-[200px]">
+              <div className="flex flex-col gap-1 bg-[var(--bg-input)] px-3 py-1.5 rounded-lg border border-[var(--border-default)] min-w-[190px]">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-[var(--text-muted)]">Rating:</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Rating</span>
                   <span className="text-xs font-bold font-mono-data" style={{ color: '#4f8ef7' }}>
                     {difficultyMin === 800 && difficultyMax === 3500 ? 'All' : `${difficultyMin}–${difficultyMax}`}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-[var(--text-muted)] font-mono-data w-8 shrink-0">800</span>
-                  <div className="relative flex-1 h-5 flex items-center">
-                    <div className="absolute h-1.5 w-full rounded-full" style={{ background: 'var(--border-subtle)' }} />
-                    <div
-                      className="absolute h-1.5 rounded-full"
-                      style={{
-                        background: '#4f8ef7',
-                        left: `${((difficultyMin - 800) / (3500 - 800)) * 100}%`,
-                        right: `${100 - ((difficultyMax - 800) / (3500 - 800)) * 100}%`,
-                      }}
-                    />
-                    <input
-                      type="range" min={800} max={3500} step={100}
-                      value={difficultyMin}
-                      onChange={(e) => { const v = Math.min(Number(e.target.value), difficultyMax - 100); setDifficultyMin(v); setPage(1); }}
-                      className="absolute w-full h-1.5 opacity-0 cursor-pointer"
-                      style={{ zIndex: 3 }}
-                    />
-                    <input
-                      type="range" min={800} max={3500} step={100}
-                      value={difficultyMax}
-                      onChange={(e) => { const v = Math.max(Number(e.target.value), difficultyMin + 100); setDifficultyMax(v); setPage(1); }}
-                      className="absolute w-full h-1.5 opacity-0 cursor-pointer"
-                      style={{ zIndex: 4 }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-[var(--text-muted)] font-mono-data w-8 shrink-0 text-right">3500</span>
+                <div className="relative h-5 flex items-center">
+                  {/* Track background */}
+                  <div className="absolute h-1 w-full rounded-full" style={{ background: 'var(--border-subtle)' }} />
+                  {/* Active fill (solid blue) */}
+                  <div
+                    className="absolute h-1 rounded-full"
+                    style={{
+                      background: '#4f8ef7',
+                      left: `${((difficultyMin - 800) / (3500 - 800)) * 100}%`,
+                      right: `${100 - ((difficultyMax - 800) / (3500 - 800)) * 100}%`,
+                    }}
+                  />
+                  {/* Visual min thumb */}
+                  <div
+                    className="absolute w-3.5 h-3.5 rounded-full border-2 shadow-md pointer-events-none z-10"
+                    style={{
+                      left: `calc(${((difficultyMin - 800) / (3500 - 800)) * 100}% - 7px)`,
+                      background: '#4f8ef7',
+                      borderColor: 'var(--bg-card)',
+                    }}
+                  />
+                  {/* Visual max thumb */}
+                  <div
+                    className="absolute w-3.5 h-3.5 rounded-full border-2 shadow-md pointer-events-none z-10"
+                    style={{
+                      left: `calc(${((difficultyMax - 800) / (3500 - 800)) * 100}% - 7px)`,
+                      background: '#4f8ef7',
+                      borderColor: 'var(--bg-card)',
+                    }}
+                  />
+                  {/* Min range input */}
+                  <input
+                    type="range" min={800} max={3500} step={100}
+                    value={difficultyMin}
+                    onChange={(e) => { const v = Math.min(Number(e.target.value), difficultyMax - 100); setDifficultyMin(v); setPage(1); }}
+                    className="absolute w-full h-full opacity-0 cursor-pointer pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto"
+                    style={{ zIndex: difficultyMin > 2000 ? 5 : 4 }}
+                  />
+                  {/* Max range input */}
+                  <input
+                    type="range" min={800} max={3500} step={100}
+                    value={difficultyMax}
+                    onChange={(e) => { const v = Math.max(Number(e.target.value), difficultyMin + 100); setDifficultyMax(v); setPage(1); }}
+                    className="absolute w-full h-full opacity-0 cursor-pointer pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto"
+                    style={{ zIndex: difficultyMin > 2000 ? 4 : 5 }}
+                  />
                 </div>
               </div>
             ) : (

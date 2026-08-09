@@ -105,7 +105,7 @@ export function ProblemDistributionCard({ data, platform, loading, children }: P
               ))}
             </div>
           </div>
-        ) : (
+        ) : platform === 'CODEFORCES' ? (
           <div className="grid min-h-0 flex-1 grid-cols-[92px_minmax(0,1fr)] gap-3">
             <div className="flex flex-col justify-center rounded-[20px] px-3 py-3 overflow-hidden" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--border-default)' }}>
               <span className="text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--accent-blue)' }}>Total</span>
@@ -125,6 +125,28 @@ export function ProblemDistributionCard({ data, platform, loading, children }: P
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+          </div>
+        ) : (
+          /* platform === 'ALL' */
+          <div className="flex flex-col justify-between flex-1 py-1">
+            <div className="flex flex-col">
+              <span className="font-mono-data text-3xl sm:text-4xl font-black leading-none" style={{ color: 'var(--text-primary)' }}>
+                {(total + cfTotal).toLocaleString()}
+              </span>
+              <span className="text-[10px] uppercase font-semibold tracking-wider mt-1 text-[var(--text-muted)]">
+                Total Solved Across All Platforms
+              </span>
+            </div>
+            <div className="flex items-center gap-3 mt-3">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <span>LeetCode:</span>
+                <span className="font-mono-data font-bold">{total}</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <span>Codeforces:</span>
+                <span className="font-mono-data font-bold">{cfTotal}</span>
+              </div>
             </div>
           </div>
         )}

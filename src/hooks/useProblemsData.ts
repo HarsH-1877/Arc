@@ -67,7 +67,7 @@ export function useProblemsList(params: {
       if (params.platform !== 'ALL') sp.set('platform', params.platform);
       if (params.verdict !== 'All') sp.set('verdict', params.verdict);
       if (params.difficulty !== 'All') sp.set('difficulty', params.difficulty);
-      if (params.lang !== 'All') sp.set('lang', params.lang);
+      if (params.lang && !params.lang.startsWith('All')) sp.set('lang', params.lang);
       if (params.search) sp.set('search', params.search);
       if (params.sort) sp.set('sort', params.sort);
       sp.set('page', params.page.toString());
