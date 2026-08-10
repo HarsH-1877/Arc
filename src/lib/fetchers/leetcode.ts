@@ -161,10 +161,12 @@ export async function getLCSolvedStats(username: string): Promise<LCSolvedStats>
           acSubmissionNum {
             difficulty
             count
+            submissions
           }
           totalSubmissionNum {
             difficulty
             count
+            submissions
           }
         }
       }
@@ -174,8 +176,8 @@ export async function getLCSolvedStats(username: string): Promise<LCSolvedStats>
   const data = await lcQuery<{
     matchedUser: {
       submitStats: {
-        acSubmissionNum: LCRawAcCount[];
-        totalSubmissionNum: LCRawTotalCount[];
+        acSubmissionNum: Array<{ difficulty: string; count: number; submissions?: number }>;
+        totalSubmissionNum: Array<{ difficulty: string; count: number; submissions?: number }>;
       };
     } | null;
   }>(query, { username });
@@ -186,17 +188,25 @@ export async function getLCSolvedStats(username: string): Promise<LCSolvedStats>
 
   const { acSubmissionNum, totalSubmissionNum } = data.matchedUser.submitStats;
 
-  const get = (arr: LCRawAcCount[], diff: string) =>
+  const getCount = (arr: Array<{ difficulty: string; count: number }>, diff: string) =>
     arr.find((x) => x.difficulty === diff)?.count ?? 0;
 
-  const totalSolved = get(acSubmissionNum, 'All');
-  const easySolved = get(acSubmissionNum, 'Easy');
-  const mediumSolved = get(acSubmissionNum, 'Medium');
-  const hardSolved = get(acSubmissionNum, 'Hard');
+  const getSubmissions = (arr: Array<{ difficulty: string; count: number; submissions?: number }>, diff: string) => {
+    const item = arr.find((x) => x.difficulty === diff);
+    return item?.submissions ?? item?.count ?? 0;
+  };
 
-  const totalAttempts = get(totalSubmissionNum as LCRawAcCount[], 'All');
+  const totalSolved = getCount(acSubmissionNum, 'All');
+  const easySolved = getCount(acSubmissionNum, 'Easy');
+  const mediumSolved = getCount(acSubmissionNum, 'Medium');
+  const hardSolved = getCount(acSubmissionNum, 'Hard');
+
+  const acSubs = getSubmissions(acSubmissionNum, 'All');
+  const totalSubs = getSubmissions(totalSubmissionNum, 'All');
+
+  // Acceptance rate = (total AC submissions / total submissions) * 100
   const acceptanceRate =
-    totalAttempts > 0 ? Math.round((totalSolved / totalAttempts) * 10000) / 100 : 0;
+    totalSubs > 0 ? Math.min(100, Math.round((acSubs / totalSubs) * 10000) / 100) : 0;
 
   return { totalSolved, easySolved, mediumSolved, hardSolved, acceptanceRate };
 }
@@ -443,10 +453,11 @@ export async function getLCAllAcSubmissions(
 /**
  * Fetch topic tags for a specific problem by its slug.
  */
-export async function getLCProblemTags(titleSlug: string): Promise<string[]> {
+export async function getLCProblemTags(titleSlug: string): Promise<{ tags: string[]; difficulty: string | null }> {
   const query = `
-    query getProblemTags($titleSlug: String!) {
+    query getProblemInfo($titleSlug: String!) {
       question(titleSlug: $titleSlug) {
+        difficulty
         topicTags {
           name
         }
@@ -456,11 +467,14 @@ export async function getLCProblemTags(titleSlug: string): Promise<string[]> {
 
   try {
     const data = await lcQuery<{
-      question: { topicTags: Array<{ name: string }> } | null;
+      question: { difficulty: string; topicTags: Array<{ name: string }> } | null;
     }>(query, { titleSlug });
-    return (data.question?.topicTags ?? []).map((t) => t.name);
+    return {
+      tags: (data.question?.topicTags ?? []).map((t) => t.name),
+      difficulty: data.question?.difficulty ?? null,
+    };
   } catch {
-    return [];
+    return { tags: [], difficulty: null };
   }
 }
 

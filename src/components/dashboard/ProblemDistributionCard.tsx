@@ -114,14 +114,14 @@ export function ProblemDistributionCard({ data, platform, loading, children }: P
             </div>
             <div className="h-full w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart layout="vertical" data={histogram} margin={{ top: 0, right: 24, bottom: 0, left: 0 }}>
+                <BarChart layout="vertical" data={histogram} margin={{ top: 2, right: 24, bottom: 2, left: 0 }}>
                   <CartesianGrid horizontal={false} stroke="var(--border-subtle)" strokeDasharray="3 5" />
                   <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="range" width={48} tick={{ fill: 'var(--text-muted)', fontSize: 9 }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="range" width={54} interval={0} tick={{ fill: 'var(--text-muted)', fontSize: 9 }} axisLine={false} tickLine={false} />
                   <Tooltip content={<HistogramTooltip />} cursor={{ fill: 'rgba(255,255,255,0.035)' }} />
-                  <Bar dataKey="count" radius={[0, 8, 8, 0]} barSize={12}>
+                  <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={8}>
                     {histogram.map((row) => <Cell key={row.range} fill={row.fill} />)}
-                    <LabelList dataKey="count" position="right" fill="var(--text-muted)" fontSize={10} fontWeight={600} />
+                    <LabelList dataKey="count" position="right" fill="var(--text-muted)" fontSize={9} fontWeight={600} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>

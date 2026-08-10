@@ -42,9 +42,25 @@ export async function GET() {
       metadata: { href: contest.href, contestId: contest.id },
     }));
 
+  const now = Date.now();
+  const twoHoursMs = 2 * 60 * 60 * 1000;
+
+  // Filter out notifications that were read more than 2 hours ago
+  const validStored = stored.filter((notification) => {
+    if (!notification.read) return true;
+    const meta = notification.metadata as Record<string, any> | null;
+    const readAtIso = meta?.readAt;
+    if (readAtIso) {
+      const readAtMs = new Date(readAtIso).getTime();
+      return now - readAtMs < twoHoursMs;
+    }
+    // Fallback if readAt is not set: keep read notifications for up to 2 hours
+    return now - notification.createdAt.getTime() < twoHoursMs;
+  });
+
   return NextResponse.json([
     ...contestReminders,
-    ...stored.map((notification) => ({
+    ...validStored.map((notification) => ({
       ...notification,
       createdAt: notification.createdAt.toISOString(),
       metadata: notification.metadata as Record<string, unknown> | null,
@@ -64,9 +80,20 @@ export async function PATCH(req: Request) {
   if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
   if (!id || String(id).startsWith('contest-')) return NextResponse.json({ ok: true });
 
-  await db.notification.updateMany({
+  const existing = await db.notification.findFirst({
     where: { id, userId: session.id },
-    data: { read: true },
   });
+
+  if (existing) {
+    const existingMeta = (existing.metadata as Record<string, any>) || {};
+    await db.notification.update({
+      where: { id: existing.id },
+      data: {
+        read: true,
+        metadata: { ...existingMeta, readAt: new Date().toISOString() },
+      },
+    });
+  }
+
   return NextResponse.json({ ok: true });
 }

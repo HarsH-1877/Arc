@@ -386,11 +386,11 @@ export function ProblemsClient() {
       {/* 2. Problem List & Filters Card */}
       <Card padding="0" className="overflow-hidden">
         {/* Filters Bar Header */}
-        <div className="p-4 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]/40 flex flex-col gap-4">
-          {/* Row 1: Search + Platform Pills + Reset Filters + Difficulty Pills */}
+        <div className="p-4 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]/40 flex flex-col gap-3.5">
+          {/* Row 1: Search + Platform Pills + Difficulty Filter + Reset Button */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             {/* Search Input Box */}
-            <div className="relative flex-1 min-w-[220px] max-w-md">
+            <div className="relative flex-1 min-w-[240px] max-w-md">
               <Search
                 size={16}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
@@ -403,151 +403,146 @@ export function ProblemsClient() {
                   setPage(1);
                 }}
                 placeholder="Search problem title or contest..."
-                className="w-full pl-9 pr-3 py-1.5 rounded-lg text-sm bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-default)] focus:outline-none focus:border-[var(--accent-purple)] transition-colors placeholder:text-[var(--text-muted)]"
+                className="w-full pl-9 pr-3 h-9 rounded-lg text-sm bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-default)] focus:outline-none focus:border-[var(--accent-purple)] transition-colors placeholder:text-[var(--text-muted)]"
               />
             </div>
 
-            {/* Platform Filter Pills — logos only */}
-            <div className="flex items-center bg-[var(--bg-input)] p-1 rounded-lg border border-[var(--border-default)] gap-0.5">
-              {[
-                { id: 'ALL', label: 'All' },
-                { id: 'CODEFORCES', label: 'Codeforces' },
-                { id: 'LEETCODE', label: 'LeetCode' },
-              ].map((p) => {
-                const isActive = platform === p.id;
-                const activeColor = p.id === 'CODEFORCES'
-                  ? 'rgba(30,136,229,0.18)'
-                  : p.id === 'LEETCODE'
-                  ? 'rgba(255,161,22,0.18)'
-                  : 'rgba(255,255,255,0.10)';
-                const activeBorder = p.id === 'CODEFORCES'
-                  ? '1px solid rgba(30,136,229,0.45)'
-                  : p.id === 'LEETCODE'
-                  ? '1px solid rgba(255,161,22,0.45)'
-                  : '1px solid rgba(255,255,255,0.2)';
-                const activeText = p.id === 'CODEFORCES'
-                  ? '#4f8ef7'
-                  : p.id === 'LEETCODE'
-                  ? '#ffa116'
-                  : 'var(--text-primary)';
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => { setPlatform(p.id); setDifficultyMin(800); setDifficultyMax(3500); setDifficulty('All'); setPage(1); }}
-                    title={p.label}
-                    className="flex items-center justify-center px-2.5 py-1.5 rounded-md transition-all"
-                    style={{
-                      background: isActive ? activeColor : 'transparent',
-                      border: isActive ? activeBorder : '1px solid transparent',
-                      color: isActive ? activeText : 'var(--text-secondary)',
-                    }}
-                  >
-                    {p.id !== 'ALL' ? (
-                      <PlatformLogo platform={p.id as 'CODEFORCES' | 'LEETCODE'} size={16} active={isActive} />
-                    ) : (
-                      <span className="text-[11px] font-bold">All</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Reset Filters Button (moved before Difficulty) */}
-            <button
-              onClick={resetFilters}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-[var(--bg-elevated)] hover:bg-white/10 text-[var(--text-secondary)] border border-[var(--border-default)] transition-colors"
-            >
-              <RotateCcw size={13} />
-              <span>Reset Filters</span>
-            </button>
-
-            {/* Dynamic Difficulty Filter — slider for CF, pills for LC/All */}
-            {platform === 'CODEFORCES' ? (
-              <div className="flex flex-col gap-1 bg-[var(--bg-input)] px-3 py-1.5 rounded-lg border border-[var(--border-default)] min-w-[190px]">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Rating</span>
-                  <span className="text-xs font-bold font-mono-data" style={{ color: '#4f8ef7' }}>
-                    {difficultyMin === 800 && difficultyMax === 3500 ? 'All' : `${difficultyMin}–${difficultyMax}`}
-                  </span>
-                </div>
-                <div className="relative h-5 flex items-center">
-                  {/* Track background */}
-                  <div className="absolute h-1 w-full rounded-full" style={{ background: 'var(--border-subtle)' }} />
-                  {/* Active fill (solid blue) */}
-                  <div
-                    className="absolute h-1 rounded-full"
-                    style={{
-                      background: '#4f8ef7',
-                      left: `${((difficultyMin - 800) / (3500 - 800)) * 100}%`,
-                      right: `${100 - ((difficultyMax - 800) / (3500 - 800)) * 100}%`,
-                    }}
-                  />
-                  {/* Visual min thumb */}
-                  <div
-                    className="absolute w-3.5 h-3.5 rounded-full border-2 shadow-md pointer-events-none z-10"
-                    style={{
-                      left: `calc(${((difficultyMin - 800) / (3500 - 800)) * 100}% - 7px)`,
-                      background: '#4f8ef7',
-                      borderColor: 'var(--bg-card)',
-                    }}
-                  />
-                  {/* Visual max thumb */}
-                  <div
-                    className="absolute w-3.5 h-3.5 rounded-full border-2 shadow-md pointer-events-none z-10"
-                    style={{
-                      left: `calc(${((difficultyMax - 800) / (3500 - 800)) * 100}% - 7px)`,
-                      background: '#4f8ef7',
-                      borderColor: 'var(--bg-card)',
-                    }}
-                  />
-                  {/* Min range input */}
-                  <input
-                    type="range" min={800} max={3500} step={100}
-                    value={difficultyMin}
-                    onChange={(e) => { const v = Math.min(Number(e.target.value), difficultyMax - 100); setDifficultyMin(v); setPage(1); }}
-                    className="absolute w-full h-full opacity-0 cursor-pointer pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto"
-                    style={{ zIndex: difficultyMin > 2000 ? 5 : 4 }}
-                  />
-                  {/* Max range input */}
-                  <input
-                    type="range" min={800} max={3500} step={100}
-                    value={difficultyMax}
-                    onChange={(e) => { const v = Math.max(Number(e.target.value), difficultyMin + 100); setDifficultyMax(v); setPage(1); }}
-                    className="absolute w-full h-full opacity-0 cursor-pointer pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto"
-                    style={{ zIndex: difficultyMin > 2000 ? 4 : 5 }}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center bg-[var(--bg-input)] p-1 rounded-lg border border-[var(--border-default)]">
-                <span className="text-xs font-semibold text-[var(--text-muted)] px-2">Difficulty:</span>
-                {['All', 'Easy', 'Medium', 'Hard'].map((d) => {
-                  const isActive = difficulty === d;
-                  // For ALL platform, map pills to CF equivalents too
-                  const activeColor = d === 'Easy' ? 'rgba(52,211,153,0.15)' : d === 'Medium' ? 'rgba(251,191,36,0.15)' : d === 'Hard' ? 'rgba(244,63,94,0.15)' : 'rgba(255,255,255,0.10)';
-                  const activeBorder = d === 'Easy' ? '1px solid rgba(52,211,153,0.4)' : d === 'Medium' ? '1px solid rgba(251,191,36,0.4)' : d === 'Hard' ? '1px solid rgba(244,63,94,0.4)' : '1px solid rgba(255,255,255,0.2)';
-                  const activeText = d === 'Easy' ? 'var(--accent-green)' : d === 'Medium' ? 'var(--accent-amber)' : d === 'Hard' ? 'var(--danger)' : 'var(--text-primary)';
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Platform Filter Pills — logos only */}
+              <div className="flex items-center bg-[var(--bg-input)] p-1 rounded-lg border border-[var(--border-default)] gap-0.5 h-9">
+                {[
+                  { id: 'ALL', label: 'All' },
+                  { id: 'CODEFORCES', label: 'Codeforces' },
+                  { id: 'LEETCODE', label: 'LeetCode' },
+                ].map((p) => {
+                  const isActive = platform === p.id;
+                  const activeColor = p.id === 'CODEFORCES'
+                    ? 'rgba(30,136,229,0.18)'
+                    : p.id === 'LEETCODE'
+                    ? 'rgba(255,161,22,0.18)'
+                    : 'rgba(255,255,255,0.10)';
+                  const activeBorder = p.id === 'CODEFORCES'
+                    ? '1px solid rgba(30,136,229,0.45)'
+                    : p.id === 'LEETCODE'
+                    ? '1px solid rgba(255,161,22,0.45)'
+                    : '1px solid rgba(255,255,255,0.2)';
+                  const activeText = p.id === 'CODEFORCES'
+                    ? '#4f8ef7'
+                    : p.id === 'LEETCODE'
+                    ? '#ffa116'
+                    : 'var(--text-primary)';
                   return (
                     <button
-                      key={d}
-                      onClick={() => { setDifficulty(d); setPage(1); }}
-                      className="px-3 py-1 rounded-md text-xs font-semibold transition-all"
+                      key={p.id}
+                      onClick={() => { setPlatform(p.id); setDifficultyMin(800); setDifficultyMax(3500); setDifficulty('All'); setPage(1); }}
+                      title={p.label}
+                      className="flex items-center justify-center px-2.5 h-7 rounded-md transition-all"
                       style={{
                         background: isActive ? activeColor : 'transparent',
                         border: isActive ? activeBorder : '1px solid transparent',
                         color: isActive ? activeText : 'var(--text-secondary)',
                       }}
                     >
-                      {d}
+                      {p.id !== 'ALL' ? (
+                        <PlatformLogo platform={p.id as 'CODEFORCES' | 'LEETCODE'} size={16} active={isActive} />
+                      ) : (
+                        <span className="text-[11px] font-bold">All</span>
+                      )}
                     </button>
                   );
                 })}
               </div>
-            )}
+
+              {/* Dynamic Difficulty Filter — slider for CF, pills for LC/All */}
+              {platform === 'CODEFORCES' ? (
+                <div className="flex flex-col justify-center gap-0.5 bg-[var(--bg-input)] px-3 h-9 rounded-lg border border-[var(--border-default)] min-w-[190px]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Rating</span>
+                    <span className="text-[11px] font-bold font-mono-data" style={{ color: '#4f8ef7' }}>
+                      {difficultyMin === 800 && difficultyMax === 3500 ? 'All' : `${difficultyMin}–${difficultyMax}`}
+                    </span>
+                  </div>
+                  <div className="relative h-3 flex items-center">
+                    <div className="absolute h-1 w-full rounded-full" style={{ background: 'var(--border-subtle)' }} />
+                    <div
+                      className="absolute h-1 rounded-full"
+                      style={{
+                        background: '#4f8ef7',
+                        left: `${((difficultyMin - 800) / (3500 - 800)) * 100}%`,
+                        right: `${100 - ((difficultyMax - 800) / (3500 - 800)) * 100}%`,
+                      }}
+                    />
+                    <div
+                      className="absolute w-3 h-3 rounded-full border-2 shadow-md pointer-events-none z-10"
+                      style={{
+                        left: `calc(${((difficultyMin - 800) / (3500 - 800)) * 100}% - 6px)`,
+                        background: '#4f8ef7',
+                        borderColor: 'var(--bg-card)',
+                      }}
+                    />
+                    <div
+                      className="absolute w-3 h-3 rounded-full border-2 shadow-md pointer-events-none z-10"
+                      style={{
+                        left: `calc(${((difficultyMax - 800) / (3500 - 800)) * 100}% - 6px)`,
+                        background: '#4f8ef7',
+                        borderColor: 'var(--bg-card)',
+                      }}
+                    />
+                    <input
+                      type="range" min={800} max={3500} step={100}
+                      value={difficultyMin}
+                      onChange={(e) => { const v = Math.min(Number(e.target.value), difficultyMax - 100); setDifficultyMin(v); setPage(1); }}
+                      className="absolute w-full h-full opacity-0 cursor-pointer pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto"
+                      style={{ zIndex: difficultyMin > 2000 ? 5 : 4 }}
+                    />
+                    <input
+                      type="range" min={800} max={3500} step={100}
+                      value={difficultyMax}
+                      onChange={(e) => { const v = Math.max(Number(e.target.value), difficultyMin + 100); setDifficultyMax(v); setPage(1); }}
+                      className="absolute w-full h-full opacity-0 cursor-pointer pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto"
+                      style={{ zIndex: difficultyMin > 2000 ? 4 : 5 }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center bg-[var(--bg-input)] p-1 rounded-lg border border-[var(--border-default)] h-9">
+                  <span className="text-[11px] font-semibold text-[var(--text-muted)] px-2">Difficulty:</span>
+                  {['All', 'Easy', 'Medium', 'Hard'].map((d) => {
+                    const isActive = difficulty === d;
+                    const activeColor = d === 'Easy' ? 'rgba(52,211,153,0.15)' : d === 'Medium' ? 'rgba(251,191,36,0.15)' : d === 'Hard' ? 'rgba(244,63,94,0.15)' : 'rgba(255,255,255,0.10)';
+                    const activeBorder = d === 'Easy' ? '1px solid rgba(52,211,153,0.4)' : d === 'Medium' ? '1px solid rgba(251,191,36,0.4)' : d === 'Hard' ? '1px solid rgba(244,63,94,0.4)' : '1px solid rgba(255,255,255,0.2)';
+                    const activeText = d === 'Easy' ? 'var(--accent-green)' : d === 'Medium' ? 'var(--accent-amber)' : d === 'Hard' ? 'var(--danger)' : 'var(--text-primary)';
+                    return (
+                      <button
+                        key={d}
+                        onClick={() => { setDifficulty(d); setPage(1); }}
+                        className="px-2.5 h-7 rounded-md text-xs font-semibold transition-all"
+                        style={{
+                          background: isActive ? activeColor : 'transparent',
+                          border: isActive ? activeBorder : '1px solid transparent',
+                          color: isActive ? activeText : 'var(--text-secondary)',
+                        }}
+                      >
+                        {d}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Reset Filters Button */}
+              <button
+                onClick={resetFilters}
+                className="flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-semibold bg-[var(--bg-elevated)] hover:bg-white/10 text-[var(--text-secondary)] border border-[var(--border-default)] transition-colors shrink-0"
+              >
+                <RotateCcw size={13} />
+                <span>Reset</span>
+              </button>
+            </div>
           </div>
 
-          {/* Row 2: Tags, Status, Language, Sort By, Filters/Reset Button */}
-          <div className="flex flex-wrap items-center gap-3">
+          {/* Row 2: Secondary Dropdowns (Tag, Status, Language, Sort) */}
+          <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-[var(--border-subtle)]/50">
             {/* Tags Dropdown */}
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-medium text-[var(--text-muted)]">Tag:</span>
@@ -557,7 +552,7 @@ export function ProblemsClient() {
                   setTag(e.target.value);
                   setPage(1);
                 }}
-                className="px-2.5 py-1.5 rounded-md text-xs font-semibold bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-default)] focus:outline-none focus:border-[var(--accent-purple)]"
+                className="px-2.5 h-8 rounded-md text-xs font-semibold bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-default)] focus:outline-none focus:border-[var(--accent-purple)]"
               >
                 {TAG_OPTIONS.map((t) => (
                   <option key={t} value={t}>
@@ -576,7 +571,7 @@ export function ProblemsClient() {
                   setVerdict(e.target.value);
                   setPage(1);
                 }}
-                className="px-2.5 py-1.5 rounded-md text-xs font-semibold bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-default)] focus:outline-none focus:border-[var(--accent-purple)]"
+                className="px-2.5 h-8 rounded-md text-xs font-semibold bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-default)] focus:outline-none focus:border-[var(--accent-purple)]"
               >
                 <option value="All">All Status</option>
                 <option value="AC">Accepted (AC)</option>
@@ -594,7 +589,7 @@ export function ProblemsClient() {
                   setLang(e.target.value);
                   setPage(1);
                 }}
-                className="px-2.5 py-1.5 rounded-md text-xs font-semibold bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-default)] focus:outline-none focus:border-[var(--accent-purple)]"
+                className="px-2.5 h-8 rounded-md text-xs font-semibold bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-default)] focus:outline-none focus:border-[var(--accent-purple)]"
               >
                 {LANGUAGE_OPTIONS.map((l) => (
                   <option key={l} value={l}>

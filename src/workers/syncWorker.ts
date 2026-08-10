@@ -297,22 +297,22 @@ async function syncLeetCode(connectionId: string, username: string, userId: stri
     },
   });
 
-  // Fetch problem tags for unique LC problem slugs
+  // Fetch problem tags AND difficulty for unique LC problem slugs
   const allSubmissionsToSave = [
     ...allAcSubs.map((s) => ({ ...s, statusDisplay: 'Accepted' })),
     ...recentSubs,
   ];
 
   const uniqueSlugs = Array.from(new Set(allSubmissionsToSave.map((s) => s.titleSlug).filter(Boolean)));
-  const slugTagsMap = new Map<string, string[]>();
+  const slugInfoMap = new Map<string, { tags: string[]; difficulty: string | null }>();
 
-  // Fetch tags in chunks of 10
+  // Fetch tags + difficulty in chunks of 10
   for (let i = 0; i < uniqueSlugs.length; i += 10) {
     const chunk = uniqueSlugs.slice(i, i + 10);
     await Promise.all(
       chunk.map(async (slug) => {
-        const tags = await getLCProblemTags(slug);
-        if (tags.length > 0) slugTagsMap.set(slug, tags);
+        const info = await getLCProblemTags(slug);
+        slugInfoMap.set(slug, info);
       })
     );
   }
@@ -332,7 +332,7 @@ async function syncLeetCode(connectionId: string, username: string, userId: stri
     else if (statusLower.includes('runtime error')) verdict = 'RE';
     else verdict = 'ATTEMPTED';
 
-    const problemTags = sub.titleSlug ? (slugTagsMap.get(sub.titleSlug) ?? []) : [];
+    const problemInfo = sub.titleSlug ? (slugInfoMap.get(sub.titleSlug) ?? { tags: [], difficulty: null }) : { tags: [], difficulty: null };
 
     await db.submission.upsert({
       where: { connectionId_externalId: { connectionId, externalId: sub.id } },
@@ -345,9 +345,10 @@ async function syncLeetCode(connectionId: string, username: string, userId: stri
         verdict,
         language: sub.lang,
         timestamp: new Date(Number(sub.timestamp) * 1000),
-        tags: problemTags,
+        tags: problemInfo.tags,
+        difficulty: problemInfo.difficulty,
       },
-      update: { verdict, tags: problemTags },
+      update: { verdict, tags: problemInfo.tags, difficulty: problemInfo.difficulty },
     });
   }
 

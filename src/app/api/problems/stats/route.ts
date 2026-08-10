@@ -114,21 +114,22 @@ export async function GET(req: Request) {
 
     if (platform === 'LEETCODE') {
       finalTotalSolved = lcSolved;
-      finalAccuracy = Math.round(lcAcceptanceRate * 10) / 10;
+      finalAccuracy = Math.min(100, Math.round(lcAcceptanceRate * 10) / 10);
     } else if (platform === 'CODEFORCES') {
       finalTotalSolved = solvedSet.size || totalAccepted;
-      finalAccuracy = totalAttempts > 0 ? Math.round((totalAccepted / totalAttempts) * 1000) / 10 : 0;
+      finalAccuracy = totalAttempts > 0 ? Math.min(100, Math.round((totalAccepted / totalAttempts) * 1000) / 10) : 0;
     } else {
       // ALL: combine
-      const cfSolvedCount = solvedSet.size ? solvedSet.size - lcSolved : totalAccepted;
+      const cfSolvedCount = solvedSet.size ? Math.max(0, solvedSet.size - lcSolved) : totalAccepted;
       finalTotalSolved = Math.max(solvedSet.size, (cfConn?.codeforcesData ? cfSolvedCount : 0) + lcSolved);
-      // Blended accuracy — weighted by submission counts
-      finalAccuracy = totalAttempts > 0 ? Math.round((totalAccepted / totalAttempts) * 1000) / 10 : 0;
-      // If LC dominates, blend with LC's authoritative rate
+      
+      const cfAccuracy = totalAttempts > 0 ? Math.min(100, (totalAccepted / totalAttempts) * 100) : 0;
       if (lcSolved > 0 && lcAcceptanceRate > 0) {
         const lcWeight = lcSolved / (finalTotalSolved || 1);
         const cfWeight = 1 - lcWeight;
-        finalAccuracy = Math.round((lcAcceptanceRate * lcWeight + finalAccuracy * cfWeight) * 10) / 10;
+        finalAccuracy = Math.min(100, Math.round((lcAcceptanceRate * lcWeight + cfAccuracy * cfWeight) * 10) / 10);
+      } else {
+        finalAccuracy = Math.min(100, Math.round(cfAccuracy * 10) / 10);
       }
     }
 

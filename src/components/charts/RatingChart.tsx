@@ -103,21 +103,26 @@ export function RatingChart({ data, loading, compact = false, compareMode = fals
   const { selectedPlatform } = useUIStore();
   const milestones = selectedPlatform === 'CODEFORCES' ? CF_MILESTONES : LC_MILESTONES;
 
-  const chartData = useMemo(() => data.map((d) => {
+  const chartData = useMemo(() => {
     const isLc = selectedPlatform === 'LEETCODE';
-    const point = {
-      ...d,
-      userRating: d.userRating ?? (isLc ? d.lcRating : d.cfRating),
-      friend1: isLc ? ((d as any).lcFriend1 ?? d.friend1) : (d.friend1 ?? d.friendRating),
-      friend2: isLc ? ((d as any).lcFriend2 ?? d.friend2) : d.friend2,
-      friend3: isLc ? ((d as any).lcFriend3 ?? d.friend3) : d.friend3,
-      friend4: isLc ? ((d as any).lcFriend4 ?? d.friend4) : d.friend4,
-      avgTop4: undefined as number | undefined,
-    };
-    const friendValues = FRIEND_KEYS.map((key) => point[key]).filter((value): value is number => typeof value === 'number');
-    point.avgTop4 = friendValues.length ? friendValues.reduce((sum, value) => sum + value, 0) / friendValues.length : undefined;
-    return point;
-  }), [data, selectedPlatform]);
+    const mapped = data.map((d) => {
+      const point = {
+        ...d,
+        userRating: d.userRating ?? (isLc ? d.lcRating : d.cfRating),
+        friend1: compareMode ? (d.friend1 ?? d.friendRating) : (isLc ? (d as any).lcFriend1 : d.friend1),
+        friend2: compareMode ? d.friend2 : (isLc ? (d as any).lcFriend2 : d.friend2),
+        friend3: compareMode ? d.friend3 : (isLc ? (d as any).lcFriend3 : d.friend3),
+        friend4: compareMode ? d.friend4 : (isLc ? (d as any).lcFriend4 : d.friend4),
+        avgTop4: undefined as number | undefined,
+      };
+      const friendValues = FRIEND_KEYS.map((key) => point[key]).filter((value): value is number => typeof value === 'number');
+      point.avgTop4 = friendValues.length ? friendValues.reduce((sum, value) => sum + value, 0) / friendValues.length : undefined;
+      return point;
+    });
+    // Trim leading points where userRating is undefined to eliminate empty left-side gap
+    const firstIdx = mapped.findIndex((p) => typeof p.userRating === 'number');
+    return firstIdx > 0 ? mapped.slice(firstIdx) : mapped;
+  }, [data, selectedPlatform, compareMode]);
 
   const activeFriendKeys = friendMode === 'avg' ? ['avgTop4'] : FRIEND_KEYS;
   const visibleSeries = SERIES.filter((series) => {

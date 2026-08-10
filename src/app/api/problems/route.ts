@@ -75,12 +75,27 @@ export async function GET(req: Request) {
     if (difficulty && difficulty !== 'All') {
       const rangeMatch = difficulty.match(/^(\d+)-(\d+)$/);
       if (rangeMatch) {
-        const minD = rangeMatch[1];
-        const maxD = rangeMatch[2];
-        where.AND = [
-          ...(Array.isArray(where.AND) ? where.AND : []),
-          { difficulty: { gte: minD } },
-          { difficulty: { lte: maxD } },
+        const minD = parseInt(rangeMatch[1], 10);
+        const maxD = parseInt(rangeMatch[2], 10);
+        const validRatings: string[] = [];
+        for (let r = 800; r <= 3500; r += 100) {
+          if (r >= minD && r <= maxD) validRatings.push(String(r));
+        }
+        where.difficulty = { in: validRatings };
+      } else if (difficulty.toLowerCase() === 'easy') {
+        where.OR = [
+          { difficulty: { equals: 'Easy', mode: 'insensitive' } },
+          { difficulty: { in: ['800', '900', '1000', '1100', '1200'] } },
+        ];
+      } else if (difficulty.toLowerCase() === 'medium') {
+        where.OR = [
+          { difficulty: { equals: 'Medium', mode: 'insensitive' } },
+          { difficulty: { in: ['1300', '1400', '1500', '1600', '1700', '1800'] } },
+        ];
+      } else if (difficulty.toLowerCase() === 'hard') {
+        where.OR = [
+          { difficulty: { equals: 'Hard', mode: 'insensitive' } },
+          { difficulty: { in: ['1900', '2000', '2100', '2200', '2300', '2400', '2500', '2600', '2700', '2800', '2900', '3000', '3100', '3200', '3300', '3400', '3500'] } },
         ];
       } else {
         where.difficulty = { equals: difficulty, mode: 'insensitive' };

@@ -47,15 +47,16 @@ async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
   const now = Math.floor(Date.now() / 1000);
 
   // Weekly contests: every Sunday at 02:30 UTC
-  // Anchor: Weekly Contest 459 on Sun Jul 6, 2025 02:30 UTC = 1751765400
-  const baseWeeklyNum = 459;
-  const baseWeeklyTime = 1751765400;
+  // Anchor: Weekly Contest 514 on Sun Aug 10, 2026 02:30 UTC = 1786329000
+  const baseWeeklyNum = 514;
+  const baseWeeklyTime = 1786329000;
 
-  const weeksSinceBase = Math.round((now - baseWeeklyTime) / (7 * 86400));
+  // Use Math.floor to avoid rounding drift — always snap to the most recent or current contest
+  const weeksSinceBase = Math.floor((now - baseWeeklyTime) / (7 * 86400));
   const nearestWeeklyNum = baseWeeklyNum + weeksSinceBase;
   const nearestWeeklyTime = baseWeeklyTime + weeksSinceBase * 7 * 86400;
 
-  for (let i = -10; i <= 8; i++) {
+  for (let i = -12; i <= 10; i++) {
     const startTime = nearestWeeklyTime + i * 7 * 86400;
     const contestNum = nearestWeeklyNum + i;
     if (contestNum < 1) continue;
@@ -68,15 +69,15 @@ async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
   }
 
   // Biweekly contests: every other Saturday at 14:30 UTC
-  // Anchor: Biweekly Contest 158 on Sat Jul 5, 2025 14:30 UTC = 1751726200
-  const baseBiweeklyNum = 158;
-  const baseBiweeklyTime = 1751726200;
+  // Anchor: Biweekly Contest 165 on Sat Aug 2, 2026 14:30 UTC = 1785681000
+  const baseBiweeklyNum = 165;
+  const baseBiweeklyTime = 1785681000;
 
-  const biweeksSinceBase = Math.round((now - baseBiweeklyTime) / (14 * 86400));
+  const biweeksSinceBase = Math.floor((now - baseBiweeklyTime) / (14 * 86400));
   const nearestBiweeklyNum = baseBiweeklyNum + biweeksSinceBase;
   const nearestBiweeklyTime = baseBiweeklyTime + biweeksSinceBase * 14 * 86400;
 
-  for (let i = -8; i <= 6; i++) {
+  for (let i = -10; i <= 8; i++) {
     const startTime = nearestBiweeklyTime + i * 14 * 86400;
     const contestNum = nearestBiweeklyNum + i;
     if (contestNum < 1) continue;
@@ -170,8 +171,9 @@ export async function fetchContestSchedule(): Promise<UpcomingContest[]> {
     for (const contest of lcContests) {
       if (contest.startTime < twoMonthsAgo) continue;
       const isUpcoming = contest.startTime > now;
-      // Registration opens ~2 weeks before and stays open until the contest ends
-      const registrationOpen = isUpcoming || (contest.startTime + contest.duration > now);
+      const daysUntilStart = (contest.startTime - now) / 86400;
+      // Registration opens ~7 days before contest start time
+      const registrationOpen = isUpcoming ? daysUntilStart <= 7 : (contest.startTime + contest.duration > now);
       contests.push({
         id: `lc-${contest.titleSlug}`,
         name: contest.title,
