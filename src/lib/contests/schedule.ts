@@ -47,9 +47,9 @@ async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
   const now = Math.floor(Date.now() / 1000);
 
   // Weekly contests: every Sunday at 02:30 UTC
-  // Anchor: Weekly Contest 514 on Sun Aug 10, 2026 02:30 UTC = 1786329000
+  // Anchor: Weekly Contest 514 on Sun Aug 9, 2026 02:30 UTC = 1786242600
   const baseWeeklyNum = 514;
-  const baseWeeklyTime = 1786329000;
+  const baseWeeklyTime = 1786242600; // Sun Aug 9 2026 02:30 UTC ✓
 
   // Use Math.floor to avoid rounding drift — always snap to the most recent or current contest
   const weeksSinceBase = Math.floor((now - baseWeeklyTime) / (7 * 86400));
@@ -69,9 +69,9 @@ async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
   }
 
   // Biweekly contests: every other Saturday at 14:30 UTC
-  // Anchor: Biweekly Contest 165 on Sat Aug 2, 2026 14:30 UTC = 1785681000
-  const baseBiweeklyNum = 165;
-  const baseBiweeklyTime = 1785681000;
+  // Anchor: Biweekly Contest 188 on Sat Aug 1, 2026 14:30 UTC = 1785594600
+  const baseBiweeklyNum = 188;
+  const baseBiweeklyTime = 1785594600; // Sat Aug 1 2026 14:30 UTC ✓
 
   const biweeksSinceBase = Math.floor((now - baseBiweeklyTime) / (14 * 86400));
   const nearestBiweeklyNum = baseBiweeklyNum + biweeksSinceBase;
@@ -89,10 +89,16 @@ async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
     });
   }
 
-  // Deduplicate by titleSlug, preferring liveContests
+  // Deduplicate by titleSlug — ALWAYS prefer generated contests over live API data.
+  // The LC API frequently returns stale/wrong contest numbers, so we treat generated
+  // data as the source of truth and only accept API entries for slugs we didn't generate.
   const map = new Map<string, LCUpcomingRaw>();
   for (const c of generated) map.set(c.titleSlug, c);
-  for (const c of liveContests) map.set(c.titleSlug, c);
+  for (const c of liveContests) {
+    if (!map.has(c.titleSlug)) {
+      map.set(c.titleSlug, c);
+    }
+  }
 
   return Array.from(map.values());
 }
@@ -128,7 +134,7 @@ export async function fetchContestSchedule(): Promise<UpcomingContest[]> {
         const registrationOpen = contest.startTimeSeconds - now <= 7 * 24 * 60 * 60; // 7 days
         contests.push({
           id: `cf-${contest.id}`,
-          name: contest.name,
+          name: contest.name, // keep raw name so Div. pill can be extracted in the UI
           platform: 'CODEFORCES',
           startTime: new Date(contest.startTimeSeconds * 1000).toISOString(),
           durationSeconds: contest.durationSeconds,
@@ -173,7 +179,7 @@ export async function fetchContestSchedule(): Promise<UpcomingContest[]> {
       const isUpcoming = contest.startTime > now;
       const daysUntilStart = (contest.startTime - now) / 86400;
       // Registration opens ~7 days before contest start time
-      const registrationOpen = isUpcoming ? daysUntilStart <= 7 : (contest.startTime + contest.duration > now);
+      const registrationOpen = isUpcoming && daysUntilStart <= 7;
       contests.push({
         id: `lc-${contest.titleSlug}`,
         name: contest.title,

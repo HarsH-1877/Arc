@@ -50,14 +50,23 @@ export function UpcomingContestCard({ contest }: { contest: ContestItem }) {
   }, [contest.date, contest.time]);
 
   let displayId: string | null = null;
+  let roundNumber: string | null = null;
   const canRegister = contest.platform !== 'CODEFORCES' || contest.registrationOpen !== false;
   if (contest.platform === 'CODEFORCES') {
-    const divMatch = contest.name.match(/(Div\.?\s*\d)/i);
-    const eduMatch = contest.name.match(/(Educational)/i);
-    if (divMatch) {
-      displayId = divMatch[0];
-    } else if (eduMatch) {
+    // Extract round number from "Codeforces Round 998", "Codeforces Round #998", or "Educational Codeforces Round 172"
+    const roundMatch = contest.name.match(/Round\s+#?(\d+)/i);
+    if (roundMatch) {
+      roundNumber = roundMatch[1];
+    }
+
+    // Extract whatever is inside the brackets — handles Div. 1, Div. 2, Div. 1+2, Div. 3, Div. 4, etc.
+    const bracketMatch = contest.name.match(/\(([^)]+)\)/);
+    if (bracketMatch) {
+      displayId = bracketMatch[1].trim();
+    } else if (/Educational/i.test(contest.name)) {
       displayId = 'Edu';
+    } else if (/Global/i.test(contest.name)) {
+      displayId = 'Global';
     }
   }
 
@@ -66,7 +75,11 @@ export function UpcomingContestCard({ contest }: { contest: ContestItem }) {
       <div className="flex flex-col p-4">
         <div className="mb-4 flex items-start justify-between gap-3">
           <h3 className="text-[18px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
-            {contest.name.replace(/(Div\.?\s*\d)/i, '')}
+            {contest.platform === 'CODEFORCES'
+              ? roundNumber
+                ? `CF Round ${roundNumber}`
+                : contest.name.replace(/Codeforces\s*/i, '').replace(/\s*\([^)]*\)/g, '').trim()
+              : contest.name.replace(/\s*\([^)]*\)/g, '').replace(/(Div\.?\s*\d+)/i, '').trim()}
           </h3>
           {displayId && (
             <span className="shrink-0 rounded-full px-3 py-1 text-[10px] font-bold tracking-widest" style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}>

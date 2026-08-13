@@ -216,7 +216,7 @@ function PlatformCard({
   const syncing = isSyncing;
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)' }}>
+    <div className="flex flex-col gap-4 rounded-lg p-5 hover:border-[var(--border-strong)] transition-colors" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)' }}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <PlatformLogo platform={platform} size={36} />

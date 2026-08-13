@@ -10,6 +10,7 @@ import { useUIStore } from '@/store/useUIStore';
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Activity,
   Code2,
   AlertTriangle,
@@ -453,7 +454,115 @@ export function ProblemsClient() {
                 })}
               </div>
 
-              {/* Dynamic Difficulty Filter — slider for CF, pills for LC/All */}
+              {/* Reset Filters Button */}
+              <button
+                onClick={resetFilters}
+                className="flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-semibold bg-[var(--bg-elevated)] hover:bg-white/10 text-[var(--text-secondary)] border border-[var(--border-default)] transition-colors shrink-0"
+              >
+                <RotateCcw size={13} />
+                <span>Reset</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Row 2: Secondary Dropdowns (Tag, Status, Language, Sort) + Difficulty Filter */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Tags Dropdown */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Tag</span>
+              <div className="relative">
+                <select
+                  value={tag}
+                  onChange={(e) => { setTag(e.target.value); setPage(1); }}
+                  className="h-8 appearance-none cursor-pointer pl-3 pr-8 rounded-lg text-xs font-semibold transition-all"
+                  style={{
+                    background: tag !== 'All Tags' ? 'rgba(79,142,247,0.12)' : 'var(--bg-elevated)',
+                    color: tag !== 'All Tags' ? 'var(--accent-blue)' : 'var(--text-secondary)',
+                    border: tag !== 'All Tags' ? '1px solid rgba(79,142,247,0.35)' : '1px solid var(--border-default)',
+                    minWidth: '120px',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+                  }}
+                >
+                  {TAG_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <ChevronDown size={11} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" style={{ color: tag !== 'All Tags' ? 'var(--accent-blue)' : 'var(--text-muted)' }} />
+              </div>
+            </div>
+
+            {/* Status Dropdown */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Status</span>
+              <div className="relative">
+                <select
+                  value={verdict}
+                  onChange={(e) => { setVerdict(e.target.value); setPage(1); }}
+                  className="h-8 appearance-none cursor-pointer pl-3 pr-8 rounded-lg text-xs font-semibold transition-all"
+                  style={{
+                    background: verdict === 'AC' ? 'rgba(52,211,153,0.12)' : verdict === 'ATTEMPTED' ? 'rgba(251,191,36,0.12)' : verdict === 'WA' ? 'rgba(244,63,94,0.12)' : 'var(--bg-elevated)',
+                    color: verdict === 'AC' ? 'var(--accent-green)' : verdict === 'ATTEMPTED' ? 'var(--accent-amber)' : verdict === 'WA' ? 'var(--accent-rose)' : 'var(--text-secondary)',
+                    border: verdict === 'AC' ? '1px solid rgba(52,211,153,0.35)' : verdict === 'ATTEMPTED' ? '1px solid rgba(251,191,36,0.35)' : verdict === 'WA' ? '1px solid rgba(244,63,94,0.35)' : '1px solid var(--border-default)',
+                    minWidth: '120px',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+                  }}
+                >
+                  <option value="All">All Status</option>
+                  <option value="AC">Accepted (AC)</option>
+                  <option value="ATTEMPTED">Attempted</option>
+                  <option value="WA">Wrong Answer (WA)</option>
+                </select>
+                <ChevronDown size={11} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" style={{ color: verdict !== 'All' ? 'currentColor' : 'var(--text-muted)' }} />
+              </div>
+            </div>
+
+            {/* Language Dropdown */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Lang</span>
+              <div className="relative">
+                <select
+                  value={lang}
+                  onChange={(e) => { setLang(e.target.value); setPage(1); }}
+                  className="h-8 appearance-none cursor-pointer pl-3 pr-8 rounded-lg text-xs font-semibold transition-all"
+                  style={{
+                    background: lang !== 'All Languages' ? 'rgba(139,92,246,0.12)' : 'var(--bg-elevated)',
+                    color: lang !== 'All Languages' ? 'var(--accent-purple)' : 'var(--text-secondary)',
+                    border: lang !== 'All Languages' ? '1px solid rgba(139,92,246,0.35)' : '1px solid var(--border-default)',
+                    minWidth: '120px',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+                  }}
+                >
+                  {LANGUAGE_OPTIONS.map((l) => <option key={l} value={l}>{l}</option>)}
+                </select>
+                <ChevronDown size={11} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" style={{ color: lang !== 'All Languages' ? 'var(--accent-purple)' : 'var(--text-muted)' }} />
+              </div>
+            </div>
+
+            {/* Sort By Dropdown */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Sort</span>
+              <div className="relative">
+                <select
+                  value={sort}
+                  onChange={(e) => { setSort(e.target.value); setPage(1); }}
+                  className="h-8 appearance-none cursor-pointer pl-3 pr-8 rounded-lg text-xs font-semibold transition-all"
+                  style={{
+                    background: sort !== 'newest' ? 'rgba(79,142,247,0.10)' : 'var(--bg-elevated)',
+                    color: sort !== 'newest' ? 'var(--accent-blue)' : 'var(--text-secondary)',
+                    border: sort !== 'newest' ? '1px solid rgba(79,142,247,0.30)' : '1px solid var(--border-default)',
+                    minWidth: '130px',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+                  }}
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="difficulty_asc">Easy → Hard</option>
+                  <option value="difficulty_desc">Hard → Easy</option>
+                </select>
+                <ChevronDown size={11} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" style={{ color: sort !== 'newest' ? 'var(--accent-blue)' : 'var(--text-muted)' }} />
+              </div>
+            </div>
+
+            {/* Dynamic Difficulty Filter — slider for CF, pills for LC/All — pushed to far right */}
+            <div className="ml-auto">
               {platform === 'CODEFORCES' ? (
                 <div className="flex flex-col justify-center gap-0.5 bg-[var(--bg-input)] px-3 h-9 rounded-lg border border-[var(--border-default)] min-w-[190px]">
                   <div className="flex items-center justify-between">
@@ -529,92 +638,6 @@ export function ProblemsClient() {
                   })}
                 </div>
               )}
-
-              {/* Reset Filters Button */}
-              <button
-                onClick={resetFilters}
-                className="flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-semibold bg-[var(--bg-elevated)] hover:bg-white/10 text-[var(--text-secondary)] border border-[var(--border-default)] transition-colors shrink-0"
-              >
-                <RotateCcw size={13} />
-                <span>Reset</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Row 2: Secondary Dropdowns (Tag, Status, Language, Sort) */}
-          <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-[var(--border-subtle)]/50">
-            {/* Tags Dropdown */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium text-[var(--text-muted)]">Tag:</span>
-              <select
-                value={tag}
-                onChange={(e) => {
-                  setTag(e.target.value);
-                  setPage(1);
-                }}
-                className="px-2.5 h-8 rounded-md text-xs font-semibold bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-default)] focus:outline-none focus:border-[var(--accent-purple)]"
-              >
-                {TAG_OPTIONS.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Status Dropdown */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium text-[var(--text-muted)]">Status:</span>
-              <select
-                value={verdict}
-                onChange={(e) => {
-                  setVerdict(e.target.value);
-                  setPage(1);
-                }}
-                className="px-2.5 h-8 rounded-md text-xs font-semibold bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-default)] focus:outline-none focus:border-[var(--accent-purple)]"
-              >
-                <option value="All">All Status</option>
-                <option value="AC">Accepted (AC)</option>
-                <option value="ATTEMPTED">Attempted</option>
-                <option value="WA">Wrong Answer (WA)</option>
-              </select>
-            </div>
-
-            {/* Language Dropdown */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium text-[var(--text-muted)]">Language:</span>
-              <select
-                value={lang}
-                onChange={(e) => {
-                  setLang(e.target.value);
-                  setPage(1);
-                }}
-                className="px-2.5 h-8 rounded-md text-xs font-semibold bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-default)] focus:outline-none focus:border-[var(--accent-purple)]"
-              >
-                {LANGUAGE_OPTIONS.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Sort By Dropdown */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium text-[var(--text-muted)]">Sort:</span>
-              <select
-                value={sort}
-                onChange={(e) => {
-                  setSort(e.target.value);
-                  setPage(1);
-                }}
-                className="px-2.5 py-1.5 rounded-md text-xs font-semibold bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-default)] focus:outline-none focus:border-[var(--accent-purple)]"
-              >
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="difficulty_asc">Difficulty: Easy to Hard</option>
-                <option value="difficulty_desc">Difficulty: Hard to Easy</option>
-              </select>
             </div>
           </div>
         </div>
@@ -802,9 +825,10 @@ export function ProblemsClient() {
                   onClick={() => setPage(pNum)}
                   className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
                     page === pNum
-                      ? 'bg-purple-600 text-white shadow-sm'
+                      ? 'text-white shadow-sm'
                       : 'bg-[var(--bg-input)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/10 border border-[var(--border-default)]'
                   }`}
+                  style={page === pNum ? { background: 'var(--accent-blue)' } : undefined}
                 >
                   {pNum}
                 </button>

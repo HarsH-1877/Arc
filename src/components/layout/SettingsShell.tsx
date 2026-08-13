@@ -19,7 +19,7 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
     <div className="mx-auto max-w-5xl">
       <div className="flex flex-col gap-8 md:flex-row">
         <aside className="w-full shrink-0 md:w-56 sticky top-8 self-start">
-          <div className="mb-5 px-3 pt-[32px]">
+          <div className="mb-4 px-3">
             <h1 className="text-xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Settings</h1>
           </div>
           <nav className="flex flex-col gap-1">
@@ -38,7 +38,7 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="flex items-center gap-3 rounded-md px-3 py-[11px] text-sm font-medium hover:bg-[var(--bg-card-hover)] transition-colors"
+                  className="group flex items-center gap-3 rounded-md px-3 py-[11px] text-sm font-medium hover:bg-[var(--bg-card-hover)] transition-colors"
                   style={{
                     color,
                     background: bg,
@@ -46,7 +46,7 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
                     boxShadow: isActive && !item.danger ? '-2px 0 12px var(--brand-dim)' : 'none',
                   }}
                 >
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full" style={{ background: isActive ? (item.danger ? 'rgba(251,113,133,0.15)' : 'var(--brand-dim)') : 'var(--bg-surface-2)', color: isActive ? (item.danger ? 'var(--accent-rose)' : 'var(--brand)') : 'var(--text-tertiary)' }}>
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full group-hover:scale-110 transition-transform duration-200" style={{ background: isActive ? (item.danger ? 'rgba(251,113,133,0.15)' : 'var(--brand-dim)') : 'var(--bg-surface-2)', color: isActive ? (item.danger ? 'var(--accent-rose)' : 'var(--brand)') : 'var(--text-tertiary)' }}>
                     <item.icon size={14} />
                   </div>
                   {item.label}

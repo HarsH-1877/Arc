@@ -2,6 +2,7 @@
 
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, LabelList } from 'recharts';
 import { Card } from '@/components/shared/Card';
+import { PlatformLogo } from '@/components/shared/PlatformLogo';
 import type { DashboardApiData } from '@/hooks/useDashboardData';
 
 interface ProblemDistributionCardProps {
@@ -140,11 +141,11 @@ export function ProblemDistributionCard({ data, platform, loading, children }: P
             </div>
             <div className="flex items-center gap-3 mt-3">
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                <span>LeetCode:</span>
+                <PlatformLogo platform="LEETCODE" size={14} />
                 <span className="font-mono-data font-bold">{total}</span>
               </div>
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                <span>Codeforces:</span>
+                <PlatformLogo platform="CODEFORCES" size={14} />
                 <span className="font-mono-data font-bold">{cfTotal}</span>
               </div>
             </div>

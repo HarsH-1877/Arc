@@ -92,7 +92,7 @@ export default function ProfileSettingsPage() {
         </p>
 
         <div className="flex flex-col gap-10 md:flex-row md:items-start">
-          <div className="flex w-full flex-col items-center gap-4 rounded-xl p-8 md:w-64 md:shrink-0" style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border-subtle)' }}>
+          <div className="flex w-full flex-col items-center gap-4 rounded-xl p-8 md:w-64 md:shrink-0 hover:border-[var(--border-strong)] transition-colors" style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border-subtle)' }}>
             <div className="group relative">
               <div className="rounded-full bg-[var(--bg-surface-3)] p-1.5 shadow-sm">
                 <UserAvatar

@@ -4,7 +4,7 @@ import { getSession } from '@/lib/session';
 import {
   buildContestCalendarEvents,
   contestResultsToHistory,
-  fetchUpcomingContests,
+  fetchContestSchedule,
 } from '@/lib/contests/schedule';
 import type { UserContestHistoryItem } from '@/lib/contests/types';
 import { USE_MOCK_DATA } from '@/lib/mock';
@@ -31,13 +31,13 @@ export async function GET() {
 
   const connectionIds = connections.map((connection) => connection.id);
 
-  const [contestRows, upcoming, cfSolvedRows] = await Promise.all([
+  const [contestRows, fullSchedule, cfSolvedRows] = await Promise.all([
     db.contestResult.findMany({
       where: { connectionId: { in: connectionIds } },
       orderBy: { timestamp: 'desc' },
       take: 100,
     }),
-    fetchUpcomingContests(),
+    fetchContestSchedule(),
     db.submission.findMany({
       where: {
         connectionId: { in: connectionIds },
@@ -242,7 +242,8 @@ export async function GET() {
     history.map((contest) => `${contest.platform}:${contest.date}:${contest.name}`),
   );
 
-  const calendarEvents = buildContestCalendarEvents(history, upcoming, attendedKeys);
+  const upcoming = fullSchedule.filter((c) => new Date(c.startTime).getTime() > Date.now());
+  const calendarEvents = buildContestCalendarEvents(history, fullSchedule, attendedKeys);
 
   const bestByPlatform = (['CODEFORCES', 'LEETCODE'] as const)
     .map((platform) => {
@@ -254,8 +255,16 @@ export async function GET() {
     })
     .filter(Boolean);
 
+  const now = Date.now();
   const upcomingForUser = (['CODEFORCES', 'LEETCODE'] as const).flatMap((platform) =>
-    upcoming.filter((contest) => contest.platform === platform),
+    upcoming.filter((contest) => {
+      if (contest.platform !== platform) return false;
+      // Double-check contest is actually in the future (upcoming filter should handle this, but be safe)
+      if (new Date(contest.startTime).getTime() <= now) return false;
+      // Only show contests with open registration — hides CF contests whose registration window hasn't started yet
+      if (contest.registrationOpen !== true) return false;
+      return true;
+    }),
   ).map((contest) => {
     const cfRating =
       connections.find((connection) => connection.platform === 'CODEFORCES')?.codeforcesData?.currentRating ?? null;

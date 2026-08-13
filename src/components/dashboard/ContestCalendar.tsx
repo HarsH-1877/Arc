@@ -115,7 +115,7 @@ function buildContestDays(events: NonNullable<DashboardApiData['contestCalendarE
   const grouped = new Map<string, ContestDay>();
 
   for (const event of events) {
-    const date = new Date(event.date);
+    const date = new Date(event.date + 'T12:00:00');
     const key = date.toDateString();
     const existing = grouped.get(key);
 

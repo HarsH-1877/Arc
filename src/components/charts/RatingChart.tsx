@@ -56,15 +56,16 @@ const CF_MILESTONES = [
   { value: 3000, label: 'LGM' },
 ];
 const LC_MILESTONES = [
-  { value: 1500, label: '1500' },
-  { value: 1650, label: '1650' },
   { value: 1850, label: 'KNT' },
-  { value: 2000, label: '2000' },
   { value: 2200, label: 'GRD' },
-  { value: 2350, label: '2350' },
-  { value: 2500, label: 'LGD' },
 ];
 const LC_AXIS_TICKS = [1500, 1650, 1850, 2000, 2200, 2350, 2500];
+
+// For the right axis we only want to label the milestone tick positions, not all ticks.
+// Non-milestone ticks render as an empty string so no numbers bleed through on the right.
+function lcRightTickFormatter(val: number): string {
+  return LC_MILESTONES.find((m) => m.value === val)?.label ?? '';
+}
 
 const SERIES = [
   { key: 'userRating', name: 'You', color: 'var(--line-you)', primary: true },
@@ -343,7 +344,11 @@ export function RatingChart({ data, loading, compact = false, compareMode = fals
               domain={[domainMin, domainMax]}
               allowDecimals={false}
               ticks={axisTicks}
-              tickFormatter={(val) => activeMilestones.find(m => m.value === val)?.label ?? String(val)}
+              tickFormatter={(val) =>
+                selectedPlatform === 'LEETCODE'
+                  ? lcRightTickFormatter(val)
+                  : activeMilestones.find((m) => m.value === val)?.label ?? String(val)
+              }
             />
             <Tooltip content={<CustomTooltip />} />
             {visibleSeries.filter((series) => !series.primary).map((series) => (
