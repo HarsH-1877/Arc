@@ -648,10 +648,10 @@ export function ProblemsClient() {
             <thead>
               <tr className="border-b text-[11px] uppercase tracking-wider font-semibold text-[var(--text-muted)] bg-[var(--bg-elevated)]" style={{ borderColor: 'var(--border-subtle)' }}>
                 <th className="px-5 py-3">Problem</th>
-                <th className="px-5 py-3">Platform</th>
-                <th className="px-5 py-3">Difficulty</th>
-                <th className="px-5 py-3">Solved On</th>
-                <th className="px-5 py-3">Language</th>
+                <th className="px-5 py-3 text-center">Platform</th>
+                <th className="px-5 py-3 text-center">Difficulty</th>
+                <th className="px-5 py-3 text-center">Solved On</th>
+                <th className="px-5 py-3 text-center">Language</th>
                 <th className="px-5 py-3">Tags</th>
                 <th className="px-5 py-3 text-center">Status</th>
               </tr>
@@ -725,18 +725,15 @@ export function ProblemsClient() {
                         </div>
                       </td>
 
-                      {/* Column 2: Platform */}
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-2">
+                      {/* Column 2: Platform - logo only */}
+                      <td className="px-5 py-3.5 text-center">
+                        <div className="flex items-center justify-center">
                           <PlatformLogo platform={p.platform} size={20} />
-                          <span className="text-xs font-semibold text-[var(--text-secondary)]">
-                            {p.platform === 'CODEFORCES' ? 'Codeforces' : p.platform === 'LEETCODE' ? 'LeetCode' : p.platform}
-                          </span>
                         </div>
                       </td>
 
                       {/* Column 3: Difficulty */}
-                      <td className="px-5 py-3.5">
+                      <td className="px-5 py-3.5 text-center">
                         <span
                           className={`inline-block px-2.5 py-0.5 text-xs font-bold rounded-full border ${diffColorClass}`}
                         >
@@ -745,12 +742,12 @@ export function ProblemsClient() {
                       </td>
 
                       {/* Column 4: Solved On */}
-                      <td className="px-5 py-3.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
+                      <td className="px-5 py-3.5 text-xs text-[var(--text-secondary)] whitespace-nowrap text-center">
                         {formattedDate}
                       </td>
 
                       {/* Column 5: Language */}
-                      <td className="px-5 py-3.5 text-xs text-[var(--text-secondary)] font-medium">
+                      <td className="px-5 py-3.5 text-xs text-[var(--text-secondary)] font-medium text-center">
                         {p.language || 'C++17'}
                       </td>
 

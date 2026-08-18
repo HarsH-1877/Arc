@@ -50,6 +50,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'This handle is already linked to another Arc account.' }, { status: 409 });
     }
 
+    const existingConnection = await db.platformConnection.findUnique({
+      where: { userId_platform: { userId: session.id, platform } },
+    });
+
+    if (existingConnection && existingConnection.handle.toLowerCase() !== handle.toLowerCase()) {
+      await db.submission.deleteMany({ where: { connectionId: existingConnection.id } });
+      await db.contestResult.deleteMany({ where: { connectionId: existingConnection.id } });
+      await db.codeforcesData.deleteMany({ where: { connectionId: existingConnection.id } });
+      await db.leetcodeData.deleteMany({ where: { connectionId: existingConnection.id } });
+    }
+
     const connection = await db.platformConnection.upsert({
       where: { userId_platform: { userId: session.id, platform } },
       create: { userId: session.id, platform, handle, syncStatus: 'PENDING' },

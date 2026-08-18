@@ -13,6 +13,8 @@ export interface DashboardApiData {
       currentRating: number | null;
       maxRating: number | null;
       rank: string | null;
+      totalSolved?: number;
+      difficultyStats?: Record<string, number>;
     } | null;
     leetcode: {
       handle: string;

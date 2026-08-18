@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
-import { getCFUser, getCFRatingHistory, getCFSubmissions } from '@/lib/fetchers/codeforces';
+import { getCFUser, getCFRatingHistory, getCFAllSubmissions } from '@/lib/fetchers/codeforces';
+import { getCodeforcesProblemKey, getUniqueAcceptedCodeforcesProblems } from '@/lib/codeforces/solved-problems';
 import { getLCSolvedStats, getLCContestInfo, getLCAllAcSubmissions, getLCRecentSubmissions, getLCProblemTags, getLCTagStats, getLCContestHistory, getLCProfile } from '@/lib/fetchers/leetcode';
 import type { Platform } from '@prisma/client';
 
@@ -128,24 +129,39 @@ export async function syncPlatform(connectionId: string, options?: { quick?: boo
 }
 
 async function syncCodeforces(connectionId: string, handle: string, userId: string, quick = false) {
-  const submissionLimit = quick ? 100 : 500;
+  void userId;
+  void quick;
   const [cfUser, ratingHistory, submissions] = await Promise.all([
     getCFUser(handle),
     getCFRatingHistory(handle),
-    getCFSubmissions(handle, submissionLimit),
+    getCFAllSubmissions(handle),
   ]);
 
-  // Build tag stats from AC submissions
+  // Build tag stats and difficulty distribution from distinct AC problems
   const tagStats: Record<string, number> = {};
   const difficultyStats: Record<string, number> = {};
+  const seenProblems = getUniqueAcceptedCodeforcesProblems(submissions.map((sub) => ({
+    contestId: sub.contestId,
+    index: sub.problem.index,
+    name: sub.problem.name,
+    verdict: sub.verdict,
+  })));
+  const processedProblems = new Set<string>();
+
   for (const sub of submissions) {
     if (sub.verdict !== 'OK') continue;
+    const problemKey = getCodeforcesProblemKey({ contestId: sub.contestId, index: sub.problem.index, name: sub.problem.name });
+    if (!seenProblems.has(problemKey) || processedProblems.has(problemKey)) continue;
+    processedProblems.add(problemKey);
+
     for (const tag of sub.problem.tags) {
       tagStats[tag] = (tagStats[tag] ?? 0) + 1;
     }
     if (sub.problem.rating) {
       const bucket = String(Math.floor(sub.problem.rating / 100) * 100);
       difficultyStats[bucket] = (difficultyStats[bucket] ?? 0) + 1;
+    } else {
+      difficultyStats.UNRATED = (difficultyStats.UNRATED ?? 0) + 1;
     }
   }
 
@@ -189,8 +205,11 @@ async function syncCodeforces(connectionId: string, handle: string, userId: stri
     },
   });
 
-  // Upsert all submissions (AC and non-AC)
-  for (const sub of submissions) {
+  // The full history is authoritative. Rebuild this connection so prior partial syncs
+  // cannot inflate totals or keep entries that are no longer in the API response.
+  await db.submission.deleteMany({ where: { connectionId, platform: 'CODEFORCES' } });
+
+  const submissionRows = submissions.map((sub) => {
     let verdict = 'AC';
     if (sub.verdict === 'OK') verdict = 'AC';
     else if (sub.verdict === 'WRONG_ANSWER') verdict = 'WA';
@@ -199,21 +218,24 @@ async function syncCodeforces(connectionId: string, handle: string, userId: stri
     else if (sub.verdict === 'RUNTIME_ERROR') verdict = 'RE';
     else verdict = sub.verdict || 'ATTEMPTED';
 
-    await db.submission.upsert({
-      where: { connectionId_externalId: { connectionId, externalId: String(sub.id) } },
-      create: {
-        connectionId,
-        externalId: String(sub.id),
-        problemName: sub.problem.name,
-        platform: 'CODEFORCES',
-        verdict,
-        language: sub.programmingLanguage,
-        timestamp: new Date(sub.creationTimeSeconds * 1000),
-        contestId: sub.contestId ? String(sub.contestId) : null,
-        difficulty: sub.problem.rating ? String(sub.problem.rating) : null,
-        tags: sub.problem.tags,
-      },
-      update: { verdict, tags: sub.problem.tags },
+    return {
+      connectionId,
+      externalId: String(sub.id),
+      problemName: sub.problem.name,
+      problemSlug: getCodeforcesProblemKey({ contestId: sub.contestId, index: sub.problem.index, name: sub.problem.name }),
+      platform: 'CODEFORCES' as const,
+      verdict,
+      language: sub.programmingLanguage,
+      timestamp: new Date(sub.creationTimeSeconds * 1000),
+      contestId: sub.contestId ? String(sub.contestId) : null,
+      difficulty: sub.problem.rating ? String(sub.problem.rating) : null,
+      tags: sub.problem.tags,
+    };
+  });
+
+  for (let index = 0; index < submissionRows.length; index += 1000) {
+    await db.submission.createMany({
+      data: submissionRows.slice(index, index + 1000),
     });
   }
 

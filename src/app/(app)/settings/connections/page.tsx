@@ -4,7 +4,7 @@ import type { SyncStatus } from '@prisma/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/shared/Card';
 import { SyncStatusDot } from '@/components/shared/SyncStatusDot';
-import { CheckCircle2, Loader2, RefreshCw, Unlink, Plus } from 'lucide-react';
+import { CheckCircle2, Loader2, RefreshCw, Unlink, Plus, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { formatRelativeTime } from '@/lib/utils';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
@@ -50,7 +50,12 @@ export default function ConnectionsSettingsPage() {
       return res.json();
     },
     onSuccess: (_data, variables) => {
+      // Invalidate ALL caches — handle change means completely new data across all pages
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['contests'] });
+      queryClient.invalidateQueries({ queryKey: ['problems'] });
+      queryClient.invalidateQueries({ queryKey: ['problems-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['compare'] });
       if (variables.platform === 'CODEFORCES') setCfHandle('');
       else setLcHandle('');
     },
@@ -66,7 +71,13 @@ export default function ConnectionsSettingsPage() {
       if (!res.ok) throw new Error('Failed to unlink');
       return res.json();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['contests'] });
+      queryClient.invalidateQueries({ queryKey: ['problems'] });
+      queryClient.invalidateQueries({ queryKey: ['problems-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['compare'] });
+    },
   });
 
   const { mutate: syncPlatformMutation } = useMutation({
@@ -79,10 +90,17 @@ export default function ConnectionsSettingsPage() {
       if (!res.ok) throw new Error('Failed to sync');
       return res.json();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
-    onSettled: () => {
-      // Force an immediate refetch so syncStatus reflects the latest DB state
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['contests'] });
+      queryClient.invalidateQueries({ queryKey: ['problems'] });
+      queryClient.invalidateQueries({ queryKey: ['problems-stats'] });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['contests'] });
+      queryClient.invalidateQueries({ queryKey: ['problems'] });
+      queryClient.invalidateQueries({ queryKey: ['problems-stats'] });
     },
   });
 
@@ -224,7 +242,17 @@ function PlatformCard({
             <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>{name}</h3>
             {data ? (
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <span className="font-mono-data rounded-md px-2 py-0.5 text-sm" style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}>{data.handle}</span>
+                <a
+                  href={platform === 'CODEFORCES' ? `https://codeforces.com/profile/${data.handle}` : `https://leetcode.com/u/${data.handle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono-data inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-sm hover:underline hover:opacity-85 transition-opacity"
+                  style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}
+                  title={`View ${name} profile for ${data.handle}`}
+                >
+                  <span>{data.handle}</span>
+                  <ExternalLink size={12} className="opacity-60" />
+                </a>
                 <CheckCircle2 size={15} aria-label="Account linked" style={{ color: 'var(--success)' }} />
                 <SyncStatusDot status={data.syncStatus as SyncStatus} lastSyncedAt={data.lastSyncedAt} errorMessage={data.syncError ?? undefined} />
               </div>

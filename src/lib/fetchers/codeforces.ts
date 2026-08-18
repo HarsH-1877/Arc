@@ -36,6 +36,7 @@ export interface CFSubmission {
   id: number;
   contestId?: number;
   problem: {
+    index: string;
     name: string;
     tags: string[];
     rating?: number;
@@ -185,21 +186,22 @@ export async function getCFRatingHistory(handle: string): Promise<CFRatingChange
 }
 
 /**
- * Fetch the most-recent `count` submissions for a handle.
- * Defaults to 500 (Codeforces maximum in one call).
+ * Fetch submissions for a handle (up to 10000).
  */
 export async function getCFSubmissions(
   handle: string,
-  count = 500,
+  count = 1000,
+  from = 1,
 ): Promise<CFSubmission[]> {
   const raw = await cfFetch<CFRawSubmission[]>(
-    `user.status?handle=${encodeURIComponent(handle)}&from=1&count=${count}`,
+    `user.status?handle=${encodeURIComponent(handle)}&from=${from}&count=${count}`,
   );
 
   return raw.map((s) => ({
     id: s.id,
     contestId: s.contestId,
     problem: {
+      index: s.problem.index,
       name: s.problem.name,
       tags: s.problem.tags,
       rating: s.problem.rating,
@@ -208,6 +210,20 @@ export async function getCFSubmissions(
     programmingLanguage: s.programmingLanguage,
     creationTimeSeconds: s.creationTimeSeconds,
   }));
+}
+
+/** Fetch a handle's complete submission history in stable API-sized pages. */
+export async function getCFAllSubmissions(handle: string): Promise<CFSubmission[]> {
+  const pageSize = 1000;
+  const submissions: CFSubmission[] = [];
+  let from = 1;
+
+  while (true) {
+    const page = await getCFSubmissions(handle, pageSize, from);
+    submissions.push(...page);
+    if (page.length < pageSize) return submissions;
+    from += page.length;
+  }
 }
 
 export interface CFContest {

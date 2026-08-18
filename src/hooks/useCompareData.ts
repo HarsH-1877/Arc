@@ -6,6 +6,8 @@ export interface CompareUser {
   username: string;
   displayName: string | null;
   avatarUrl: string | null;
+  cfHandle?: string | null;
+  lcHandle?: string | null;
   cfRating: number | null;
   cfRank: string | null;
   lcRating: number | null;

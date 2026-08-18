@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { USE_MOCK_DATA, MOCK_DASHBOARD } from '@/lib/mock';
 import { fetchUpcomingContests, fetchContestSchedule, buildContestCalendarEvents, contestResultsToHistory, mergeRatingChartData } from '@/lib/contests/schedule';
 import { getLCContestHistory } from '@/lib/fetchers/leetcode';
+import { getStoredCodeforcesProblemKey } from '@/lib/codeforces/solved-problems';
 
 // GET /api/dashboard
 export async function GET() {
@@ -29,7 +30,7 @@ export async function GET() {
 
   const connectionIds = user.platforms.map((p) => p.id);
 
-  const [recentSubmissions, heatmapSubs, contestRows, upcomingContests, contestSchedule] = await Promise.all([
+  const [recentSubmissions, heatmapSubs, contestRows, upcomingContests, contestSchedule, cfAcceptedSubs] = await Promise.all([
     db.submission.findMany({
       where: { connectionId: { in: connectionIds } },
       orderBy: { timestamp: 'desc' },
@@ -50,7 +51,20 @@ export async function GET() {
     }),
     fetchUpcomingContests(),
     fetchContestSchedule(),
+    cf
+      ? db.submission.findMany({
+          where: {
+            connectionId: cf.id,
+            verdict: { in: ['OK', 'Accepted', 'AC'] },
+          },
+          select: { problemName: true, problemSlug: true, difficulty: true, contestId: true },
+        })
+      : Promise.resolve([]),
   ]);
+
+  const cfSolvedCount = new Set(
+    cfAcceptedSubs.map(getStoredCodeforcesProblemKey),
+  ).size;
 
   const heatmapMaps: Record<'CODEFORCES' | 'LEETCODE', Record<string, number>> = {
     CODEFORCES: {},
@@ -313,8 +327,7 @@ export async function GET() {
         rawCount,
         value: Math.round((rawCount / maxCount) * 100),
       }))
-      .sort((a, b) => b.rawCount - a.rawCount)
-      .slice(0, 8);
+      .sort((a, b) => b.rawCount - a.rawCount);
   };
   const topicStats = buildTopicStats(allTags);
   const codeforcesTopicStats = buildTopicStats(cfTags);
@@ -337,6 +350,8 @@ export async function GET() {
             currentRating: cf.codeforcesData?.currentRating ?? null,
             maxRating: cf.codeforcesData?.maxRating ?? null,
             rank: cf.codeforcesData?.rank ?? null,
+            totalSolved: cfSolvedCount,
+            difficultyStats: (cf.codeforcesData?.difficultyStats ?? {}) as Record<string, number>,
           }
         : null,
       leetcode: lc

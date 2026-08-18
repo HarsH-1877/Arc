@@ -211,6 +211,8 @@ export function buildContestCalendarEvents(
   const events: ContestCalendarEvent[] = [];
   const now = Date.now();
 
+  const attendedDates = new Set(history.map((c) => `${c.platform}:${c.date}`));
+
   for (const contest of history) {
     events.push({
       date: contest.date,
@@ -227,10 +229,11 @@ export function buildContestCalendarEvents(
     const startMs = new Date(contest.startTime).getTime();
     const date = contest.startTime.slice(0, 10);
     const key = `${contest.platform}:${date}:${contest.name}`;
+    const datePlatformKey = `${contest.platform}:${date}`;
     const alreadyListed = events.some(
-      (event) => event.date === date && event.label === contest.name && event.platform === contest.platform,
+      (event) => event.date === date && event.platform === contest.platform,
     );
-    if (alreadyListed || attendedContestKeys.has(key)) continue;
+    if (alreadyListed || attendedContestKeys.has(key) || attendedDates.has(datePlatformKey)) continue;
 
     if (startMs >= now) {
       events.push({

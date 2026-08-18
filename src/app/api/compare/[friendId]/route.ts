@@ -5,6 +5,7 @@ import { logger } from '@/lib/utils';
 import type { CompareWinner } from '@/types';
 import type { Prisma } from '@prisma/client';
 import { USE_MOCK_DATA, getMockCompare } from '@/lib/mock';
+import { getStoredCodeforcesProblemKey } from '@/lib/codeforces/solved-problems';
 
 type UserWithPlatforms = Prisma.UserGetPayload<{
   include: {
@@ -44,8 +45,7 @@ async function formatUser(
         rawCount,
         value: Math.round((rawCount / maxCount) * 100),
       }))
-      .sort((a, b) => b.rawCount - a.rawCount)
-      .slice(0, 15);
+      .sort((a, b) => b.rawCount - a.rawCount);
   };
 
   const topicStats = buildTopics(topicStatsRaw);
@@ -121,7 +121,15 @@ async function formatUser(
     }
   }
 
-  const cfSolvedCount = cf ? await db.submission.count({ where: { connectionId: cf.id, verdict: { in: ['OK', 'AC', 'Accepted'] } } }) : 0;
+  const cfSubs = cf
+    ? await db.submission.findMany({
+        where: { connectionId: cf.id, verdict: { in: ['OK', 'AC', 'Accepted'] } },
+        select: { problemName: true, problemSlug: true, contestId: true },
+      })
+    : [];
+  const cfSolvedCount = new Set(
+    cfSubs.map(getStoredCodeforcesProblemKey),
+  ).size;
   const lcSolvedCount = lc?.leetcodeData?.totalSolved ?? 0;
   const cfContestCount = cfRatingHistory.length;
   const lcContestCount = lc?.leetcodeData?.contestsAttended ?? 0;
@@ -131,6 +139,8 @@ async function formatUser(
     username: u.username,
     displayName: u.displayName,
     avatarUrl: u.avatarUrl,
+    cfHandle: cf?.handle ?? null,
+    lcHandle: lc?.handle ?? null,
     cfRating: cf?.codeforcesData?.currentRating ?? null,
     cfRank: cf?.codeforcesData?.rank ?? null,
     lcRating: lc?.leetcodeData?.contestRating ?? null,

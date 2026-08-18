@@ -13,17 +13,30 @@ interface ProblemDistributionCardProps {
 }
 
 const PIE_COLORS = ['var(--accent-green)', 'var(--accent-amber)', 'var(--accent-rose)'];
-const CF_RANGES = ['800-999', '1000-1199', '1200-1399', '1400-1599', '1600-1799', '1800-1999', '2000+'];
-const CF_COLORS = ['#4f8ef7', '#4f8ef7', '#4f8ef7', '#4f8ef7', '#4f8ef7', '#4f8ef7', '#4f8ef7'];
-
 function cfHistogramData(data?: DashboardApiData) {
-  const solvedCf = data?.recentSubmissions.filter((submission) => submission.platform === 'CODEFORCES' && ['OK', 'Accepted', 'AC'].includes(submission.verdict)).length ?? 0;
-  const seed = Math.max(solvedCf, 8);
-  return CF_RANGES.map((range, index) => ({
-    range,
-    count: Math.max(1, Math.round(seed * [1.7, 1.45, 1.8, 1.07, 0.58, 0.9, 0.3][index])),
-    fill: CF_COLORS[index],
-  }));
+  const stats = data?.platforms.codeforces?.difficultyStats ?? {};
+
+  const getCountInRange = (min: number, max: number) => {
+    let sum = 0;
+    for (const [ratingStr, count] of Object.entries(stats)) {
+      const r = Number(ratingStr);
+      if (!Number.isNaN(r) && r >= min && r <= max) {
+        sum += Number(count) || 0;
+      }
+    }
+    return sum;
+  };
+
+  return [
+    { range: '800-999', count: getCountInRange(800, 999), fill: '#4f8ef7' },
+    { range: '1000-1199', count: getCountInRange(1000, 1199), fill: '#4f8ef7' },
+    { range: '1200-1399', count: getCountInRange(1200, 1399), fill: '#4f8ef7' },
+    { range: '1400-1599', count: getCountInRange(1400, 1599), fill: '#4f8ef7' },
+    { range: '1600-1799', count: getCountInRange(1600, 1799), fill: '#4f8ef7' },
+    { range: '1800-1999', count: getCountInRange(1800, 1999), fill: '#4f8ef7' },
+    { range: '2000+', count: getCountInRange(2000, 9999), fill: '#4f8ef7' },
+    { range: 'Unrated', count: Number(stats.UNRATED) || 0, fill: '#64748b' },
+  ];
 }
 
 function PieTooltip({ active, payload }: any) {
@@ -63,7 +76,7 @@ export function ProblemDistributionCard({ data, platform, loading, children }: P
     { name: 'Hard', value: leetcode?.hardSolved ?? 0 },
   ];
   const histogram = cfHistogramData(data);
-  const cfTotal = histogram.reduce((sum, bucket) => sum + bucket.count, 0);
+  const cfTotal = data?.platforms.codeforces?.totalSolved ?? histogram.reduce((sum, bucket) => sum + bucket.count, 0);
 
   return (
     <Card variant="base" className="min-h-[128px] overflow-hidden" padding="20px 24px">

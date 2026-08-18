@@ -75,11 +75,7 @@ export function UpcomingContestCard({ contest }: { contest: ContestItem }) {
       <div className="flex flex-col p-4">
         <div className="mb-4 flex items-start justify-between gap-3">
           <h3 className="text-[18px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
-            {contest.platform === 'CODEFORCES'
-              ? roundNumber
-                ? `CF Round ${roundNumber}`
-                : contest.name.replace(/Codeforces\s*/i, '').replace(/\s*\([^)]*\)/g, '').trim()
-              : contest.name.replace(/\s*\([^)]*\)/g, '').replace(/(Div\.?\s*\d+)/i, '').trim()}
+            {contest.name.replace(/\s*\([^)]*\)/g, '').trim()}
           </h3>
           {displayId && (
             <span className="shrink-0 rounded-full px-3 py-1 text-[10px] font-bold tracking-widest" style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}>

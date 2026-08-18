@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, Minus, Plus, Target, Trophy, X } from 'lucide-react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -32,17 +32,95 @@ const LEETCODE_RANKS: RankGoal[] = [
 export function GoalSetter({ platform }: { platform: Platform }) {
   const { data } = useDashboardData();
   const [open, setOpen] = useState(false);
-  const [goalType, setGoalType] = useState<GoalType>('rating');
-  const [customRatingTarget, setCustomRatingTarget] = useState(1800);
-  const [questionTarget, setQuestionTarget] = useState(500);
-  const [cfRank, setCfRank] = useState(CODEFORCES_RANKS[2]);
-  const [lcRank, setLcRank] = useState(LEETCODE_RANKS[0]);
+  const storageKey = `arc-goal-${platform}`;
+
+  const [goalType, setGoalType] = useState<GoalType>(() => {
+    if (typeof window === 'undefined') return 'rating';
+    try {
+      const saved = localStorage.getItem(`${storageKey}-type`);
+      return (saved as GoalType) || 'rating';
+    } catch {
+      return 'rating';
+    }
+  });
+
+  const [customRatingTarget, setCustomRatingTarget] = useState<number>(() => {
+    if (typeof window === 'undefined') return 1800;
+    try {
+      const saved = localStorage.getItem(`${storageKey}-rating`);
+      return saved ? Number(saved) : 1800;
+    } catch {
+      return 1800;
+    }
+  });
+
+  const [questionTarget, setQuestionTarget] = useState<number>(() => {
+    if (typeof window === 'undefined') return 500;
+    try {
+      const saved = localStorage.getItem(`${storageKey}-questions`);
+      return saved ? Number(saved) : 500;
+    } catch {
+      return 500;
+    }
+  });
+
+  const [cfRank, setCfRank] = useState<RankGoal>(() => {
+    if (typeof window === 'undefined') return CODEFORCES_RANKS[2];
+    try {
+      const savedLabel = localStorage.getItem('arc-goal-cfrank');
+      return CODEFORCES_RANKS.find((r) => r.label === savedLabel) ?? CODEFORCES_RANKS[2];
+    } catch {
+      return CODEFORCES_RANKS[2];
+    }
+  });
+
+  const [lcRank, setLcRank] = useState<RankGoal>(() => {
+    if (typeof window === 'undefined') return LEETCODE_RANKS[0];
+    try {
+      const savedLabel = localStorage.getItem('arc-goal-lcrank');
+      return LEETCODE_RANKS.find((r) => r.label === savedLabel) ?? LEETCODE_RANKS[0];
+    } catch {
+      return LEETCODE_RANKS[0];
+    }
+  });
+
   const [rankOpen, setRankOpen] = useState(false);
   const goalMenuRef = useRef<HTMLDivElement>(null);
   useDismissOnOutsideClick(goalMenuRef, () => {
     setOpen(false);
     setRankOpen(false);
   }, open || rankOpen);
+
+  // Sync state when platform changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const savedType = localStorage.getItem(`${storageKey}-type`);
+      if (savedType) setGoalType(savedType as GoalType);
+
+      const savedRating = localStorage.getItem(`${storageKey}-rating`);
+      if (savedRating) setCustomRatingTarget(Number(savedRating));
+
+      const savedQuestions = localStorage.getItem(`${storageKey}-questions`);
+      if (savedQuestions) setQuestionTarget(Number(savedQuestions));
+    } catch {
+      // Ignore
+    }
+  }, [platform, storageKey]);
+
+  // Persist state updates to localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(`${storageKey}-type`, goalType);
+      localStorage.setItem(`${storageKey}-rating`, String(customRatingTarget));
+      localStorage.setItem(`${storageKey}-questions`, String(questionTarget));
+      localStorage.setItem('arc-goal-cfrank', cfRank.label);
+      localStorage.setItem('arc-goal-lcrank', lcRank.label);
+    } catch {
+      // Ignore storage errors
+    }
+  }, [platform, storageKey, goalType, customRatingTarget, questionTarget, cfRank, lcRank]);
 
   const currentRating = platform === 'CODEFORCES'
     ? data?.platforms.codeforces?.currentRating ?? 0

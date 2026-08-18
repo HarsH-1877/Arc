@@ -42,14 +42,18 @@ export function DashboardClient() {
 
           <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div className="min-w-0 space-y-4">
-              <Card variant="base" padding="18px" className="min-h-[232px] h-full">
+              <Card variant="base" padding="18px">
                 <span style={{ fontSize: '10px', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '12px', display: 'block' }}>
                   Activity Heatmap
                 </span>
                 <ActivityHeatmap
-                  data={selectedPlatform === 'CODEFORCES'
-                    ? data?.codeforcesHeatmapData ?? data?.heatmapData ?? []
-                    : data?.leetcodeHeatmapData ?? []}
+                  data={
+                    selectedPlatform === 'CODEFORCES'
+                      ? (data?.codeforcesHeatmapData?.length ? data.codeforcesHeatmapData : data?.heatmapData ?? [])
+                      : selectedPlatform === 'LEETCODE'
+                      ? (data?.leetcodeHeatmapData?.length ? data.leetcodeHeatmapData : data?.heatmapData ?? [])
+                      : data?.heatmapData ?? []
+                  }
                   loading={isLoading}
                   compact
                 />
@@ -60,11 +64,14 @@ export function DashboardClient() {
 
             <div className="min-w-0">
               <TopicBreakdown
-                topics={selectedPlatform === 'CODEFORCES'
-                  ? data?.codeforcesTopicStats ?? data?.topicStats ?? []
-                  : data?.leetcodeTopicStats ?? data?.topicStats ?? []}
+                topics={
+                  selectedPlatform === 'CODEFORCES'
+                    ? (data?.codeforcesTopicStats?.length ? data.codeforcesTopicStats : data?.topicStats ?? [])
+                    : selectedPlatform === 'LEETCODE'
+                    ? (data?.leetcodeTopicStats?.length ? data.leetcodeTopicStats : data?.topicStats ?? [])
+                    : data?.topicStats ?? []
+                }
                 loading={isLoading}
-                className="min-h-[232px] h-full"
               />
             </div>
           </div>

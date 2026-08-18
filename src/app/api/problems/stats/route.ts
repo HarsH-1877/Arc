@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import type { Prisma } from '@prisma/client';
+import { getStoredCodeforcesProblemKey } from '@/lib/codeforces/solved-problems';
 
 export async function GET(req: Request) {
   try {
@@ -43,6 +44,8 @@ export async function GET(req: Request) {
           timestamp: true,
           problemName: true,
           platform: true,
+          contestId: true,
+          problemSlug: true,
         },
       }),
       db.contestResult.count({
@@ -76,7 +79,9 @@ export async function GET(req: Request) {
 
       if (isAc) {
         totalAccepted++;
-        solvedSet.add(sub.problemName);
+        solvedSet.add(sub.platform === 'CODEFORCES'
+          ? getStoredCodeforcesProblemKey(sub)
+          : sub.problemName);
       }
 
       if (sub.language) {
@@ -102,13 +107,18 @@ export async function GET(req: Request) {
     const shouldIncludeCF = !platform || platform === 'ALL' || platform === 'CODEFORCES';
     const shouldIncludeLC = !platform || platform === 'ALL' || platform === 'LEETCODE';
 
-    // Use authoritative solved counts from platform data
-    const cfSolved = shouldIncludeCF ? (cfConn?.codeforcesData ? totalAccepted : 0) : 0;
     // For LC, use the totalSolved from LeetcodeData (authoritative, not just recent 2000)
     const lcSolved = shouldIncludeLC ? (lcConn?.leetcodeData?.totalSolved ?? 0) : 0;
     const lcAcceptanceRate = shouldIncludeLC ? (lcConn?.leetcodeData?.acceptanceRate ?? 0) : 0;
 
-    // Final totalSolved: for ALL use DB count (includes both), for specific platform use authoritative data
+    const cfSolvedSet = new Set(
+      submissions
+        .filter((s) => s.platform === 'CODEFORCES' && ['OK', 'Accepted', 'AC'].includes(s.verdict))
+        .map(getStoredCodeforcesProblemKey),
+    );
+    const cfSolvedCount = cfConn?.codeforcesData ? cfSolvedSet.size : 0;
+
+    // Final totalSolved: for ALL use sum of distinct solved, for specific platform use authoritative data
     let finalTotalSolved: number;
     let finalAccuracy: number;
 
@@ -116,16 +126,14 @@ export async function GET(req: Request) {
       finalTotalSolved = lcSolved;
       finalAccuracy = Math.min(100, Math.round(lcAcceptanceRate * 10) / 10);
     } else if (platform === 'CODEFORCES') {
-      finalTotalSolved = solvedSet.size || totalAccepted;
+      finalTotalSolved = cfSolvedCount;
       finalAccuracy = totalAttempts > 0 ? Math.min(100, Math.round((totalAccepted / totalAttempts) * 1000) / 10) : 0;
     } else {
       // ALL: combine
-      const cfSolvedCount = solvedSet.size ? Math.max(0, solvedSet.size - lcSolved) : totalAccepted;
-      finalTotalSolved = Math.max(solvedSet.size, (cfConn?.codeforcesData ? cfSolvedCount : 0) + lcSolved);
-      
+      finalTotalSolved = cfSolvedCount + lcSolved;
       const cfAccuracy = totalAttempts > 0 ? Math.min(100, (totalAccepted / totalAttempts) * 100) : 0;
-      if (lcSolved > 0 && lcAcceptanceRate > 0) {
-        const lcWeight = lcSolved / (finalTotalSolved || 1);
+      if (lcSolved > 0 && lcAcceptanceRate > 0 && finalTotalSolved > 0) {
+        const lcWeight = lcSolved / finalTotalSolved;
         const cfWeight = 1 - lcWeight;
         finalAccuracy = Math.min(100, Math.round((lcAcceptanceRate * lcWeight + cfAccuracy * cfWeight) * 10) / 10);
       } else {

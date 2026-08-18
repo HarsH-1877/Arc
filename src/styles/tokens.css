@@ -88,7 +88,7 @@
   /* ── Backward-compat aliases ── */
   --accent-blue:     var(--brand);
   --accent-blue-dim: var(--brand-dim);
-  --accent-cyan:     var(--brand);
+  --accent-cyan:     #22d3ee;
   --accent-purple:   var(--gray-400);
   --accent-green:    var(--success);
   --accent-amber:    var(--warning);

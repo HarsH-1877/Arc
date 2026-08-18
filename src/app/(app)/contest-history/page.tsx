@@ -194,9 +194,12 @@ export default function ContestHistoryPage() {
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <PlatformLogo platform={bc.platform} size={14} />
-                    <p className="truncate text-xs font-bold" style={{ color: 'var(--text-primary)' }} title={bc.name}>
-                      {bc.name.replace(/\s*\([^)]*\)/g, '')}
-                    </p>
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-bold" style={{ color: 'var(--text-primary)' }} title={bc.name}>
+                        {bc.name}
+                      </p>
+                      <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{formatDate(bc.date)}</p>
+                    </div>
                   </div>
                   <div className="shrink-0 flex items-center gap-1">
                     <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>{bc.before}</span>
@@ -224,8 +227,9 @@ export default function ContestHistoryPage() {
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold" style={{ color: 'var(--text-primary)' }} title={bestContest.name}>
-                  {bestContest.name.replace(/\s*\([^)]*\)/g, '')}
+                  {bestContest.name}
                 </p>
+                <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{formatDate(bestContest.date)}</p>
                 <div className="mt-1 flex items-center gap-1.5">
                   <span className="font-mono-data text-xs font-bold" style={{ color: 'var(--text-secondary)' }}>{bestContest.before}</span>
                   <ArrowUpRight size={13} style={{ color: 'var(--success)' }} />

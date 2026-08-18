@@ -123,8 +123,12 @@ function buildContestDays(events: NonNullable<DashboardApiData['contestCalendarE
       if (!existing.platforms.some((item) => item.platform === event.platform)) {
         existing.platforms.push({ platform: event.platform, href: event.href, registrationOpen: event.registrationOpen });
       }
-      if (event.type === 'given' && typeof event.delta === 'number') existing.delta = event.delta;
-      if (event.type !== 'upcoming') existing.type = event.type;
+      if (event.type === 'given') {
+        existing.type = 'given';
+        if (typeof event.delta === 'number') existing.delta = event.delta;
+      } else if (event.type === 'missed' && existing.type !== 'given') {
+        existing.type = 'missed';
+      }
       if (existing.label !== event.label) existing.label = `${existing.label} & ${event.label}`;
     } else {
       grouped.set(key, {
@@ -215,7 +219,7 @@ export function ContestCalendar({ events = [], loading = false }: ContestCalenda
               style={{
                 background: event
                   ? event.type === 'given'
-                    ? 'linear-gradient(135deg, rgba(79,142,247,0.18), rgba(52,211,153,0.08))'
+                    ? 'linear-gradient(135deg, rgba(52,211,153,0.18), rgba(52,211,153,0.06))'
                     : event.type === 'missed'
                       ? 'linear-gradient(135deg, rgba(244,63,94,0.12), rgba(244,63,94,0.04))'
                       : 'linear-gradient(135deg, rgba(251,191,36,0.12), rgba(167,139,250,0.08))'
@@ -223,9 +227,11 @@ export function ContestCalendar({ events = [], loading = false }: ContestCalenda
                 border: today
                   ? '1px solid var(--accent-blue)'
                   : event
-                    ? event.type === 'missed'
-                      ? '1px solid rgba(244,63,94,0.25)'
-                      : '1px solid rgba(79,142,247,0.24)'
+                    ? event.type === 'given'
+                      ? '1px solid rgba(52,211,153,0.35)'
+                      : event.type === 'missed'
+                        ? '1px solid rgba(244,63,94,0.25)'
+                        : '1px solid rgba(251,191,36,0.25)'
                     : '1px solid var(--border-subtle)',
                 opacity: inMonth ? 1 : 0.36,
               }}
@@ -260,7 +266,7 @@ export function ContestCalendar({ events = [], loading = false }: ContestCalenda
 
       <div className="flex flex-wrap items-center gap-3 text-[11px]" style={{ color: 'var(--text-secondary)' }}>
         <span className="flex items-center gap-1.5">
-          <i className="h-2 w-2 rounded-full" style={{ background: 'var(--accent-blue)' }} />
+          <i className="h-2 w-2 rounded-full" style={{ background: 'var(--accent-green)' }} />
           Given
         </span>
         <span className="flex items-center gap-1.5">

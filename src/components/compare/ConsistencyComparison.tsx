@@ -12,8 +12,16 @@ interface ConsistencyComparisonProps {
 
 export function ConsistencyComparison({ user, friend }: ConsistencyComparisonProps) {
   const { selectedPlatform } = useUIStore();
-  const uHeatmap = selectedPlatform === 'CODEFORCES' ? user.cfHeatmapData || user.heatmapData : user.lcHeatmapData || user.heatmapData;
-  const fHeatmap = selectedPlatform === 'CODEFORCES' ? friend.cfHeatmapData || friend.heatmapData : friend.lcHeatmapData || friend.heatmapData;
+  const uHeatmap = selectedPlatform === 'CODEFORCES'
+    ? (user.cfHeatmapData?.length ? user.cfHeatmapData : user.heatmapData)
+    : selectedPlatform === 'LEETCODE'
+    ? (user.lcHeatmapData?.length ? user.lcHeatmapData : user.heatmapData)
+    : user.heatmapData;
+  const fHeatmap = selectedPlatform === 'CODEFORCES'
+    ? (friend.cfHeatmapData?.length ? friend.cfHeatmapData : friend.heatmapData)
+    : selectedPlatform === 'LEETCODE'
+    ? (friend.lcHeatmapData?.length ? friend.lcHeatmapData : friend.heatmapData)
+    : friend.heatmapData;
 
   const uTotal = uHeatmap.reduce((acc, curr) => acc + curr.count, 0);
   const fTotal = fHeatmap.reduce((acc, curr) => acc + curr.count, 0);

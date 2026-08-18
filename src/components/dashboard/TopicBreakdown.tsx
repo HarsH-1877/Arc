@@ -37,7 +37,7 @@ export function TopicBreakdown({ topics = [], loading = false, className }: Topi
 
   return (
     <Card variant="base" className={cn('overflow-hidden', className)}>
-      <span style={{ fontSize: '10px', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '14px' }}>
+      <span style={{ fontSize: '10px', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '14px', display: 'block' }}>
         Topics
       </span>
       {sortedTopics.length === 0 ? (
@@ -45,7 +45,7 @@ export function TopicBreakdown({ topics = [], loading = false, className }: Topi
           No topics logged yet
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1 max-h-[160px] hover-scrollbar">
           <div className="flex flex-wrap content-start gap-2">
             {sortedTopics.map((t, index) => (
               <div key={t.topic} className="topic-pill">

@@ -12,9 +12,24 @@ export async function DELETE(request: NextRequest) {
     const { platform } = await request.json() as { platform: Platform };
     if (!platform) return NextResponse.json({ error: 'platform required' }, { status: 400 });
 
+    const connections = await db.platformConnection.findMany({
+      where: { userId: session.id, platform },
+      select: { id: true },
+    });
+
+    for (const c of connections) {
+      await db.submission.deleteMany({ where: { connectionId: c.id } });
+      await db.contestResult.deleteMany({ where: { connectionId: c.id } });
+      await db.codeforcesData.deleteMany({ where: { connectionId: c.id } });
+      await db.leetcodeData.deleteMany({ where: { connectionId: c.id } });
+    }
+
     await db.platformConnection.deleteMany({
       where: { userId: session.id, platform },
     });
+
+    const { recalculateStreak } = await import('@/workers/syncWorker');
+    await recalculateStreak(session.id).catch(() => {});
 
     return NextResponse.json({ ok: true });
   } catch (err) {
