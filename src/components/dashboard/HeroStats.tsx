@@ -35,7 +35,7 @@ export function HeroStats({ data, loading }: HeroStatsProps) {
   const cf = data?.platforms.codeforces;
   const lc = data?.platforms.leetcode;
   const { selectedPlatform } = useUIStore();
-  const contestCount = data?.ratingChartData.filter((point) => typeof point.cfRating === 'number' || typeof point.lcRating === 'number').length ?? 0;
+  const contestCount = selectedPlatform === 'CODEFORCES' ? cf?.contestCount ?? 0 : lc?.contestCount ?? 0;
   const rating = selectedPlatform === 'CODEFORCES' ? cf?.currentRating ?? null : lc?.contestRating ?? null;
   const maxRating = selectedPlatform === 'CODEFORCES' ? cf?.maxRating ?? null : lc?.contestRating ?? null;
   const isGrowing = selectedPlatform === 'CODEFORCES' ? (cf?.currentRating ?? 0) > 1200 : (lc?.contestRating ?? 0) > 1500;

@@ -9,13 +9,17 @@ export interface CompareUser {
   cfHandle?: string | null;
   lcHandle?: string | null;
   cfRating: number | null;
+  cfMaxRating: number | null;
   cfRank: string | null;
   lcRating: number | null;
+  lcMaxRating: number | null;
   totalSolved: number;
   cfSolvedCount: number;
   lcSolvedCount: number;
   cfContestCount: number;
+  cfAverageRank: number | null;
   lcContestCount: number;
+  lcAverageRank: number | null;
   streak: number;
   totalActiveDays: number;
   lastSyncedAt: string | null;

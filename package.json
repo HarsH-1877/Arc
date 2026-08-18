@@ -7,7 +7,7 @@
                     "build":  "next build",
                     "start":  "next start",
     "lint":  "next lint",
-    "test:cf-count": "tsc --outDir .test-build --module commonjs --target es2022 --skipLibCheck src/lib/codeforces/solved-problems.ts && node --test tests/codeforces-solved-problems.test.cjs",
+    "test:cf-count": "tsc --outDir .test-build --module commonjs --target es2022 --skipLibCheck src/lib/codeforces/solved-problems.ts src/lib/codeforces/problem-url.ts && node --test tests/codeforces-solved-problems.test.cjs",
     "db:generate":  "prisma generate",
                     "db:migrate":  "prisma migrate dev",
                     "db:push":  "prisma db push",

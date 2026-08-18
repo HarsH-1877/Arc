@@ -26,6 +26,17 @@ export default function ConnectionsSettingsPage() {
   const [cfError, setCfError] = useState('');
   const [lcError, setLcError] = useState('');
 
+  const refreshConnectedData = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+      queryClient.invalidateQueries({ queryKey: ['contests'] }),
+      queryClient.invalidateQueries({ queryKey: ['problems'] }),
+      queryClient.invalidateQueries({ queryKey: ['problems-stats'] }),
+      queryClient.invalidateQueries({ queryKey: ['compare'] }),
+    ]);
+    await queryClient.refetchQueries({ queryKey: ['dashboard'], type: 'active' });
+  };
+
   const { data: dashboard, isLoading } = useQuery({
     queryKey: ['dashboard'],
     queryFn: async () => {
@@ -49,13 +60,8 @@ export default function ConnectionsSettingsPage() {
       }
       return res.json();
     },
-    onSuccess: (_data, variables) => {
-      // Invalidate ALL caches — handle change means completely new data across all pages
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['contests'] });
-      queryClient.invalidateQueries({ queryKey: ['problems'] });
-      queryClient.invalidateQueries({ queryKey: ['problems-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['compare'] });
+    onSuccess: async (_data, variables) => {
+      await refreshConnectedData();
       if (variables.platform === 'CODEFORCES') setCfHandle('');
       else setLcHandle('');
     },
@@ -71,12 +77,8 @@ export default function ConnectionsSettingsPage() {
       if (!res.ok) throw new Error('Failed to unlink');
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['contests'] });
-      queryClient.invalidateQueries({ queryKey: ['problems'] });
-      queryClient.invalidateQueries({ queryKey: ['problems-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['compare'] });
+    onSuccess: async () => {
+      await refreshConnectedData();
     },
   });
 
@@ -90,17 +92,8 @@ export default function ConnectionsSettingsPage() {
       if (!res.ok) throw new Error('Failed to sync');
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['contests'] });
-      queryClient.invalidateQueries({ queryKey: ['problems'] });
-      queryClient.invalidateQueries({ queryKey: ['problems-stats'] });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['contests'] });
-      queryClient.invalidateQueries({ queryKey: ['problems'] });
-      queryClient.invalidateQueries({ queryKey: ['problems-stats'] });
+    onSettled: async () => {
+      await refreshConnectedData();
     },
   });
 

@@ -44,15 +44,15 @@ function averageGap(days: { date: string; count: number }[]) {
 export function StatComparison({ user, friend }: StatComparisonProps) {
   const { selectedPlatform } = useUIStore();
   const stats = selectedPlatform === 'CODEFORCES' ? [
-    { label: 'CF Rating', userValue: user.cfRating, friendValue: friend.cfRating, unit: 'rating', lowerWins: false },
-    { label: 'CF Contests', userValue: user.cfContestCount, friendValue: friend.cfContestCount, unit: 'contests', lowerWins: false },
-    { label: 'CF Solved', userValue: user.cfSolvedCount, friendValue: friend.cfSolvedCount, unit: 'solved', lowerWins: false },
-    { label: 'Longest Streak', userValue: longestStreak(user.cfHeatmapData || user.heatmapData), friendValue: longestStreak(friend.cfHeatmapData || friend.heatmapData), unit: 'days', lowerWins: false },
+    { label: 'CF Rating', userValue: user.cfRating, friendValue: friend.cfRating, userMeta: `(${formatValue(user.cfMaxRating)} max)`, friendMeta: `(${formatValue(friend.cfMaxRating)} max)`, lowerWins: false },
+    { label: 'Avg. Rank', userValue: user.cfAverageRank, friendValue: friend.cfAverageRank, userMeta: `(${user.cfContestCount} contests)`, friendMeta: `(${friend.cfContestCount} contests)`, lowerWins: true },
+    { label: 'CF Solved', userValue: user.cfSolvedCount, friendValue: friend.cfSolvedCount, userMeta: null, friendMeta: null, lowerWins: false },
+    { label: 'Longest Streak', userValue: longestStreak(user.cfHeatmapData || user.heatmapData), friendValue: longestStreak(friend.cfHeatmapData || friend.heatmapData), userMeta: null, friendMeta: null, lowerWins: false },
   ] : [
-    { label: 'LC Rating', userValue: user.lcRating, friendValue: friend.lcRating, unit: 'rating', lowerWins: false },
-    { label: 'LC Contests', userValue: user.lcContestCount, friendValue: friend.lcContestCount, unit: 'contests', lowerWins: false },
-    { label: 'LC Solved', userValue: user.lcSolvedCount, friendValue: friend.lcSolvedCount, unit: 'solved', lowerWins: false },
-    { label: 'Longest Streak', userValue: longestStreak(user.lcHeatmapData || user.heatmapData), friendValue: longestStreak(friend.lcHeatmapData || friend.heatmapData), unit: 'days', lowerWins: false },
+    { label: 'LC Rating', userValue: user.lcRating, friendValue: friend.lcRating, userMeta: `(${formatValue(user.lcMaxRating)} max)`, friendMeta: `(${formatValue(friend.lcMaxRating)} max)`, lowerWins: false },
+    { label: 'Avg. Rank', userValue: user.lcAverageRank, friendValue: friend.lcAverageRank, userMeta: `(${user.lcContestCount} contests)`, friendMeta: `(${friend.lcContestCount} contests)`, lowerWins: true },
+    { label: 'LC Solved', userValue: user.lcSolvedCount, friendValue: friend.lcSolvedCount, userMeta: null, friendMeta: null, lowerWins: false },
+    { label: 'Longest Streak', userValue: longestStreak(user.lcHeatmapData || user.heatmapData), friendValue: longestStreak(friend.lcHeatmapData || friend.heatmapData), userMeta: null, friendMeta: null, lowerWins: false },
   ];
 
   return (
@@ -69,13 +69,13 @@ export function StatComparison({ user, friend }: StatComparisonProps) {
         return (
           <div key={stat.label} className="card card-glow flex flex-col gap-4 rounded-md p-4">
             <div className="flex items-center justify-between gap-3">
-              <span style={{ fontSize: '10px', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>{stat.label}</span>
+              <span style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-primary)' }}>{stat.label}</span>
               {delta != null && <span className="font-mono-data rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', border: '1px solid var(--border-default)' }}>Delta {formatValue(delta)}</span>}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <MetricSide label="You" value={formatValue(userValue)} unit={stat.unit} won={userWins} accent="var(--brand)" />
-              <MetricSide label="Friend" value={formatValue(friendValue)} unit={stat.unit} won={friendWins} accent="var(--gray-400)" />
+              <MetricSide label="You" value={formatValue(userValue)} meta={stat.userMeta} won={userWins} accent="var(--brand)" />
+              <MetricSide label="Friend" value={formatValue(friendValue)} meta={stat.friendMeta} won={friendWins} accent="var(--gray-400)" />
             </div>
           </div>
         );
@@ -84,13 +84,13 @@ export function StatComparison({ user, friend }: StatComparisonProps) {
   );
 }
 
-function MetricSide({ label, value, unit, won, accent }: { label: string; value: string; unit: string; won: boolean; accent: string }) {
+function MetricSide({ label, value, meta, won, accent }: { label: string; value: string; meta: string | null; won: boolean; accent: string }) {
   return (
     <div className="rounded-lg p-3" style={{ background: won ? 'rgba(255,255,255,0.05)' : 'var(--bg-card)', border: won ? '1px solid ' + accent : '1px solid var(--border-subtle)' }}>
       <span className="text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: won ? accent : 'var(--text-muted)' }}>{label}</span>
       <div className="mt-2 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 overflow-hidden">
         <span className="font-mono-data text-xl font-bold truncate" style={{ color: won ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{value}</span>
-        <span className="text-[10px] shrink-0" style={{ color: 'var(--text-muted)' }}>{unit}</span>
+        {meta && <span className="text-[10px] shrink-0" style={{ color: 'var(--text-muted)' }}>{meta}</span>}
       </div>
     </div>
   );

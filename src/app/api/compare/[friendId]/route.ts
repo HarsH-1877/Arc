@@ -133,6 +133,18 @@ async function formatUser(
   const lcSolvedCount = lc?.leetcodeData?.totalSolved ?? 0;
   const cfContestCount = cfRatingHistory.length;
   const lcContestCount = lc?.leetcodeData?.contestsAttended ?? 0;
+  const contestRanks = await db.contestResult.findMany({
+    where: { connectionId: { in: [cf?.id, lc?.id].filter((id): id is string => Boolean(id)) }, rank: { not: null } },
+    select: { connectionId: true, rank: true },
+  });
+  const averageRankFor = (connectionId?: string) => {
+    const ranks = contestRanks.filter((row) => row.connectionId === connectionId && row.rank && row.rank > 0).map((row) => row.rank!);
+    return ranks.length ? Math.round(ranks.reduce((total, rank) => total + rank, 0) / ranks.length) : null;
+  };
+  const cfAverageRank = averageRankFor(cf?.id);
+  const lcAverageRank = averageRankFor(lc?.id);
+  const cfMaxRating = cf?.codeforcesData?.maxRating ?? null;
+  const lcMaxRating = Math.max(lc?.leetcodeData?.contestRating ?? 0, ...lcRatingHistory.map((point) => point.rating)) || null;
 
   return {
     id: u.id,
@@ -142,13 +154,17 @@ async function formatUser(
     cfHandle: cf?.handle ?? null,
     lcHandle: lc?.handle ?? null,
     cfRating: cf?.codeforcesData?.currentRating ?? null,
+    cfMaxRating,
     cfRank: cf?.codeforcesData?.rank ?? null,
     lcRating: lc?.leetcodeData?.contestRating ?? null,
+    lcMaxRating,
     totalSolved: cfSolvedCount + lcSolvedCount,
     cfSolvedCount,
     lcSolvedCount,
     cfContestCount,
+    cfAverageRank,
     lcContestCount,
+    lcAverageRank,
     streak: u.streaks?.currentStreak ?? 0,
     totalActiveDays: heatmaps.all.filter((d) => d.count > 0).length,
     ratingHistory: cfRatingHistory,

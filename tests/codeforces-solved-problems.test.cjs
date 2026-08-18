@@ -6,6 +6,7 @@ const {
   getStoredCodeforcesProblemKey,
   getUniqueAcceptedCodeforcesProblems,
 } = require('../.test-build/solved-problems.js');
+const { getCodeforcesProblemUrl } = require('../.test-build/problem-url.js');
 
 test('counts every unique accepted Codeforces problem, including unrated problems', () => {
   const accepted = getUniqueAcceptedCodeforcesProblems([
@@ -32,5 +33,12 @@ test('keeps legacy stored submissions distinct until their next full sync', () =
   assert.equal(
     getStoredCodeforcesProblemKey({ problemSlug: null, contestId: '1200', problemName: 'Duplicate title' }),
     '1200:Duplicate title',
+  );
+});
+
+test('builds a Codeforces problem URL from the stored contest and problem index', () => {
+  assert.equal(
+    getCodeforcesProblemUrl('2249', '2249:F'),
+    'https://codeforces.com/contest/2249/problem/F',
   );
 });

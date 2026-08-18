@@ -5,6 +5,7 @@ import { Card } from '@/components/shared/Card';
 import { useProblemsList, useProblemsStats, TopicWeaknessItem } from '@/hooks/useProblemsData';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { ProblemDistributionCard } from '@/components/dashboard/ProblemDistributionCard';
+import { getCodeforcesProblemUrl } from '@/lib/codeforces/problem-url';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
 import { useUIStore } from '@/store/useUIStore';
 import {
@@ -682,7 +683,7 @@ export function ProblemsClient() {
                   const isAttempted = !isAc && ['WA', 'TLE', 'MLE', 'RE', 'Wrong Answer', 'Time Limit Exceeded', 'Memory Limit Exceeded', 'Runtime Error', 'PARTIAL'].some(v => p.verdict.toUpperCase().includes(v.toUpperCase()));
                   const href =
                     p.platform === 'CODEFORCES' && p.contestId
-                      ? `https://codeforces.com/contest/${p.contestId}/problem/${p.externalId.split('-')[1] || 'A'}`
+                      ? (getCodeforcesProblemUrl(p.contestId, p.problemSlug) ?? `https://codeforces.com/contest/${p.contestId}`)
                       : p.problemSlug
                       ? `https://leetcode.com/problems/${p.problemSlug}`
                       : '#';

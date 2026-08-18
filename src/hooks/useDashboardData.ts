@@ -13,6 +13,7 @@ export interface DashboardApiData {
       currentRating: number | null;
       maxRating: number | null;
       rank: string | null;
+      contestCount: number;
       totalSolved?: number;
       difficultyStats?: Record<string, number>;
     } | null;
@@ -26,6 +27,7 @@ export interface DashboardApiData {
       mediumSolved: number;
       hardSolved: number;
       contestRating: number | null;
+      contestCount: number;
     } | null;
   };
   streak: { currentStreak: number; longestStreak: number; freezeTokens: number; totalActiveDays: number };

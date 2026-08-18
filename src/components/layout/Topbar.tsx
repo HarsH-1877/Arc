@@ -51,8 +51,18 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await queryClient.invalidateQueries();
-    setTimeout(() => setIsRefreshing(false), 500);
+    try {
+      const response = await fetch('/api/platforms/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      if (!response.ok) throw new Error('Unable to sync connected platforms');
+      await queryClient.invalidateQueries();
+      await queryClient.refetchQueries({ type: 'active' });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   return (

@@ -169,6 +169,9 @@ export async function GET() {
     }
   }
 
+  const cfContestCount = cfRatingHistory.length;
+  const lcContestCount = lcRatingHistory.length || lc?.leetcodeData?.contestsAttended || 0;
+
   // ── Fetch top-4 friends' rating history for the dashboard chart ─────────
   // Store both CF and LC histories per friend so the chart can pick based on selectedPlatform
   let friendChartData: Array<{
@@ -350,6 +353,7 @@ export async function GET() {
             currentRating: cf.codeforcesData?.currentRating ?? null,
             maxRating: cf.codeforcesData?.maxRating ?? null,
             rank: cf.codeforcesData?.rank ?? null,
+            contestCount: cfContestCount,
             totalSolved: cfSolvedCount,
             difficultyStats: (cf.codeforcesData?.difficultyStats ?? {}) as Record<string, number>,
           }
@@ -365,6 +369,7 @@ export async function GET() {
             mediumSolved: lc.leetcodeData?.mediumSolved ?? 0,
             hardSolved: lc.leetcodeData?.hardSolved ?? 0,
             contestRating: lc.leetcodeData?.contestRating ?? null,
+            contestCount: lcContestCount,
           }
         : null,
     },
