@@ -5,8 +5,7 @@ import { getSession } from '@/lib/session';
 import { getCFUser } from '@/lib/fetchers/codeforces';
 import { getLCSolvedStats } from '@/lib/fetchers/leetcode';
 import { syncPlatform } from '@/workers/syncWorker';
-
-const HANDLE_RE = /^[a-zA-Z0-9_-]{1,24}$/;
+import { isPlatformHandleFormatValid } from '@/lib/handle-validation';
 
 // POST /api/platforms/link
 export async function POST(request: NextRequest) {
@@ -19,7 +18,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'platform and handle are required' }, { status: 400 });
     }
 
-    if (!HANDLE_RE.test(handle)) {
+    if (!isPlatformHandleFormatValid(handle)) {
       return NextResponse.json({ error: 'Invalid handle format' }, { status: 400 });
     }
 

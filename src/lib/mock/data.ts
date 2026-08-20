@@ -6,7 +6,6 @@ export const MOCK_SESSION_USER = {
   id: 'mock-user-1',
   email: 'arc.dev@example.com',
   username: 'arcdev',
-  displayName: 'Arc Developer',
   avatarUrl: null,
   onboarded: true,
 };
@@ -15,7 +14,6 @@ export const MOCK_PROFILE = {
   id: MOCK_SESSION_USER.id,
   email: MOCK_SESSION_USER.email,
   username: MOCK_SESSION_USER.username,
-  displayName: MOCK_SESSION_USER.displayName,
   avatarUrl: MOCK_SESSION_USER.avatarUrl,
   bio: 'Competitive programming enthusiast. CF + LC grind.',
   createdAt: new Date('2024-01-15').toISOString(),
@@ -78,7 +76,6 @@ export const MOCK_DASHBOARD = {
   user: {
     id: MOCK_SESSION_USER.id,
     username: MOCK_SESSION_USER.username,
-    displayName: MOCK_SESSION_USER.displayName,
     avatarUrl: MOCK_SESSION_USER.avatarUrl,
   },
   platforms: {
@@ -146,11 +143,11 @@ export const MOCK_DASHBOARD = {
 };
 
 export const MOCK_FRIENDS: Friend[] = [
-  { id: 'mock-friend-1', username: 'tourist', displayName: 'Gennady K.', avatarUrl: null, cfRating: 3821, lcRating: 3512, friendshipId: 'fr-1' },
-  { id: 'mock-friend-2', username: 'benq', displayName: 'Benjamin Qi', avatarUrl: null, cfRating: 3790, lcRating: 3480, friendshipId: 'fr-2' },
-  { id: 'mock-friend-3', username: 'ecnerwala', displayName: 'Andrew Gu', avatarUrl: null, cfRating: 3650, lcRating: 3200, friendshipId: 'fr-3' },
-  { id: 'mock-friend-4', username: 'ksun48', displayName: 'Kevin Sun', avatarUrl: null, cfRating: 3100, lcRating: 2900, friendshipId: 'fr-4' },
-  { id: 'mock-friend-5', username: 'neal', displayName: 'Neal Wu', avatarUrl: null, cfRating: 2840, lcRating: 2710, friendshipId: 'fr-5' },
+  { id: 'mock-friend-1', username: 'tourist', avatarUrl: null, cfRating: 3821, lcRating: 3512, friendshipId: 'fr-1' },
+  { id: 'mock-friend-2', username: 'benq', avatarUrl: null, cfRating: 3790, lcRating: 3480, friendshipId: 'fr-2' },
+  { id: 'mock-friend-3', username: 'ecnerwala', avatarUrl: null, cfRating: 3650, lcRating: 3200, friendshipId: 'fr-3' },
+  { id: 'mock-friend-4', username: 'ksun48', avatarUrl: null, cfRating: 3100, lcRating: 2900, friendshipId: 'fr-4' },
+  { id: 'mock-friend-5', username: 'neal', avatarUrl: null, cfRating: 2840, lcRating: 2710, friendshipId: 'fr-5' },
 ];
 
 export const MOCK_FRIEND_REQUESTS: FriendRequest[] = [
@@ -158,19 +155,19 @@ export const MOCK_FRIEND_REQUESTS: FriendRequest[] = [
     id: 'req-1',
     type: 'INCOMING',
     createdAt: daysAgo(1),
-    user: { id: 'mock-search-1', username: 'neal', displayName: 'Neal Wu', avatarUrl: null, cfRating: 2800, lcRating: 2650 },
+    user: { id: 'mock-search-1', username: 'neal', avatarUrl: null, cfRating: 2800, lcRating: 2650 },
   },
   {
     id: 'req-2',
     type: 'OUTGOING',
     createdAt: daysAgo(3),
-    user: { id: 'mock-search-2', username: 'jiangly', displayName: 'Jiangly', avatarUrl: null, cfRating: 3200, lcRating: 3100 },
+    user: { id: 'mock-search-2', username: 'jiangly', avatarUrl: null, cfRating: 3200, lcRating: 3100 },
   },
 ];
 
 export const MOCK_SEARCH_USERS: Friend[] = [
-  { id: 'mock-search-3', username: 'petr', displayName: 'Petr Mitrichev', avatarUrl: null, cfRating: 3500, lcRating: 3400, relationship: 'NONE' },
-  { id: 'mock-search-4', username: 'rng_58', displayName: 'rng_58', avatarUrl: null, cfRating: 3200, lcRating: 3000, relationship: 'NONE' },
+  { id: 'mock-search-3', username: 'petr', avatarUrl: null, cfRating: 3500, lcRating: 3400, relationship: 'NONE' },
+  { id: 'mock-search-4', username: 'rng_58', avatarUrl: null, cfRating: 3200, lcRating: 3000, relationship: 'NONE' },
 ];
 
 export const MOCK_NOTIFICATIONS: NotificationSummary[] = [
@@ -236,7 +233,6 @@ export function getMockCompare(friendId: string): CompareData | null {
     user: {
       id: MOCK_SESSION_USER.id,
       username: MOCK_SESSION_USER.username,
-      displayName: MOCK_SESSION_USER.displayName,
       avatarUrl: MOCK_SESSION_USER.avatarUrl,
       cfRating: 1823,
       cfMaxRating: 1912,
@@ -266,7 +262,6 @@ export function getMockCompare(friendId: string): CompareData | null {
     friend: {
       id: friend.id,
       username: friend.username,
-      displayName: friend.displayName,
       avatarUrl: friend.avatarUrl,
       cfRating: friend.cfRating,
       cfMaxRating: friend.cfRating ? friend.cfRating + 74 : null,

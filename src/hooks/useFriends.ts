@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 export interface Friend {
   id: string;
   username: string;
-  displayName: string | null;
   avatarUrl: string | null;
   cfRating: number | null;
   lcRating: number | null;

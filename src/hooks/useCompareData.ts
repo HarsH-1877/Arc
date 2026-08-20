@@ -4,7 +4,6 @@ import type { CompareVerdict } from '@/types';
 export interface CompareUser {
   id: string;
   username: string;
-  displayName: string | null;
   avatarUrl: string | null;
   cfHandle?: string | null;
   lcHandle?: string | null;

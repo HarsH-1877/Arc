@@ -25,7 +25,7 @@ export function UserSelector() {
     return friends.filter(
       (f) =>
         f.username.toLowerCase().includes(q) ||
-        (f.displayName?.toLowerCase().includes(q) ?? false),
+        f.username.toLowerCase().includes(q),
     );
   }, [friends, query]);
 
@@ -57,11 +57,11 @@ export function UserSelector() {
           <div className="flex items-center gap-2 min-w-0">
             <UserAvatar
               src={selectedFriend.avatarUrl}
-              name={selectedFriend.displayName ?? selectedFriend.username}
+              name={selectedFriend.username}
               size={28}
             />
             <span className="truncate font-medium">
-              {selectedFriend.displayName ?? selectedFriend.username}
+              {selectedFriend.username}
             </span>
           </div>
         ) : (
@@ -126,15 +126,12 @@ export function UserSelector() {
                         <div className="flex min-w-0 items-center gap-2">
                           <UserAvatar
                             src={friend.avatarUrl}
-                            name={friend.displayName ?? friend.username}
+                            name={friend.username}
                             size={28}
                           />
                           <div className="min-w-0">
                             <p className="truncate font-medium" style={{ color: 'var(--text-primary)' }}>
-                              {friend.displayName ?? friend.username}
-                            </p>
-                            <p className="truncate text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                              @{friend.username}
+                              {friend.username}
                             </p>
                           </div>
                         </div>

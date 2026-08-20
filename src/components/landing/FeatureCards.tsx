@@ -81,10 +81,10 @@ function Watermark({ label, side = 'left' }: { label: string; side?: 'left' | 'r
 ───────────────────────────────────────────── */
 export function FeatureCards() {
   const tickerItems = [
-    'AC —— WA —— TLE —— RE —— ONE RATING, EVERY JUDGE ——',
-    'AC —— WA —— TLE —— RE —— ONE RATING, EVERY JUDGE ——',
-    'AC —— WA —— TLE —— RE —— ONE RATING, EVERY JUDGE ——',
-    'AC —— WA —— TLE —— RE —— ONE RATING, EVERY JUDGE ——',
+    'CF —— LC —— CC —— HR —— COMPETITIVE PROGRAMMING. CONNECTED. ——',
+    'CF —— LC —— CC —— HR —— COMPETITIVE PROGRAMMING. CONNECTED. ——',
+    'CF —— LC —— CC —— HR —— COMPETITIVE PROGRAMMING. CONNECTED. ——',
+    'CF —— LC —— CC —— HR —— COMPETITIVE PROGRAMMING. CONNECTED. ——',
   ];
 
   return (

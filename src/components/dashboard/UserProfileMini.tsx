@@ -16,7 +16,7 @@ export function UserProfileMini() {
     },
   });
 
-  const name = profile?.displayName ?? profile?.username ?? 'User';
+  const name = profile?.username ?? 'User';
   const initials = getInitials(name);
 
   return (

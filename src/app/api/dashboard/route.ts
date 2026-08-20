@@ -340,7 +340,6 @@ export async function GET() {
     user: {
       id: user.id,
       username: user.username,
-      displayName: user.displayName,
       avatarUrl: user.avatarUrl,
     },
     platforms: {

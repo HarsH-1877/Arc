@@ -20,7 +20,6 @@ export const signupSchema = z.object({
 });
 
 export const profileSchema = z.object({
-  displayName: z.string().min(1).max(50).optional(),
   username: z
     .string()
     .min(3)

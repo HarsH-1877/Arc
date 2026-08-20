@@ -7,6 +7,7 @@ const {
   getUniqueAcceptedCodeforcesProblems,
 } = require('../.test-build/solved-problems.js');
 const { getCodeforcesProblemUrl } = require('../.test-build/problem-url.js');
+const { isPlatformHandleFormatValid } = require('../.test-build/handle-validation.js');
 
 test('counts every unique accepted Codeforces problem, including unrated problems', () => {
   const accepted = getUniqueAcceptedCodeforcesProblems([
@@ -41,4 +42,10 @@ test('builds a Codeforces problem URL from the stored contest and problem index'
     getCodeforcesProblemUrl('2249', '2249:F'),
     'https://codeforces.com/contest/2249/problem/F',
   );
+});
+
+test('accepts valid platform handles containing dots while rejecting whitespace', () => {
+  assert.equal(isPlatformHandleFormatValid('Benq.42'), true);
+  assert.equal(isPlatformHandleFormatValid('tourist'), true);
+  assert.equal(isPlatformHandleFormatValid('not a handle'), false);
 });

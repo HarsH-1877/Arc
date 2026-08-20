@@ -11,7 +11,6 @@ export interface UserProfile {
   id: string;
   email: string;
   username: string;
-  displayName: string | null;
   avatarUrl: string | null;
   bio: string | null;
   onboarded: boolean;
@@ -99,7 +98,6 @@ export interface SubmissionSummary {
 export interface FriendSummary {
   id: string;
   username: string;
-  displayName: string | null;
   avatarUrl: string | null;
   cfRating: number | null;
   lcRating: number | null;

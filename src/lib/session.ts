@@ -6,7 +6,6 @@ export interface SessionUser {
   id: string;
   email: string;
   username: string;
-  displayName: string | null;
   avatarUrl: string | null;
   onboarded: boolean;
 }
@@ -26,7 +25,6 @@ export async function getSession(): Promise<SessionUser | null> {
       id: MOCK_SESSION_USER.id,
       email: MOCK_SESSION_USER.email,
       username: MOCK_SESSION_USER.username,
-      displayName: MOCK_SESSION_USER.displayName,
       avatarUrl: MOCK_SESSION_USER.avatarUrl,
       onboarded: true,
     };
@@ -48,7 +46,6 @@ export async function getSession(): Promise<SessionUser | null> {
         id: true,
         email: true,
         username: true,
-        displayName: true,
         avatarUrl: true,
         onboarded: true,
       },

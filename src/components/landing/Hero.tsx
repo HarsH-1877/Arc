@@ -58,7 +58,7 @@ export function Hero() {
               className="mb-6 font-mono text-[11px] uppercase tracking-[0.18em]"
               style={{ color: 'var(--active-tier, #3B7DDB)' }}
             >
-              {'// ONE RATING. EVERY JUDGE.'}
+              {'// COMPETITIVE PROGRAMMING. CONNECTED.'}
             </span>
 
             {/* Two-line headline, mixed weight */}

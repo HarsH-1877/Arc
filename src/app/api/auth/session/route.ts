@@ -55,13 +55,12 @@ export async function POST(request: NextRequest) {
         data: {
           email,
           username,
-          displayName: decodedToken.name ?? username,
           avatarUrl: decodedToken.picture ?? null,
           onboarded: Boolean(onboard),
         },
       });
     } else {
-      const updates: { avatarUrl?: string; username?: string; displayName?: string } = {};
+      const updates: { avatarUrl?: string; username?: string } = {};
 
       if (decodedToken.picture && decodedToken.picture !== user.avatarUrl) {
         updates.avatarUrl = decodedToken.picture;
@@ -72,7 +71,6 @@ export async function POST(request: NextRequest) {
         const taken = await db.user.findUnique({ where: { username: normalized } });
         if (!taken || taken.id === user.id) {
           updates.username = normalized;
-          updates.displayName = normalized;
         }
       }
 

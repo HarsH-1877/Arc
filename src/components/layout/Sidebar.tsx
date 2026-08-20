@@ -53,7 +53,7 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
     window.location.replace('/');
   }
 
-  const userDisplayName = profile?.displayName ?? profile?.username ?? 'User';
+  const userDisplayName = profile?.username ?? 'User';
   const initials = getInitials(userDisplayName);
   const connectedPlatforms = profile?.connectedPlatforms ?? [];
   const hasBothPlatforms = connectedPlatforms.includes('CODEFORCES') && connectedPlatforms.includes('LEETCODE');

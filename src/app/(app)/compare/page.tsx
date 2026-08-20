@@ -120,7 +120,7 @@ function ComparePageContent() {
             <motion.div key={activeTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tabTransition}>
               {activeTab === 'Overview' && (
                 <div className="space-y-6">
-                  <CompareRatingChart data={mergedRatingData} userName={data.user.displayName ?? data.user.username} friendName={data.friend.displayName ?? data.friend.username} />
+                  <CompareRatingChart data={mergedRatingData} userName={data.user.username} friendName={data.friend.username} />
                 </div>
               )}
               {activeTab === 'Topics' && <TopicComparison user={data.user} friend={data.friend} />}

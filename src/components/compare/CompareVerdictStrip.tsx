@@ -64,9 +64,9 @@ export function CompareVerdictStrip({ user, friend, verdict }: CompareVerdictStr
           const winner = verdict[cat.key];
           const winnerName =
             winner === 'user'
-              ? user.displayName ?? user.username
+              ? user.username
               : winner === 'friend'
-                ? friend.displayName ?? friend.username
+                ? friend.username
                 : null;
 
           return (

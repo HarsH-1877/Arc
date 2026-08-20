@@ -7,6 +7,7 @@ import { ArrowUpRight, Crown } from 'lucide-react';
 import { MOCK_FRIENDS, MOCK_PROFILE } from '@/lib/mock/data';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useUIStore } from '@/store/useUIStore';
+import Link from 'next/link';
 
 interface FriendsLeaderboardProps {
   compact?: boolean;
@@ -58,13 +59,13 @@ export function FriendsLeaderboard({ compact = false }: FriendsLeaderboardProps)
   const sortedLeaderboard = [
     ...friends.map((f: any) => ({
       id: f.id,
-      name: f.displayName ?? f.username,
+      name: f.username,
       rating: selectedPlatform === 'CODEFORCES' ? (f.cfRating ?? 0) : (f.lcRating ?? 0),
       isYou: false,
     })),
     {
-      id: 'you',
-      name: MOCK_PROFILE.displayName ?? MOCK_PROFILE.username,
+      id: dashboardData?.user.id ?? 'you',
+      name: dashboardData?.user.username ?? MOCK_PROFILE.username,
       rating: userRating,
       isYou: true,
     },
@@ -93,13 +94,18 @@ export function FriendsLeaderboard({ compact = false }: FriendsLeaderboardProps)
         <span className="min-w-0 flex-1 truncate text-sm" style={{ color: user.isYou ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: user.isYou ? 700 : 500 }}>
           {user.name}
         </span>
-        <span className="font-mono-data flex items-center gap-1 rounded-full px-2 py-1 text-xs" style={{ color: user.isYou ? 'var(--brand)' : 'var(--text-secondary)', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
+        <span className="font-mono-data group-hover:hidden flex items-center gap-1 rounded-full px-2 py-1 text-xs" style={{ color: user.isYou ? 'var(--brand)' : 'var(--text-secondary)', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
           {getRankAbbr(selectedPlatform, user.rating) && (
             <span className="mr-1 text-[10px] font-bold opacity-60 uppercase tracking-wider">{getRankAbbr(selectedPlatform, user.rating)}</span>
           )}
           <ArrowUpRight size={12} style={{ color: 'var(--text-muted)' }} />
           {user.rating.toLocaleString()}
         </span>
+        {!user.isYou && (
+          <Link href={`/compare?friend=${user.id}`} className="hidden group-hover:inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: 'var(--brand-dim)', border: '1px solid var(--brand)', color: 'var(--text-primary)', textDecoration: 'none' }}>
+            Compare <ArrowUpRight size={12} />
+          </Link>
+        )}
       </div>
     );
   };

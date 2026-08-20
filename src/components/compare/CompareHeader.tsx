@@ -99,11 +99,10 @@ function IdentityBlock({ person, opponent, accent, align }: { person: CompareUse
   return (
     <div className={'flex items-center gap-4 p-5 ' + (right ? 'flex-row-reverse text-right' : '')} style={{ background: 'transparent' }}>
       <div className="rounded-full p-[2px]" style={{ background: accent }}>
-        <UserAvatar src={person.avatarUrl} name={person.displayName ?? person.username} size={52} />
+        <UserAvatar src={person.avatarUrl} name={person.username} size={52} />
       </div>
       <div className="min-w-0">
-        <p className="truncate font-semibold" style={{ color: 'var(--text-primary)' }}>{person.displayName ?? person.username}</p>
-        <p className="font-mono-data text-xs" style={{ color: 'var(--text-secondary)' }}>@{person.username}</p>
+        <p className="truncate font-semibold font-mono-data" style={{ color: 'var(--text-primary)' }}>{person.username}</p>
         <div className={'mt-2 flex flex-wrap gap-2 ' + (right ? 'justify-end' : '')}>
           {ratingLabel('CODEFORCES', person.cfRating, cfWon, person.cfHandle)}
           {ratingLabel('LEETCODE', person.lcRating, lcWon, person.lcHandle)}

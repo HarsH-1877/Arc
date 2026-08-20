@@ -9,7 +9,7 @@ import { RatingBadge } from '@/components/shared/RatingBadge';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDismissOnOutsideClick } from '@/hooks/useDismissOnOutsideClick';
 
-export function FriendSearch({ placeholder = 'Search by username or name...' }: { placeholder?: string }) {
+export function FriendSearch({ placeholder = 'Search by Arc ID...' }: { placeholder?: string }) {
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);
   const { data: results, isLoading } = useFriendSearch(debouncedQuery);
@@ -90,15 +90,12 @@ export function FriendSearch({ placeholder = 'Search by username or name...' }: 
                     <div className="flex items-center gap-3 overflow-hidden">
                       <UserAvatar
                         src={user.avatarUrl}
-                        name={user.displayName ?? user.username}
+                        name={user.username}
                         size={32}
                       />
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                          {user.displayName ?? user.username}
-                        </p>
-                        <p className="truncate text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                          @{user.username}
+                          {user.username}
                         </p>
                       </div>
                       <div className="hidden sm:flex items-center gap-1.5 ml-2">

@@ -142,6 +142,7 @@ function LoginForm() {
               <input
                 value={identifier}
                 onChange={(event) => setIdentifier(event.target.value)}
+                disabled={loading || googleLoading}
                 required
                 autoComplete="username"
                 placeholder="arc_developer"
@@ -153,8 +154,9 @@ function LoginForm() {
               <span className="mb-2 block text-xs font-medium text-[var(--text-secondary)]">Password</span>
               <span className="relative block">
                 <input
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                disabled={loading || googleLoading}
                   required
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
@@ -164,6 +166,7 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((value) => !value)}
+                  disabled={loading || googleLoading}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >

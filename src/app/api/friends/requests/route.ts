@@ -31,7 +31,6 @@ export async function GET() {
         user: {
           id: otherUser.id,
           username: otherUser.username,
-          displayName: otherUser.displayName,
           avatarUrl: otherUser.avatarUrl,
           cfRating: cf?.codeforcesData?.currentRating ?? null,
           lcRating: lc?.leetcodeData?.contestRating ?? null,
@@ -86,7 +85,7 @@ export async function PATCH(req: Request) {
             userId: request.senderId,
             type: 'FRIEND_ACCEPTED',
             title: 'Friend request accepted',
-            body: `${session.displayName ?? session.username} accepted your friend request.`,
+            body: `${session.username} accepted your friend request.`,
             metadata: { requestId: request.id, friendId: session.id },
           },
         }),
@@ -99,7 +98,7 @@ export async function PATCH(req: Request) {
           userId: request.senderId,
           type: 'FRIEND_REQUEST',
           title: 'Friend request declined',
-          body: `${session.displayName ?? session.username} declined your friend request.`,
+          body: `${session.username} declined your friend request.`,
           metadata: { requestId, friendId: session.id, status: 'DECLINED' },
         },
       });

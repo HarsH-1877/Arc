@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 export interface DashboardApiData {
-  user: { id: string; username: string; displayName: string | null; avatarUrl: string | null };
+  user: { id: string; username: string; avatarUrl: string | null };
   platforms: {
     codeforces: {
       handle: string;

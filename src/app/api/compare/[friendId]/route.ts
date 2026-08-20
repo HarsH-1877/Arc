@@ -149,7 +149,6 @@ async function formatUser(
   return {
     id: u.id,
     username: u.username,
-    displayName: u.displayName,
     avatarUrl: u.avatarUrl,
     cfHandle: cf?.handle ?? null,
     lcHandle: lc?.handle ?? null,

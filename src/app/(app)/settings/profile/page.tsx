@@ -11,7 +11,6 @@ interface ProfileData {
   id: string;
   email: string;
   username: string;
-  displayName: string | null;
   avatarUrl: string | null;
   bio: string | null;
   githubUrl?: string | null;
@@ -21,7 +20,6 @@ interface ProfileData {
 
 export default function ProfileSettingsPage() {
   const queryClient = useQueryClient();
-  const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [githubUrl, setGithubUrl] = useState('');
   const [linkedinUrl, setLinkedinUrl] = useState('');
@@ -40,7 +38,6 @@ export default function ProfileSettingsPage() {
 
   useEffect(() => {
     if (profile) {
-      setDisplayName(profile.displayName ?? '');
       setBio(profile.bio ?? '');
       setGithubUrl(profile.githubUrl ?? '');
       setLinkedinUrl(profile.linkedinUrl ?? '');
@@ -51,11 +48,11 @@ export default function ProfileSettingsPage() {
   }, [profile]);
 
   const { mutate: updateProfile, isPending } = useMutation({
-    mutationFn: async (data: { displayName: string; bio: string }) => {
+    mutationFn: async (data: { bio: string }) => {
       const res = await fetch('/api/user/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ displayName, bio, githubUrl, linkedinUrl, websiteUrl }),
+        body: JSON.stringify({ bio, githubUrl, linkedinUrl, websiteUrl }),
       });
       if (!res.ok) throw new Error('Failed to update profile');
       return res.json();
@@ -70,7 +67,7 @@ export default function ProfileSettingsPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile({ displayName, bio });
+    updateProfile({ bio });
   };
 
   if (isLoading) {
@@ -97,7 +94,7 @@ export default function ProfileSettingsPage() {
               <div className="rounded-full bg-[var(--bg-surface-3)] p-1.5 shadow-sm">
                 <UserAvatar
                   src={profile?.avatarUrl}
-                  name={profile?.displayName ?? profile?.username ?? ''}
+                  name={profile?.username ?? ''}
                   size={110}
                 />
               </div>
@@ -107,7 +104,7 @@ export default function ProfileSettingsPage() {
             </div>
             <div className="text-center">
               <p className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
-                {profile?.displayName ?? profile?.username}
+                {profile?.username}
               </p>
               <p className="text-xs font-semibold mt-1" style={{ color: 'var(--text-tertiary)' }}>
                 @{profile?.username}
@@ -116,7 +113,7 @@ export default function ProfileSettingsPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="flex-1 space-y-7">
-            <div className="grid gap-7 md:grid-cols-2">
+            <div className="grid gap-7">
               <div>
                 <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
                   Username
@@ -134,27 +131,6 @@ export default function ProfileSettingsPage() {
                 />
               </div>
 
-              <div>
-                <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
-                  Display Name
-                </label>
-                <input
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => {
-                    setDisplayName(e.target.value);
-                    setIsDirty(true);
-                  }}
-                  placeholder="e.g. John Doe"
-                  className="w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--brand)] hover:border-[var(--border-strong)]"
-                  style={{
-                    background: 'var(--bg-input)',
-                    borderColor: 'var(--border-default)',
-                    color: 'var(--text-primary)',
-                    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)'
-                  }}
-                />
-              </div>
             </div>
 
             <div>

@@ -44,7 +44,7 @@ function PlatformBadge({ platform, value }: { platform: 'CODEFORCES' | 'LEETCODE
 }
 
 export function FriendCard({ friend, onUnfriend, isUnfriending, rank }: FriendCardProps) {
-  const name = friend.displayName ?? friend.username;
+  const name = friend.username;
 
   return (
     <div className="friend-card group grid grid-cols-[auto_auto_minmax(0,1fr)_auto_auto] items-center gap-4 rounded-xl px-4 py-3 hover:-translate-y-0.5 hover:border-[var(--border-strong)]" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01))', border: '1px solid var(--border-subtle)', transition: 'all 0.2s ease' }}>
@@ -71,7 +71,6 @@ export function FriendCard({ friend, onUnfriend, isUnfriending, rank }: FriendCa
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{name}</p>
-        <p className="truncate text-xs font-mono-data" style={{ color: 'var(--text-muted)' }}>@{friend.username}</p>
       </div>
 
       <div className="hidden shrink-0 items-center gap-2 sm:flex">

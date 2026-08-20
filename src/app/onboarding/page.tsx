@@ -129,9 +129,6 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
 
-  // Step 0 — profile
-  const [displayName, setDisplayName] = useState('');
-
   // Step 1 — Codeforces
   const [cfHandle, setCfHandle] = useState('');
   const [cfStatus, setCfStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
@@ -200,7 +197,6 @@ export default function OnboardingPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          displayName: displayName || undefined,
           cfHandle: cfStatus === 'valid' ? cfHandle : undefined,
           lcUsername: lcStatus === 'valid' ? lcUsername : undefined,
         }),
@@ -233,31 +229,11 @@ export default function OnboardingPage() {
                   Step 1 of 3
                 </p>
                 <h2 className="text-xl font-medium" style={{ color: 'var(--text-primary)' }}>
-                  Let&apos;s set up your Arc profile
+                  Let&apos;s connect your coding profiles
                 </h2>
                 <p className="mt-1.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  You can always update this later in settings.
+                  Your Arc ID is the identity used throughout Arc.
                 </p>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="display-name" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
-                    Display name <span style={{ color: 'var(--text-tertiary)' }}>(optional)</span>
-                  </label>
-                  <input
-                    id="display-name"
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Your name"
-                    maxLength={50}
-                    className="h-11 w-full rounded-lg border px-3 text-sm outline-none transition-colors"
-                    style={{ background: 'var(--bg-surface-3)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)', borderRadius: 'var(--radius-md)' }}
-                    onFocus={(e) => (e.target.style.borderColor = 'rgba(124,58,237,0.6)')}
-                    onBlur={(e) => (e.target.style.borderColor = 'var(--border-subtle)')}
-                  />
-                </div>
               </div>
 
               <button

@@ -17,7 +17,6 @@ export async function GET() {
         id: true,
         email: true,
         username: true,
-        displayName: true,
         avatarUrl: true,
         bio: true,
         createdAt: true,
@@ -77,19 +76,17 @@ export async function PATCH(req: Request) {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
 
-    const { displayName, bio } = await req.json();
+    const { bio } = await req.json();
 
     const updatedUser = await db.user.update({
       where: { id: session.id },
       data: {
-        ...(displayName !== undefined && { displayName }),
         ...(bio !== undefined && { bio }),
       },
       select: {
         id: true,
         email: true,
         username: true,
-        displayName: true,
         avatarUrl: true,
         bio: true,
       },

@@ -13,7 +13,6 @@ import {
   linkWithCredential,
   signInWithPopup,
   signOut,
-  updateProfile,
 } from 'firebase/auth';
 import { AuthStepper } from '@/components/auth/AuthStepper';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -184,7 +183,6 @@ function SignupForm() {
       if ((linkError as { code?: string }).code !== 'auth/provider-already-linked') throw linkError;
     }
 
-    await updateProfile(auth.currentUser ?? googleUser, { displayName: cleanUsername });
     await createSession(await (auth.currentUser ?? googleUser).getIdToken(true), cleanUsername);
     router.replace('/link-account');
   }, [googleUser, password, router, username]);
@@ -281,7 +279,7 @@ function SignupForm() {
             <form onSubmit={handleCredentials} className="space-y-3.5">
               <div className="flex items-center gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-3.5 py-3">
                 {googleUser.photoURL ? <Image src={googleUser.photoURL} width={28} height={28} alt="" className="h-7 w-7 rounded-full" unoptimized /> : <GoogleIcon />}
-                <p className="min-w-0 truncate text-sm text-[var(--text-secondary)]">{googleUser.email ?? googleUser.displayName ?? 'Google account connected'}</p>
+                <p className="min-w-0 truncate text-sm text-[var(--text-secondary)]">{googleUser.email ?? 'Google account connected'}</p>
                 <CheckCircle2 size={16} className="ml-auto shrink-0 text-[var(--accent-green)]" />
               </div>
 

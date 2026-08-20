@@ -268,8 +268,8 @@ function PlatformCard({
               </button>
               {data.lastSyncedAt && <p className="mt-2 text-[11px]" style={{ color: 'var(--text-muted)' }}>Last synced {formatRelativeTime(data.lastSyncedAt)}</p>}
             </div>
-            <button onClick={() => onUnlink(platform)} disabled={isUnlinking} className="flex h-9 w-9 items-center justify-center rounded-md disabled:opacity-50 hover:bg-red-500/10 transition-colors" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--danger)', cursor: 'pointer' }} title="Unlink account" aria-label={'Unlink ' + name}>
-              <Unlink size={16} />
+            <button onClick={() => onUnlink(platform)} disabled={isUnlinking} className="flex h-9 w-9 items-center justify-center rounded-md disabled:opacity-50 hover:bg-red-500/10 transition-colors" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--danger)', cursor: 'pointer' }} title={isUnlinking ? 'Unlinking account' : 'Unlink account'} aria-label={'Unlink ' + name}>
+              {isUnlinking ? <Loader2 size={16} className="animate-spin" /> : <Unlink size={16} />}
             </button>
           </div>
         </div>

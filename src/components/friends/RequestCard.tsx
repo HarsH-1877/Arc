@@ -13,7 +13,7 @@ interface RequestCardProps {
 
 export function RequestCard({ request, onAccept, onDecline, isProcessing }: RequestCardProps) {
   const isIncoming = request.type === 'INCOMING';
-  const name = request.user.displayName ?? request.user.username;
+  const name = request.user.username;
 
   return (
     <div className="flex items-center justify-between gap-3 rounded-lg px-4 py-3" style={{ background: 'rgba(95, 178, 255, 0.06)', border: '1px solid rgba(0, 0, 0, 0.16)' }}>
@@ -23,7 +23,7 @@ export function RequestCard({ request, onAccept, onDecline, isProcessing }: Requ
         </div>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{name}</p>
-          <p className="truncate text-xs font-mono-data" style={{ color: 'var(--text-muted)' }}>@{request.user.username} · {formatRelativeTime(request.createdAt)}</p>
+          <p className="truncate text-xs font-mono-data" style={{ color: 'var(--text-muted)' }}>{formatRelativeTime(request.createdAt)}</p>
         </div>
       </div>
 

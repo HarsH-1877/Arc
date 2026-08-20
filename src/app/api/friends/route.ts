@@ -27,7 +27,6 @@ export async function GET() {
       return {
         id: friend.id,
         username: friend.username,
-        displayName: friend.displayName,
         avatarUrl: friend.avatarUrl,
         cfRating: cf?.codeforcesData?.currentRating ?? null,
         lcRating: lc?.leetcodeData?.contestRating ?? null,
@@ -96,7 +95,7 @@ export async function POST(req: Request) {
         userId: friendId,
         type: 'FRIEND_REQUEST',
         title: 'New friend request',
-        body: `${session.displayName ?? session.username} sent you a friend request.`,
+        body: `${session.username} sent you a friend request.`,
         metadata: { requestId: request.id, senderId: session.id },
       },
     });

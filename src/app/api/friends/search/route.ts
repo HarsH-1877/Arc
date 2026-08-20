@@ -13,8 +13,7 @@ export async function GET(req: Request) {
     return NextResponse.json(
       pool.filter(
         (u) =>
-          u.username.toLowerCase().includes(q) ||
-          (u.displayName?.toLowerCase().includes(q) ?? false),
+          u.username.toLowerCase().includes(q),
       ),
     );
   }
@@ -29,10 +28,7 @@ export async function GET(req: Request) {
         AND: [
           { id: { not: session.id } },
           {
-            OR: [
-              { username: { contains: q, mode: 'insensitive' } },
-              { displayName: { contains: q, mode: 'insensitive' } },
-            ],
+            username: { contains: q, mode: 'insensitive' },
           },
         ],
       },
@@ -67,7 +63,6 @@ export async function GET(req: Request) {
       return {
         id: u.id,
         username: u.username,
-        displayName: u.displayName,
         avatarUrl: u.avatarUrl,
         cfRating: cf?.codeforcesData?.currentRating ?? null,
         lcRating: lc?.leetcodeData?.contestRating ?? null,

@@ -4,8 +4,7 @@ import { getSession } from '@/lib/session';
 import { getCFUser } from '@/lib/fetchers/codeforces';
 import { getLCSolvedStats } from '@/lib/fetchers/leetcode';
 import { syncPlatform } from '@/workers/syncWorker';
-
-const HANDLE_RE = /^[a-zA-Z0-9_-]{1,24}$/;
+import { isPlatformHandleFormatValid } from '@/lib/handle-validation';
 
 // POST /api/onboarding/complete
 export async function POST(request: NextRequest) {
@@ -15,27 +14,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
     }
 
-    const { displayName, cfHandle, lcUsername } = await request.json();
+    const { cfHandle, lcUsername } = await request.json();
 
-    if (cfHandle && !HANDLE_RE.test(cfHandle)) {
+    if (cfHandle && !isPlatformHandleFormatValid(cfHandle)) {
       return NextResponse.json({ error: 'Invalid Codeforces handle format.' }, { status: 400 });
     }
 
-    if (lcUsername && !HANDLE_RE.test(lcUsername)) {
+    if (lcUsername && !isPlatformHandleFormatValid(lcUsername)) {
       return NextResponse.json({ error: 'Invalid LeetCode username format.' }, { status: 400 });
     }
 
-    if (displayName) {
-      await db.user.update({
-        where: { id: session.id },
-        data: { displayName, onboarded: true },
-      });
-    } else {
-      await db.user.update({
-        where: { id: session.id },
-        data: { onboarded: true },
-      });
-    }
+    await db.user.update({ where: { id: session.id }, data: { onboarded: true } });
 
     const connections = [];
 
