@@ -72,9 +72,9 @@ export function Hero() {
                 color: '#EDEAE4',
               }}
             >
-              <span style={{ fontWeight: 700, display: 'block' }}>Every problem you solve</span>
+              <span style={{ fontWeight: 700, display: 'block' }}>Every Platform Every Peer</span>
               <span style={{ fontWeight: 300, display: 'block', color: '#8A8A85' }}>
-                takes you somewhere.
+                One Place.
               </span>
             </h1>
 
@@ -89,8 +89,9 @@ export function Hero() {
                 fontWeight: 400,
               }}
             >
-              Codeforces and LeetCode each give you a separate number — neither knows the
-              other exists. Arc unifies them into one coherent picture of where you actually stand.
+             All CP platforms, unified in one dashboard. Add your friends, no more typing profile URLs on each platform. 
+             Get a detailed 1v1 breakdown: ratings, topics, contests, streaks, across every platform at once. 
+             Weakness tracking, contest calendar and more useful CP tools.
             </p>
 
             {/* CTA */}

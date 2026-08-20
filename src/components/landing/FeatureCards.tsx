@@ -135,15 +135,16 @@ export function FeatureCards() {
         <div className="mx-auto max-w-7xl px-8 lg:px-16 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-[1fr_2.5fr] gap-12 items-start">
             <div>
-              <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#8A8A85] block">I · THE GAP</span>
+              <span className="font-mono text-[20px] uppercase tracking-[0.2em] text-[#8A8A85] block">THE GAP</span>
             </div>
             <div className="p-6 md:p-8 rounded-sm" style={{ background: 'linear-gradient(90deg,rgba(10,11,13,0.88) 0%,rgba(10,11,13,0.45) 75%,transparent 100%)' }}>
               <h2 className="mb-8 tracking-tight text-[#EDEAE4]" style={{ fontSize:'clamp(2.5rem,5vw,4rem)', lineHeight:1.05 }}>
-                <span className="font-bold">Two ratings.</span>{' '}
-                <span className="font-light text-[#8A8A85]">Zero alignment.</span>
+                <span className="font-bold">Global leaderboards exist. </span>{' '}
+                <span className="font-light text-[#8A8A85]">Friends leaderboards don't.</span>
               </h2>
               <p className="text-base md:text-lg font-light leading-relaxed text-[#EDEAE4] mb-12 max-w-2xl">
-                Your CF rating and your LeetCode rating have never spoken to each other. One shows how you perform under pressure. The other shows how deep you can think. Neither gives you the full picture.
+                Every platform ranks you against millions of strangers. None rank you against your friends. 
+                Arc builds that leaderboard, pulling stats from every platform you and your friends use giving a detailed 1v1 breakdowns.
               </p>
               <div className="flex items-center gap-12 pt-6">
                 <div>
@@ -155,6 +156,12 @@ export function FeatureCards() {
                   <div className="font-mono text-4xl md:text-5xl font-bold tracking-tight text-[#EDEAE4]">2,134</div>
                   <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#8A8A85] mt-2">LeetCode Rating</div>
                 </div>
+                <div className="h-16 w-[1px] bg-[#242426]" />
+                <div>
+                  <div className="font-mono text-4xl md:text-5xl font-bold tracking-tight text-[#EDEAE4]">2,352</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#8A8A85] mt-2">CodeChef Rating</div>
+                </div>
+                
               </div>
             </div>
           </div>
@@ -169,10 +176,10 @@ export function FeatureCards() {
         <div className="mx-auto max-w-7xl px-8 lg:px-16 relative z-10">
           <div className="mb-12">
             <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#8A8A85] block mb-3">
-              II · WHAT ARC ACTUALLY DOES
+              II · WHAT ARC OFFERS?
             </span>
             <h2 className="font-bold tracking-tight text-[#EDEAE4]" style={{ fontSize:'clamp(2.5rem,5vw,4rem)', lineHeight:1.05 }}>
-              What Arc actually does.
+              What Arc actually does?
             </h2>
           </div>
 
@@ -184,10 +191,10 @@ export function FeatureCards() {
                 <h3 className="font-mono text-xs uppercase tracking-[0.2em] text-[#8A8A85] mb-8">What you get</h3>
                 <ul className="space-y-5 font-mono text-sm text-[#EDEAE4]">
                   {[
-                    'One handle, one true rating',
-                    'Real topic weaknesses, not guesses',
-                    'Daily practice, mapped to your actual gaps',
-                    'See exactly where friends passed you',
+                    'One unified stats platform for all the CP platforms',
+                    'A useful network for CPers',
+                    '1v1 comparative breakdown with anyone',
+                    'Actually practical CP tools : Contest Calendar, Weakness Tracker, etc',
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-3.5">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--active-tier,#3B7DDB)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
@@ -203,10 +210,10 @@ export function FeatureCards() {
                 <h3 className="font-mono text-xs uppercase tracking-[0.2em] text-[#8A8A85] mb-8 opacity-60">What you don&apos;t</h3>
                 <ul className="space-y-5 font-mono text-sm text-[#8A8A85] opacity-60">
                   {[
-                    'Another dashboard to check',
-                    'Generic problem recommendations',
-                    'A static score with no context',
+                    'Juggling b/w CP platforms for stats analysis',
+                    'Blind spots in your topic coverage',
                     'Comparing yourself in the dark',
+                    'Scattered contest updates',
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-3.5">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8A85" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-60">
@@ -231,10 +238,10 @@ export function FeatureCards() {
           <div className="flex items-center justify-between mb-16">
             <div>
               <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#8A8A85] block mb-3">
-                III · FOUR CORE ENGINE FEATURES
+                III · FOUR CORE FEATURES
               </span>
               <h2 className="font-normal tracking-tight text-[#EDEAE4]" style={{ fontSize:'clamp(2.5rem,5vw,4rem)', lineHeight:1.05 }}>
-                The four things Arc <span className="font-bold">actually</span> does.
+                Four features Arc <span className="font-bold">actually</span> offers.
               </h2>
             </div>
             <div className="font-mono text-3xl md:text-5xl tracking-[0.3em] text-[#8A8A85] opacity-15 select-none hidden sm:block">

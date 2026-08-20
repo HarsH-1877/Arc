@@ -392,7 +392,7 @@ export function ProblemsClient() {
           {/* Row 1: Search + Platform Pills + Difficulty Filter + Reset Button */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             {/* Search Input Box */}
-            <div className="relative flex-1 min-w-[240px] max-w-md">
+            <div className="relative flex-1 min-w-[240px] max-w-[413px]">
               <Search
                 size={16}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
@@ -565,7 +565,7 @@ export function ProblemsClient() {
             {/* Dynamic Difficulty Filter — slider for CF, pills for LC/All — pushed to far right */}
             <div className="ml-auto">
               {platform === 'CODEFORCES' ? (
-                <div className="flex flex-col justify-center gap-0.5 bg-[var(--bg-input)] px-3 h-9 rounded-lg border border-[var(--border-default)] min-w-[190px]">
+                <div className="flex flex-col justify-center gap-0.5 bg-[var(--bg-input)] px-3 h-9 rounded-lg border border-[var(--border-default)] min-w-[209px]">
                   <div className="flex items-center justify-between">
                     <span className="text-[9px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Rating</span>
                     <span className="text-[11px] font-bold font-mono-data" style={{ color: '#4f8ef7' }}>
