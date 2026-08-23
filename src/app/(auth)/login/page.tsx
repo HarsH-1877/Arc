@@ -54,25 +54,30 @@ function LoginForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
+  const isBusy = loading || googleLoading || redirecting;
 
   const finishSession = useCallback(async (idToken: string) => {
     const data = await createSession(idToken);
+    setRedirecting(true);
     if (redirectTo && redirectTo.startsWith('/') && data.onboarded) {
       router.replace(redirectTo);
       return;
     }
-    router.replace(data.onboarded ? '/dashboard' : '/link-account');
+      router.replace(data.onboarded ? '/dashboard' : '/link-account');
   }, [redirectTo, router]);
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
     setLoading(true);
+    let completed = false;
 
     try {
       const email = await resolveIdentifier(identifier.trim());
       const credential = await signInWithEmailAndPassword(auth, email, password);
       await finishSession(await credential.user.getIdToken(true));
+      completed = true;
     } catch (err: unknown) {
       const code = (err as { code?: string }).code;
       const message =
@@ -83,28 +88,32 @@ function LoginForm() {
             : 'Could not sign in. Please try again.';
       setError(message);
     } finally {
-      setLoading(false);
+      if (!completed) setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
     setError('');
     setGoogleLoading(true);
+    let completed = false;
     try {
       const credential = await signInWithPopup(auth, googleProvider);
       const idToken = await credential.user.getIdToken(true);
       if (!(await hasArcAccount(idToken))) {
+        setRedirecting(true);
         router.replace('/signup?continue=1');
+        completed = true;
         return;
       }
       await finishSession(idToken);
+      completed = true;
     } catch (err: unknown) {
       const code = (err as { code?: string }).code;
       if (code !== 'auth/popup-closed-by-user') {
         setError(err instanceof Error ? err.message : 'Google sign-in failed. Please try again.');
       }
     } finally {
-      setGoogleLoading(false);
+      if (!completed) setGoogleLoading(false);
     }
   };
 
@@ -123,7 +132,7 @@ function LoginForm() {
           <button
             type="button"
             onClick={handleGoogleLogin}
-            disabled={googleLoading || loading}
+            disabled={isBusy}
             className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] text-sm font-medium text-[var(--text-primary)] hover:border-[var(--border-strong)] hover:bg-[var(--bg-card-hover)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {googleLoading ? <Loader2 size={16} className="animate-spin" /> : <GoogleIcon />}
@@ -142,7 +151,7 @@ function LoginForm() {
               <input
                 value={identifier}
                 onChange={(event) => setIdentifier(event.target.value)}
-                disabled={loading || googleLoading}
+                disabled={isBusy}
                 required
                 autoComplete="username"
                 placeholder="arc_developer"
@@ -156,7 +165,7 @@ function LoginForm() {
                 <input
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                disabled={loading || googleLoading}
+                disabled={isBusy}
                   required
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
@@ -166,7 +175,7 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((value) => !value)}
-                  disabled={loading || googleLoading}
+                  disabled={isBusy}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
@@ -184,10 +193,10 @@ function LoginForm() {
 
             <button
               type="submit"
-              disabled={loading || googleLoading}
+              disabled={isBusy}
               className="group flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent-blue)] text-sm font-semibold text-white shadow-[0_14px_34px_rgba(79,110,247,0.24)] hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading ? <Loader2 size={16} className="animate-spin" /> : <>Sign in <ArrowRight size={15} className="group-hover:translate-x-0.5" /></>}
+              {isBusy ? <Loader2 size={16} className="animate-spin" /> : <>Sign in <ArrowRight size={15} className="group-hover:translate-x-0.5" /></>}
             </button>
           </form>
 

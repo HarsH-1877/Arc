@@ -5,8 +5,8 @@ const {
   getCodeforcesProblemKey,
   getStoredCodeforcesProblemKey,
   getUniqueAcceptedCodeforcesProblems,
-} = require('../.test-build/solved-problems.js');
-const { getCodeforcesProblemUrl } = require('../.test-build/problem-url.js');
+} = require('../.test-build/codeforces/solved-problems.js');
+const { getCodeforcesProblemUrl } = require('../.test-build/codeforces/problem-url.js');
 const { isPlatformHandleFormatValid } = require('../.test-build/handle-validation.js');
 
 test('counts every unique accepted Codeforces problem, including unrated problems', () => {

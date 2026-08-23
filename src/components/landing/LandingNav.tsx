@@ -43,6 +43,11 @@ export function LandingNav() {
     if (btnRef.current) btnRef.current.style.transform = '';
   }
 
+  function scrollToFeatures(event: React.MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault();
+    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   return (
     <nav
       className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4 transition-all duration-300"
@@ -82,6 +87,7 @@ export function LandingNav() {
       <div className="flex items-center gap-5">
         <Link
           href="#features"
+          onClick={scrollToFeatures}
           className="landing-feature-link inline-flex h-9 items-center font-mono text-[11px] uppercase tracking-[0.08em]"
           style={{ color: '#8A8A85' }}
         >

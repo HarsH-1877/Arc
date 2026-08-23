@@ -140,7 +140,7 @@ export function FeatureCards() {
             <div className="p-6 md:p-8 rounded-sm" style={{ background: 'linear-gradient(90deg,rgba(10,11,13,0.88) 0%,rgba(10,11,13,0.45) 75%,transparent 100%)' }}>
               <h2 className="mb-8 tracking-tight text-[#EDEAE4]" style={{ fontSize:'clamp(2.5rem,5vw,4rem)', lineHeight:1.05 }}>
                 <span className="font-bold">Global leaderboards exist. </span>{' '}
-                <span className="font-light text-[#8A8A85]">Friends leaderboards don't.</span>
+                <span className="font-light text-[#8A8A85]">Friends leaderboards don&apos;t.</span>
               </h2>
               <p className="text-base md:text-lg font-light leading-relaxed text-[#EDEAE4] mb-12 max-w-2xl">
                 Every platform ranks you against millions of strangers. None rank you against your friends. 

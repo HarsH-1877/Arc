@@ -70,8 +70,8 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
       }}
     >
       <div className="min-h-0 flex-1 overflow-visible">
-        <div className="mb-6 flex items-center justify-between overflow-hidden">
-          <div className="flex min-w-0 items-center gap-3">
+        <div className={`mb-5 flex items-center overflow-hidden border-b pb-4 ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`} style={{ borderColor: 'var(--border-subtle)' }}>
+          <div className={`flex min-w-0 items-center gap-3 ${sidebarCollapsed ? 'w-full justify-center' : ''}`}>
             <div className="flex shrink-0 items-center justify-center rounded-full p-[1.5px]" style={{ background: 'var(--brand)' }}>
               <div className="flex items-center justify-center rounded-full" style={{ width: '37px', height: '37px', background: 'var(--bg-elevated)' }}>
                 <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{initials}</span>

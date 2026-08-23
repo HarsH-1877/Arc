@@ -94,7 +94,7 @@ export function FriendsLeaderboard({ compact = false }: FriendsLeaderboardProps)
         <span className="min-w-0 flex-1 truncate text-sm" style={{ color: user.isYou ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: user.isYou ? 700 : 500 }}>
           {user.name}
         </span>
-        <span className="font-mono-data group-hover:hidden flex items-center gap-1 rounded-full px-2 py-1 text-xs" style={{ color: user.isYou ? 'var(--brand)' : 'var(--text-secondary)', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
+        <span className={`font-mono-data flex items-center gap-1 rounded-full px-2 py-1 text-xs ${user.isYou ? '' : 'group-hover:hidden'}`} style={{ color: user.isYou ? 'var(--brand)' : 'var(--text-secondary)', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
           {getRankAbbr(selectedPlatform, user.rating) && (
             <span className="mr-1 text-[10px] font-bold opacity-60 uppercase tracking-wider">{getRankAbbr(selectedPlatform, user.rating)}</span>
           )}
