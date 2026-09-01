@@ -165,7 +165,7 @@ export function GoalSetter({ platform }: { platform: Platform }) {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex h-12 w-full items-center gap-3 rounded-full px-5"
+        className="flex h-12 w-full items-center gap-3 rounded-2xl px-5"
         style={{
           background: 'var(--bg-input)',
           border: '1px solid var(--border-default)',

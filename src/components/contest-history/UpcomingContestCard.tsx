@@ -51,7 +51,7 @@ export function UpcomingContestCard({ contest }: { contest: ContestItem }) {
 
   let displayId: string | null = null;
   let roundNumber: string | null = null;
-  const canRegister = contest.platform !== 'CODEFORCES' || contest.registrationOpen !== false;
+  const canRegister = contest.platform !== 'CODEFORCES' || contest.registrationOpen === true;
   if (contest.platform === 'CODEFORCES') {
     // Extract round number from "Codeforces Round 998", "Codeforces Round #998", or "Educational Codeforces Round 172"
     const roundMatch = contest.name.match(/Round\s+#?(\d+)/i);

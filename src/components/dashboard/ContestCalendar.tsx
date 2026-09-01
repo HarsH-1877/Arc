@@ -292,7 +292,7 @@ function ContestLogo({ item, label }: { item: ContestDay['platforms'][number]; l
         className="group inline-flex rounded-sm p-0.5 hover:bg-white/[0.08]"
         title={label}
         onClick={(e) => {
-          if (item.registrationOpen === false) {
+          if (item.platform === 'CODEFORCES' && !item.registrationOpen) {
             e.preventDefault();
             toast.error('Registration not started yet', {
               description: 'Check back closer to the contest start time.',

@@ -1,8 +1,8 @@
 'use client';
 
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCompareData } from '@/hooks/useCompareData';
 import { UserSelector } from '@/components/compare/UserSelector';
 import { StatComparison } from '@/components/compare/StatComparison';
@@ -15,60 +15,54 @@ import { Card } from '@/components/shared/Card';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { GitCompare } from 'lucide-react';
 import { useUIStore } from '@/store/useUIStore';
+import { useFriends } from '@/hooks/useFriends';
 
 const TABS = ['Overview', 'Topics', 'Consistency'] as const;
 type Tab = (typeof TABS)[number];
 
 function ComparePageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const friendId = searchParams.get('friend');
   const reducedMotion = useReducedMotion();
   const [activeTab, setActiveTab] = useState<Tab>('Overview');
   const { selectedPlatform } = useUIStore();
   const { data, isLoading, error } = useCompareData(friendId);
+  const { data: friends, isLoading: friendsLoading } = useFriends();
+
+  useEffect(() => {
+    if (friendId || friendsLoading || !friends || friends.length === 0) return;
+    const sorted = [...friends].sort((a, b) => {
+      const aRating = Math.max(a.cfRating ?? 0, a.lcRating ?? 0);
+      const bRating = Math.max(b.cfRating ?? 0, b.lcRating ?? 0);
+      return bRating - aRating;
+    });
+    router.replace('/compare?friend=' + sorted[0].id);
+  }, [friendId, friends, friendsLoading, router]);
 
   const mergedRatingData = useMemo(() => {
     if (!data) return [];
-
     const userHistory = (selectedPlatform === 'CODEFORCES'
       ? (data.user.cfRatingHistory?.length ? data.user.cfRatingHistory : data.user.ratingHistory)
       : (data.user.lcRatingHistory?.length ? data.user.lcRatingHistory : data.user.ratingHistory)) ?? [];
-
     const friendHistory = (selectedPlatform === 'CODEFORCES'
       ? (data.friend.cfRatingHistory?.length ? data.friend.cfRatingHistory : data.friend.ratingHistory)
       : (data.friend.lcRatingHistory?.length ? data.friend.lcRatingHistory : data.friend.ratingHistory)) ?? [];
-
     if (userHistory.length === 0 && friendHistory.length === 0) return [];
-
-    // Collect all unique dates (normalised to YYYY-MM-DD) from both series
-    const allDates = Array.from(
-      new Set([
-        ...userHistory.map((r) => r.date.slice(0, 10)),
-        ...friendHistory.map((r) => r.date.slice(0, 10)),
-      ])
-    ).sort();
-
-    // Build lookup maps keyed by YYYY-MM-DD
+    const allDates = Array.from(new Set([
+      ...userHistory.map((r) => r.date.slice(0, 10)),
+      ...friendHistory.map((r) => r.date.slice(0, 10)),
+    ])).sort();
     const userMap = new Map<string, number>();
     for (const r of userHistory) userMap.set(r.date.slice(0, 10), r.rating);
-
     const friendMap = new Map<string, number>();
     for (const r of friendHistory) friendMap.set(r.date.slice(0, 10), r.rating);
-
-    // Forward-fill: walk dates in order, carry last known rating for each series
     let lastUser: number | undefined;
     let lastFriend: number | undefined;
-
     return allDates.map((date) => {
       if (userMap.has(date)) lastUser = userMap.get(date);
       if (friendMap.has(date)) lastFriend = friendMap.get(date);
-
-      return {
-        date,
-        userRating: lastUser,
-        friend1: lastFriend,
-        friendRating: lastFriend,
-      } as { date: string; userRating?: number; friend1?: number; friendRating?: number };
+      return { date, userRating: lastUser, friend1: lastFriend, friendRating: lastFriend } as { date: string; userRating?: number; friend1?: number; friendRating?: number };
     });
   }, [data, selectedPlatform]);
 
@@ -85,7 +79,6 @@ function ComparePageContent() {
           <UserSelector />
         </div>
       </div>
-
       {!friendId ? (
         <Card padding="32px">
           <EmptyState icon={<GitCompare size={48} />} title="Select a friend" description="Choose a friend from the dropdown above to start comparing stats." />
@@ -104,7 +97,6 @@ function ComparePageContent() {
         <div className="space-y-6">
           <CompareHeader user={data.user} friend={data.friend} />
           <StatComparison user={data.user} friend={data.friend} />
-
           <div className="flex gap-6 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
             {TABS.map((tab) => {
               const active = activeTab === tab;
@@ -115,7 +107,6 @@ function ComparePageContent() {
               );
             })}
           </div>
-
           <AnimatePresence mode="wait">
             <motion.div key={activeTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tabTransition}>
               {activeTab === 'Overview' && (

@@ -66,11 +66,11 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
       style={{
         background: 'var(--bg-card)',
         borderRight: '1px solid var(--border-subtle)',
-        padding: sidebarCollapsed ? '20px 10px' : '20px 14px',
+        padding: sidebarCollapsed ? '12px 10px' : '12px 14px',
       }}
     >
       <div className="min-h-0 flex-1 overflow-visible">
-        <div className={`mb-5 flex items-center overflow-hidden border-b pb-4 ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`} style={{ borderColor: '#666666ff' }}>
+        <div className={`flex h-[64px] shrink-0 items-center overflow-hidden border-b ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`} style={{ borderColor: '#333333ff', marginLeft: '-14px', marginRight: '-14px', paddingLeft: '14px', paddingRight: '14px' }}>
           <div className={`flex min-w-0 items-center gap-3 ${sidebarCollapsed ? 'w-full justify-center' : ''}`}>
             <div className="flex shrink-0 items-center justify-center rounded-full p-[1.5px]" style={{ background: 'var(--brand)' }}>
               <div className="flex items-center justify-center rounded-full" style={{ width: '37px', height: '37px', background: 'var(--bg-elevated)' }}>
@@ -92,6 +92,8 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
           )}
         </div>
 
+        <div className="mt-3" />
+
         <nav className="flex flex-col gap-1 overflow-visible">
           {NAV_ITEMS.map((item) => {
             const active = isActive(item.href);
@@ -101,7 +103,7 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
               <Link
                 key={item.href}
                 href={item.href}
-                className={`group relative flex items-center gap-3 overflow-visible rounded-md py-[11px] hover:bg-[var(--bg-card-hover)] ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'}`}
+                className={`group relative flex items-center gap-3 overflow-visible rounded-lg py-[11px] transition-colors hover:bg-[var(--bg-card-hover)] ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'}`}
                 style={{
                   color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
                   fontWeight: active ? 600 : 400,
@@ -109,17 +111,34 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
                 }}
               >
                 {active && (
-                  <motion.span
-                    layoutId={mobile ? 'mobile-sidebar-active' : 'sidebar-active'}
-                    className="absolute inset-y-0 left-0 w-[2px]"
-                    style={{
-                      background: 'var(--brand)',
-                      boxShadow: '0 0 12px var(--brand-dim)',
-                    }}
-                    transition={{ type: 'spring', stiffness: 520, damping: 42, mass: 0.8 }}
-                  />
+                  <>
+                    {/* Subtle brand-tinted container */}
+                    <motion.span
+                      layoutId={mobile ? 'mobile-sidebar-active-bg' : 'sidebar-active-bg'}
+                      className="absolute inset-0 rounded-lg"
+                      style={{
+                        background: 'rgba(99,102,241,0.09)',
+                        border: '1px solid rgba(99,102,241,0.16)',
+                      }}
+                      transition={{ type: 'spring', stiffness: 520, damping: 42, mass: 0.8 }}
+                    />
+                    {/* Left accent line */}
+                    <motion.span
+                      layoutId={mobile ? 'mobile-sidebar-active' : 'sidebar-active'}
+                      className="absolute inset-y-0 left-0 w-[2.5px] rounded-full"
+                      style={{
+                        background: 'var(--brand)',
+                        boxShadow: '0 0 10px var(--brand-dim)',
+                      }}
+                      transition={{ type: 'spring', stiffness: 520, damping: 42, mass: 0.8 }}
+                    />
+                  </>
                 )}
-                <Icon size={22} className={`relative z-10 shrink-0 origin-center transition-transform duration-300 group-hover:text-[var(--text-primary)] ${item.label === 'Settings' ? 'group-hover:rotate-90' : 'group-hover:scale-110'}`} />
+                <Icon
+                  size={22}
+                  className={`relative z-10 shrink-0 origin-center transition-transform duration-300 ${item.label === 'Settings' ? 'group-hover:rotate-90' : 'group-hover:scale-110'}`}
+                  style={{ color: active ? 'var(--brand)' : undefined }}
+                />
                 {!sidebarCollapsed && <span className="relative z-10 text-[15px] group-hover:text-[var(--text-primary)]">{item.label}</span>}
                 
                 {sidebarCollapsed && (

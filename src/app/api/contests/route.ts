@@ -259,10 +259,7 @@ export async function GET() {
   const upcomingForUser = (['CODEFORCES', 'LEETCODE'] as const).flatMap((platform) =>
     upcoming.filter((contest) => {
       if (contest.platform !== platform) return false;
-      // Double-check contest is actually in the future (upcoming filter should handle this, but be safe)
       if (new Date(contest.startTime).getTime() <= now) return false;
-      // Only show contests with open registration — hides CF contests whose registration window hasn't started yet
-      if (contest.registrationOpen !== true) return false;
       return true;
     }),
   ).map((contest) => {
@@ -287,7 +284,7 @@ export async function GET() {
       solved: 0,
       total: contest.platform === 'LEETCODE' ? 4 : 6,
       href: contest.href,
-      registrationOpen: contest.registrationOpen ?? true,
+      registrationOpen: contest.registrationOpen ?? false,
     };
   });
 

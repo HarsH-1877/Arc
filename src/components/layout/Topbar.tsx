@@ -41,8 +41,11 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
     : (['CODEFORCES', 'LEETCODE'] as const);
 
   // When leaving contest-history, reset ALL → CODEFORCES so other pages get a valid platform
+  // When entering contest-history, default to ALL
   useEffect(() => {
-    if (!isContestHistoryPage && selectedPlatform === 'ALL') {
+    if (isContestHistoryPage && selectedPlatform !== 'ALL') {
+      setSelectedPlatform('ALL');
+    } else if (!isContestHistoryPage && selectedPlatform === 'ALL') {
       setSelectedPlatform('CODEFORCES');
     }
   }, [isContestHistoryPage, selectedPlatform, setSelectedPlatform]);
