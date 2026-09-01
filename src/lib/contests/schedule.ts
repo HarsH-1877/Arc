@@ -131,10 +131,11 @@ export async function fetchContestSchedule(): Promise<UpcomingContest[]> {
     for (const contest of cfContests) {
       if (contest.startTimeSeconds < twoMonthsAgo) continue;
       if (contest.phase === 'BEFORE' && contest.startTimeSeconds > now) {
-        const registrationOpen = contest.startTimeSeconds - now <= 7 * 24 * 60 * 60; // 7 days
+        // CF opens registration about 1-5 days before the contest
+        const registrationOpen = contest.startTimeSeconds - now <= 5 * 24 * 60 * 60;
         contests.push({
           id: `cf-${contest.id}`,
-          name: contest.name, // keep raw name so Div. pill can be extracted in the UI
+          name: contest.name,
           platform: 'CODEFORCES',
           startTime: new Date(contest.startTimeSeconds * 1000).toISOString(),
           durationSeconds: contest.durationSeconds,
@@ -178,7 +179,7 @@ export async function fetchContestSchedule(): Promise<UpcomingContest[]> {
       if (contest.startTime < twoMonthsAgo) continue;
       const isUpcoming = contest.startTime > now;
       const daysUntilStart = (contest.startTime - now) / 86400;
-      // Registration opens ~7 days before contest start time
+      // LC contest pages are live ~7 days before. Generated contests beyond that won't have a valid URL yet.
       const registrationOpen = isUpcoming && daysUntilStart <= 7;
       contests.push({
         id: `lc-${contest.titleSlug}`,

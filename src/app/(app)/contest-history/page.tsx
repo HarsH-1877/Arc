@@ -90,7 +90,9 @@ export default function ContestHistoryPage() {
   const platformFilter = selectedPlatform;
 
   const history = (data?.history ?? []).filter((contest) => platformFilter === 'ALL' || contest.platform === platformFilter);
-  const upcoming = (data?.upcoming ?? []).filter((contest) => (platformFilter === 'ALL' || contest.platform === platformFilter) && contest.registrationOpen !== false);
+  const upcomingAll = (data?.upcoming ?? []).filter((contest) => platformFilter === 'ALL' || contest.platform === platformFilter);
+  // Only show contests for which registration has started
+  const upcoming = upcomingAll.filter((c) => c.registrationOpen === true);
 
   const totalContests = history.length;
   const rankedContests = history.filter((c) => typeof c.rank === 'number' && c.rank > 0);

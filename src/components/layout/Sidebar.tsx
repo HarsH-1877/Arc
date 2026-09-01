@@ -66,33 +66,35 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
       style={{
         background: 'var(--bg-card)',
         borderRight: '1px solid var(--border-subtle)',
-        padding: sidebarCollapsed ? '12px 10px' : '12px 14px',
+        padding: sidebarCollapsed ? '8px 10px' : '8px 14px',
       }}
     >
       <div className="min-h-0 flex-1 overflow-visible">
-        <div className={`flex h-[64px] shrink-0 items-center overflow-hidden border-b ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`} style={{ borderColor: '#333333ff', marginLeft: '-14px', marginRight: '-14px', paddingLeft: '14px', paddingRight: '14px' }}>
+        <div 
+          className={`flex h-[56px] shrink-0 items-center rounded-lg px-3 ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`} 
+          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
+        >
           <div className={`flex min-w-0 items-center gap-3 ${sidebarCollapsed ? 'w-full justify-center' : ''}`}>
             <div className="flex shrink-0 items-center justify-center rounded-full p-[1.5px]" style={{ background: 'var(--brand)' }}>
-              <div className="flex items-center justify-center rounded-full" style={{ width: '37px', height: '37px', background: 'var(--bg-elevated)' }}>
-                <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{initials}</span>
+              <div className="flex items-center justify-center rounded-full" style={{ width: '34px', height: '34px', background: 'var(--bg-card)' }}>
+                <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{initials}</span>
               </div>
             </div>
             {!sidebarCollapsed && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-w-0">
-                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>Hello,</span>
-                <span className="block truncate" style={{ fontSize: 'var(--text-md)', fontWeight: 600, color: 'var(--text-primary)' }}>{userDisplayName}</span>
+                <span className="block truncate" style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{userDisplayName}</span>
               </motion.div>
             )}
           </div>
 
           {!sidebarCollapsed && (
-            <button className="flex shrink-0 items-center justify-center rounded-full p-2 transition-colors hover:bg-[var(--bg-card-hover)]" style={{ color: 'var(--text-secondary)', cursor: 'pointer', border: 'none', background: 'transparent' }} aria-label="Share profile">
-              <Share size={16} />
+            <button className="flex shrink-0 items-center justify-center rounded-full p-1.5 transition-colors hover:bg-[var(--bg-card-hover)]" style={{ color: 'var(--text-secondary)', cursor: 'pointer', border: 'none', background: 'transparent' }} aria-label="Share profile">
+              <Share size={14} />
             </button>
           )}
         </div>
 
-        <div className="mt-3" />
+        <div className="mt-4" />
 
         <nav className="flex flex-col gap-1 overflow-visible">
           {NAV_ITEMS.map((item) => {
@@ -103,7 +105,7 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
               <Link
                 key={item.href}
                 href={item.href}
-                className={`group relative flex items-center gap-3 overflow-visible rounded-lg py-[11px] transition-colors hover:bg-[var(--bg-card-hover)] ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'}`}
+                className={`group relative flex items-center gap-3 overflow-visible rounded-lg py-[11px] transition-colors hover:bg-[rgba(255,255,255,0.06)] ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'}`}
                 style={{
                   color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
                   fontWeight: active ? 600 : 400,
@@ -112,20 +114,22 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
               >
                 {active && (
                   <>
-                    {/* Subtle brand-tinted container */}
+                    {/* Subtle brand-tinted container — flat left (connects to bar), rounded right */}
                     <motion.span
                       layoutId={mobile ? 'mobile-sidebar-active-bg' : 'sidebar-active-bg'}
-                      className="absolute inset-0 rounded-lg"
+                      className="absolute inset-y-0 left-0 right-0 rounded-r-lg"
                       style={{
-                        background: 'rgba(99,102,241,0.09)',
-                        border: '1px solid rgba(99,102,241,0.16)',
+                        background: 'rgba(99,102,241,0.10)',
+                        borderTop: '1px solid rgba(99,102,241,0.16)',
+                        borderRight: '1px solid rgba(99,102,241,0.16)',
+                        borderBottom: '1px solid rgba(99,102,241,0.16)',
                       }}
                       transition={{ type: 'spring', stiffness: 520, damping: 42, mass: 0.8 }}
                     />
-                    {/* Left accent line */}
+                    {/* Left accent line — sits flush with the flat left of the container */}
                     <motion.span
                       layoutId={mobile ? 'mobile-sidebar-active' : 'sidebar-active'}
-                      className="absolute inset-y-0 left-0 w-[2.5px] rounded-full"
+                      className="absolute inset-y-0 left-0 w-[3px]"
                       style={{
                         background: 'var(--brand)',
                         boxShadow: '0 0 10px var(--brand-dim)',
@@ -137,7 +141,7 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
                 <Icon
                   size={22}
                   className={`relative z-10 shrink-0 origin-center transition-transform duration-300 ${item.label === 'Settings' ? 'group-hover:rotate-90' : 'group-hover:scale-110'}`}
-                  style={{ color: active ? 'var(--brand)' : undefined }}
+                  style={{ color: active ? '#ffffff' : undefined }}
                 />
                 {!sidebarCollapsed && <span className="relative z-10 text-[15px] group-hover:text-[var(--text-primary)]">{item.label}</span>}
                 

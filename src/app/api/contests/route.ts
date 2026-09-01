@@ -284,7 +284,7 @@ export async function GET() {
       solved: 0,
       total: contest.platform === 'LEETCODE' ? 4 : 6,
       href: contest.href,
-      registrationOpen: contest.registrationOpen ?? false,
+      registrationOpen: contest.registrationOpen ?? true,
     };
   });
 

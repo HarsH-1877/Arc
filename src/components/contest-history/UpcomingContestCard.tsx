@@ -51,7 +51,7 @@ export function UpcomingContestCard({ contest }: { contest: ContestItem }) {
 
   let displayId: string | null = null;
   let roundNumber: string | null = null;
-  const canRegister = contest.platform !== 'CODEFORCES' || contest.registrationOpen === true;
+  const canRegister = contest.registrationOpen === true;
   if (contest.platform === 'CODEFORCES') {
     // Extract round number from "Codeforces Round 998", "Codeforces Round #998", or "Educational Codeforces Round 172"
     const roundMatch = contest.name.match(/Round\s+#?(\d+)/i);
@@ -129,8 +129,8 @@ export function UpcomingContestCard({ contest }: { contest: ContestItem }) {
           REGISTER <ChevronRight size={14} strokeWidth={3} />
         </a>
       ) : (
-        <div className="flex w-full items-center justify-center py-3 text-[11px] font-bold tracking-[0.2em]" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', borderTop: '1px solid var(--border-subtle)' }}>
-          REGISTRATION SOON
+        <div className="flex w-full items-center justify-center gap-2 py-3 text-[11px] font-bold tracking-[0.15em]" style={{ background: 'rgba(251,191,36,0.08)', color: 'var(--accent-amber)', borderTop: '1px solid rgba(251,191,36,0.2)' }}>
+          <span>⏳</span> REGISTRATION SOON
         </div>
       )}
     </div>
