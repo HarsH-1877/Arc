@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { RANK_MILESTONES } from '@/lib/landing-tokens';
+import { RANK_MILESTONES, COLORS } from '@/lib/landing-tokens';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -58,8 +58,8 @@ export function MountainTrail() {
       strokeDashoffset: 1,
     });
 
-    // Active tier color starts as newbie color, updated on scroll
-    let activeTier: string = RANK_MILESTONES[0].color;
+    // Active tier color starts as expert color, updated on scroll
+    let activeTier: string = COLORS.tierExpert;
 
     // Flicker loop for core glow (real-time, not scroll-driven)
     let flickerPhase = 0;
@@ -138,7 +138,7 @@ export function MountainTrail() {
         }
 
         // Active tier: find the last milestone crossed
-        let tierColor: string = RANK_MILESTONES[0].color;
+        let tierColor: string = COLORS.tierExpert;
         for (const m of RANK_MILESTONES) {
           if (progress >= m.progress) tierColor = m.color;
         }

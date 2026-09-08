@@ -98,10 +98,10 @@ export function Hero() {
             <Link
               ref={ctaRef}
               href="/signup?fresh=1"
-              className="landing-connect-link relative z-20 inline-flex items-center gap-3 border font-mono text-[13px] font-medium uppercase tracking-[0.1em] px-6 py-3.5 transition-all duration-150 self-start shadow-[0_4px_20px_rgba(79,110,247,0.3)] hover:brightness-110"
+              className="landing-connect-link relative z-20 inline-flex items-center gap-3 border font-mono text-[13px] font-medium uppercase tracking-[0.1em] px-6 py-3.5 transition-all duration-150 self-start hover:brightness-110"
               style={{
-                background: 'var(--brand, #4f6ef7)',
-                borderColor: 'var(--brand, #4f6ef7)',
+                background: 'var(--active-tier, #3B7DDB)',
+                borderColor: 'var(--active-tier, #3B7DDB)',
                 borderRadius: 2,
                 color: '#FFFFFF',
                 transitionTimingFunction: 'cubic-bezier(0.4,0,0.2,1)',

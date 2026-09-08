@@ -105,7 +105,7 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
               <Link
                 key={item.href}
                 href={item.href}
-                className={`group relative flex items-center gap-3 overflow-visible rounded-lg py-[11px] transition-colors hover:bg-[rgba(255,255,255,0.06)] ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'}`}
+                className={`group relative flex items-center gap-3 overflow-visible rounded-r-lg py-[11px] transition-colors hover:bg-[rgba(255,255,255,0.06)] ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'}`}
                 style={{
                   color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
                   fontWeight: active ? 600 : 400,
@@ -116,7 +116,8 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
                   <>
                     {/* Subtle brand-tinted container — flat left (connects to bar), rounded right */}
                     <motion.span
-                      layoutId={mobile ? 'mobile-sidebar-active-bg' : 'sidebar-active-bg'}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
                       className="absolute inset-y-0 left-0 right-0 rounded-r-lg"
                       style={{
                         background: 'rgba(99,102,241,0.10)',
@@ -124,17 +125,18 @@ export function Sidebar({ mobile, profile }: { mobile?: boolean; profile?: any }
                         borderRight: '1px solid rgba(99,102,241,0.16)',
                         borderBottom: '1px solid rgba(99,102,241,0.16)',
                       }}
-                      transition={{ type: 'spring', stiffness: 520, damping: 42, mass: 0.8 }}
+                      transition={{ duration: 0.15 }}
                     />
                     {/* Left accent line — sits flush with the flat left of the container */}
                     <motion.span
-                      layoutId={mobile ? 'mobile-sidebar-active' : 'sidebar-active'}
+                      initial={{ opacity: 0, scaleY: 0.5 }}
+                      animate={{ opacity: 1, scaleY: 1 }}
                       className="absolute inset-y-0 left-0 w-[3px]"
                       style={{
                         background: 'var(--brand)',
                         boxShadow: '0 0 10px var(--brand-dim)',
                       }}
-                      transition={{ type: 'spring', stiffness: 520, damping: 42, mass: 0.8 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                     />
                   </>
                 )}

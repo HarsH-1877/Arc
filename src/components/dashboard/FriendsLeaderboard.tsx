@@ -8,6 +8,7 @@ import { MOCK_FRIENDS, MOCK_PROFILE } from '@/lib/mock/data';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useUIStore } from '@/store/useUIStore';
 import Link from 'next/link';
+import { cfRankName, cfRankColor } from '@/lib/codeforces/cf-rank';
 
 interface FriendsLeaderboardProps {
   compact?: boolean;
@@ -22,21 +23,19 @@ function rankClass(rank: number) {
 
 export function getRankAbbr(platform: 'ALL' | 'CODEFORCES' | 'LEETCODE', rating: number) {
   if (platform === 'CODEFORCES') {
-    if (rating < 1200) return 'NB';
-    if (rating < 1400) return 'PPL';
-    if (rating < 1600) return 'SP';
-    if (rating < 1900) return 'EXP';
-    if (rating < 2100) return 'CM';
-    if (rating < 2300) return 'M';
-    if (rating < 2400) return 'IM';
-    if (rating < 2600) return 'GM';
-    if (rating < 3000) return 'IGM';
-    return 'LGM';
+    return cfRankName(rating);
   } else {
-    if (rating >= 2200) return 'GRD';
-    if (rating >= 1850) return 'KNT';
+    if (rating >= 2200) return 'Guardian';
+    if (rating >= 1850) return 'Knight';
     return '';
   }
+}
+
+export function getRankColor(platform: 'ALL' | 'CODEFORCES' | 'LEETCODE', rating: number) {
+  if (platform === 'CODEFORCES') {
+    return cfRankColor(rating);
+  }
+  return undefined;
 }
 
 export function FriendsLeaderboard({ compact = false }: FriendsLeaderboardProps) {
@@ -96,7 +95,7 @@ export function FriendsLeaderboard({ compact = false }: FriendsLeaderboardProps)
         </span>
         <span className={`font-mono-data flex items-center gap-1 rounded-full px-2 py-1 text-xs ${user.isYou ? '' : 'group-hover:hidden'}`} style={{ color: user.isYou ? 'var(--brand)' : 'var(--text-secondary)', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
           {getRankAbbr(selectedPlatform, user.rating) && (
-            <span className="mr-1 text-[10px] font-bold opacity-60 uppercase tracking-wider">{getRankAbbr(selectedPlatform, user.rating)}</span>
+            <span className="mr-1 text-[10px] font-bold" style={{ color: getRankColor(selectedPlatform, user.rating) || 'inherit', opacity: getRankColor(selectedPlatform, user.rating) ? 1 : 0.6 }}>{getRankAbbr(selectedPlatform, user.rating)}</span>
           )}
           <ArrowUpRight size={12} style={{ color: 'var(--text-muted)' }} />
           {user.rating.toLocaleString()}

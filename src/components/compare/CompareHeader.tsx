@@ -4,22 +4,11 @@ import { UserAvatar } from '@/components/shared/UserAvatar';
 import { formatRelativeTime } from '@/lib/utils';
 import type { CompareUser } from '@/hooks/useCompareData';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
+import { cfRankName, cfRankColor } from '@/lib/codeforces/cf-rank';
 
 interface CompareHeaderProps {
   user: CompareUser;
   friend: CompareUser;
-}
-
-function getCFRank(rating: number) {
-  if (rating >= 3000) return 'LGM';
-  if (rating >= 2600) return 'IGM';
-  if (rating >= 2400) return 'GM';
-  if (rating >= 2100) return 'Master';
-  if (rating >= 1900) return 'CM';
-  if (rating >= 1600) return 'Expert';
-  if (rating >= 1400) return 'Specialist';
-  if (rating >= 1200) return 'Pupil';
-  return 'Newbie';
 }
 
 function getLCRank(rating: number) {
@@ -34,8 +23,9 @@ function ratingLabel(
   won: boolean,
   handle?: string | null,
 ) {
-  const rank = platform === 'CODEFORCES' ? (value ? getCFRank(value) : null) : (value ? getLCRank(value) : null);
   const isCf = platform === 'CODEFORCES';
+  const rank = isCf ? (value ? cfRankName(value) : null) : (value ? getLCRank(value) : null);
+  const rankColor = isCf && value ? cfRankColor(value) : undefined;
   const accent = isCf ? 'var(--accent-cyan)' : 'var(--accent-amber)';
   const profileUrl = handle
     ? platform === 'CODEFORCES'
@@ -55,7 +45,7 @@ function ratingLabel(
     >
       <PlatformLogo platform={platform} size={20} active={won} />
       {value != null ? Math.round(value).toLocaleString() : '-'}
-      {rank && <span className="ml-0.5 font-sans tracking-wide opacity-70">({rank})</span>}
+      {rank && <span className="ml-0.5 font-sans tracking-wide" style={{ color: rankColor || 'inherit', opacity: rankColor ? 1 : 0.7 }}>({rank})</span>}
       {handle && <span className="font-sans text-[10px] opacity-60 ml-0.5 max-w-[80px] truncate">({handle})</span>}
     </span>
   );

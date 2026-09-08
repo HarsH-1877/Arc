@@ -9,6 +9,7 @@ import { ArrowRight, CheckCircle2, Code2, Loader2, Trophy, XCircle } from 'lucid
 import { AuthStepper } from '@/components/auth/AuthStepper';
 import { useDebounce } from '@/hooks/useDebounce';
 import { EASE_OUT_FAST } from '@/lib/animations';
+import { cfRankName, cfRankColor } from '@/lib/codeforces/cf-rank';
 
 interface CFUser {
   handle: string;
@@ -180,7 +181,22 @@ export default function LinkAccountPage() {
               onChange={setCfHandle}
             >
               {cfUser && (
-                <PreviewRow image={cfUser.avatar} name={cfUser.handle} meta={[cfUser.rank, cfUser.rating ? String(cfUser.rating) : null].filter(Boolean).join(' · ')} />
+                <PreviewRow 
+                  image={cfUser.avatar} 
+                  name={cfUser.handle} 
+                  meta={
+                    <>
+                      {cfUser.rating ? (
+                        <span style={{ color: cfRankColor(cfUser.rating) }}>
+                          {cfRankName(cfUser.rating)}
+                        </span>
+                      ) : (
+                        cfUser.rank
+                      )}
+                      {cfUser.rating ? ` · ${cfUser.rating}` : ''}
+                    </>
+                  } 
+                />
               )}
             </HandleCard>
 
@@ -285,7 +301,7 @@ function HandleCard({
   );
 }
 
-function PreviewRow({ image, name, meta }: { image: string | null; name: string; meta: string }) {
+function PreviewRow({ image, name, meta }: { image: string | null; name: string; meta: ReactNode }) {
   return (
     <div className="mt-3 flex items-center gap-3 rounded-xl border border-[rgba(52,199,123,0.22)] bg-[rgba(52,199,123,0.08)] p-3">
       {image ? <Image src={image} width={36} height={36} alt="" className="h-9 w-9 rounded-lg object-cover" unoptimized /> : <div className="h-9 w-9 rounded-lg bg-[var(--bg-elevated)]" />}

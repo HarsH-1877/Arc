@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { BarChart2, UserMinus } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
-
+import { cfRankName, cfRankColor } from '@/lib/codeforces/cf-rank';
 interface FriendCardProps {
   friend: Friend;
   onUnfriend?: (friendshipId: string) => void;
@@ -35,10 +35,15 @@ function colorForName(name: string) {
 }
 
 function PlatformBadge({ platform, value }: { platform: 'CODEFORCES' | 'LEETCODE'; value: number }) {
+  const isCf = platform === 'CODEFORCES';
+  const rankStr = isCf ? cfRankName(value) : null;
+  const rankCol = isCf ? cfRankColor(value) : undefined;
+  
   return (
-    <span className="font-mono-data inline-flex w-[76px] items-center gap-2" style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)', borderRadius: '999px', padding: '3px 9px 3px 5px', fontSize: '12px', fontWeight: 700 }}>
+    <span className="font-mono-data inline-flex items-center gap-1.5" style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)', borderRadius: '999px', padding: '3px 9px 3px 5px', fontSize: '12px', fontWeight: 700 }}>
       <PlatformLogo platform={platform} size={22} />
       {Math.round(value)}
+      {rankStr && <span className="font-sans tracking-wide" style={{ color: rankCol, opacity: rankCol ? 1 : 0.7, fontSize: '10px' }}>({rankStr})</span>}
     </span>
   );
 }

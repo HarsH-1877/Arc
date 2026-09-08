@@ -411,7 +411,16 @@ export function ProblemsClient() {
 
             <div className="flex flex-wrap items-center gap-2.5">
               {/* Platform Filter Pills — logos only */}
-              <div className="flex items-center bg-[var(--bg-input)] p-1 rounded-lg border border-[var(--border-default)] gap-0.5 h-9">
+              <div
+                className="flex items-center bg-[var(--bg-input)] p-1 rounded-lg gap-0.5 h-9"
+                style={{
+                  border: platform === 'CODEFORCES'
+                    ? '1px solid rgba(30,136,229,0.55)'
+                    : platform === 'LEETCODE'
+                    ? '1px solid rgba(255,161,22,0.55)'
+                    : '1px solid var(--border-default)',
+                }}
+              >
                 {[
                   { id: 'ALL', label: 'All' },
                   { id: 'CODEFORCES', label: 'Codeforces' },

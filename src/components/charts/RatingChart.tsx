@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
   Area,
   ReferenceDot,
+  ReferenceLine,
 } from 'recharts';
 import { format } from 'date-fns';
 import { Card } from '@/components/shared/Card';
@@ -45,26 +46,26 @@ type FriendMode = 'top4' | 'avg';
 const TIME_FILTERS = ['Today', '7d', '2w', '1m', '3m', '1y'];
 const FRIEND_KEYS = ['friend1', 'friend2', 'friend3', 'friend4'] as const;
 const CF_MILESTONES = [
-  { value: 1200, label: 'PPL' },
-  { value: 1400, label: 'SP' },
-  { value: 1600, label: 'EXP' },
-  { value: 1900, label: 'CM' },
-  { value: 2100, label: 'M' },
-  { value: 2300, label: 'IM' },
-  { value: 2400, label: 'GM' },
-  { value: 2600, label: 'IGM' },
-  { value: 3000, label: 'LGM' },
+  { value: 1200, label: 'Pupil',              abbr: 'PPL', color: '#008000' },
+  { value: 1400, label: 'Specialist',         abbr: 'SP',  color: '#00C0C0' },
+  { value: 1600, label: 'Expert',             abbr: 'EXP', color: '#0000FF' },
+  { value: 1900, label: 'Candidate Master',   abbr: 'CM',  color: '#AA00AA' },
+  { value: 2100, label: 'Master',             abbr: 'M',   color: '#FF8C00' },
+  { value: 2300, label: 'Int. Master',        abbr: 'IM',  color: '#FF8C00' },
+  { value: 2400, label: 'Grandmaster',        abbr: 'GM',  color: '#FF0000' },
+  { value: 2600, label: 'Int. Grandmaster',   abbr: 'IGM', color: '#FF0000' },
+  { value: 3000, label: 'Legendary GM',       abbr: 'LGM', color: '#FF0000' },
 ];
 const LC_MILESTONES = [
-  { value: 1850, label: 'KNT' },
-  { value: 2200, label: 'GRD' },
+  { value: 1850, label: 'Knight',   abbr: 'KNT', color: undefined as string | undefined },
+  { value: 2200, label: 'Guardian', abbr: 'GRD', color: undefined as string | undefined },
 ];
 const LC_AXIS_TICKS = [1500, 1650, 1850, 2000, 2200, 2350, 2500];
 
 // For the right axis we only want to label the milestone tick positions, not all ticks.
 // Non-milestone ticks render as an empty string so no numbers bleed through on the right.
 function lcRightTickFormatter(val: number): string {
-  return LC_MILESTONES.find((m) => m.value === val)?.label ?? '';
+  return LC_MILESTONES.find((m) => m.value === val)?.abbr ?? '';
 }
 
 const SERIES = [
@@ -347,7 +348,7 @@ export function RatingChart({ data, loading, compact = false, compareMode = fals
               tickFormatter={(val) =>
                 selectedPlatform === 'LEETCODE'
                   ? lcRightTickFormatter(val)
-                  : activeMilestones.find((m) => m.value === val)?.label ?? String(val)
+                  : activeMilestones.find((m) => m.value === val)?.abbr ?? String(val)
               }
             />
             <Tooltip content={<CustomTooltip />} />
@@ -387,6 +388,25 @@ export function RatingChart({ data, loading, compact = false, compareMode = fals
                 fill="var(--accent-blue)"
                 stroke="rgba(255,255,255,0.9)"
                 strokeWidth={1.5}
+              />
+            ))}
+            {selectedPlatform === 'CODEFORCES' && activeMilestones.map((milestone) => (
+              <ReferenceLine
+                yAxisId="left"
+                key={`refline-${milestone.value}`}
+                y={milestone.value}
+                stroke={(milestone as any).color || 'rgba(255,255,255,0.12)'}
+                strokeDasharray="4 4"
+                strokeWidth={1}
+                strokeOpacity={0.45}
+                label={{
+                  value: (milestone as any).abbr || milestone.label,
+                  position: 'insideTopRight',
+                  fill: (milestone as any).color || 'var(--text-muted)',
+                  fontSize: 9,
+                  fontWeight: 700,
+                  offset: 4,
+                }}
               />
             ))}
           </ComposedChart>

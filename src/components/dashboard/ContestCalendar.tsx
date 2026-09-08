@@ -250,12 +250,12 @@ export function ContestCalendar({ events = [], loading = false }: ContestCalenda
               <div className="flex justify-between items-end mt-auto">
                 <div>
                   {event && event.platforms.length > 1 && (
-                    <ContestLogo item={event.platforms[1]} label={event.label} />
+                    <ContestLogo item={event.platforms[1]} label={event.label} date={event.date} />
                   )}
                 </div>
                 <div>
                   {event && event.platforms.length > 0 && (
-                    <ContestLogo item={event.platforms[0]} label={event.label} />
+                    <ContestLogo item={event.platforms[0]} label={event.label} date={event.date} />
                   )}
                 </div>
               </div>
@@ -282,7 +282,7 @@ export function ContestCalendar({ events = [], loading = false }: ContestCalenda
   );
 }
 
-function ContestLogo({ item, label }: { item: ContestDay['platforms'][number]; label: string }) {
+function ContestLogo({ item, label, date }: { item: ContestDay['platforms'][number]; label: string; date: Date }) {
   if (item.href) {
     return (
       <a
@@ -292,7 +292,8 @@ function ContestLogo({ item, label }: { item: ContestDay['platforms'][number]; l
         className="group inline-flex rounded-sm p-0.5 hover:bg-white/[0.08]"
         title={label}
         onClick={(e) => {
-          if (!item.registrationOpen) {
+          const isPast = new Date(date) < new Date();
+          if (!item.registrationOpen && !isPast) {
             e.preventDefault();
             toast.error('Registration not started yet', {
               description: 'Check back closer to the contest start time.',
