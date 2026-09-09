@@ -34,55 +34,11 @@ export function GoalSetter({ platform }: { platform: Platform }) {
   const [open, setOpen] = useState(false);
   const storageKey = `arc-goal-${platform}`;
 
-  const [goalType, setGoalType] = useState<GoalType>(() => {
-    if (typeof window === 'undefined') return 'rating';
-    try {
-      const saved = localStorage.getItem(`${storageKey}-type`);
-      return (saved as GoalType) || 'rating';
-    } catch {
-      return 'rating';
-    }
-  });
-
-  const [customRatingTarget, setCustomRatingTarget] = useState<number>(() => {
-    if (typeof window === 'undefined') return 1800;
-    try {
-      const saved = localStorage.getItem(`${storageKey}-rating`);
-      return saved ? Number(saved) : 1800;
-    } catch {
-      return 1800;
-    }
-  });
-
-  const [questionTarget, setQuestionTarget] = useState<number>(() => {
-    if (typeof window === 'undefined') return 500;
-    try {
-      const saved = localStorage.getItem(`${storageKey}-questions`);
-      return saved ? Number(saved) : 500;
-    } catch {
-      return 500;
-    }
-  });
-
-  const [cfRank, setCfRank] = useState<RankGoal>(() => {
-    if (typeof window === 'undefined') return CODEFORCES_RANKS[2];
-    try {
-      const savedLabel = localStorage.getItem('arc-goal-cfrank');
-      return CODEFORCES_RANKS.find((r) => r.label === savedLabel) ?? CODEFORCES_RANKS[2];
-    } catch {
-      return CODEFORCES_RANKS[2];
-    }
-  });
-
-  const [lcRank, setLcRank] = useState<RankGoal>(() => {
-    if (typeof window === 'undefined') return LEETCODE_RANKS[0];
-    try {
-      const savedLabel = localStorage.getItem('arc-goal-lcrank');
-      return LEETCODE_RANKS.find((r) => r.label === savedLabel) ?? LEETCODE_RANKS[0];
-    } catch {
-      return LEETCODE_RANKS[0];
-    }
-  });
+  const [goalType, setGoalType] = useState<GoalType>('rating');
+  const [customRatingTarget, setCustomRatingTarget] = useState<number>(1800);
+  const [questionTarget, setQuestionTarget] = useState<number>(500);
+  const [cfRank, setCfRank] = useState<RankGoal>(CODEFORCES_RANKS[2]);
+  const [lcRank, setLcRank] = useState<RankGoal>(LEETCODE_RANKS[0]);
 
   const [rankOpen, setRankOpen] = useState(false);
   const goalMenuRef = useRef<HTMLDivElement>(null);
@@ -103,6 +59,18 @@ export function GoalSetter({ platform }: { platform: Platform }) {
 
       const savedQuestions = localStorage.getItem(`${storageKey}-questions`);
       if (savedQuestions) setQuestionTarget(Number(savedQuestions));
+
+      const savedCfRank = localStorage.getItem('arc-goal-cfrank');
+      if (savedCfRank) {
+        const found = CODEFORCES_RANKS.find(r => r.label === savedCfRank);
+        if (found) setCfRank(found);
+      }
+
+      const savedLcRank = localStorage.getItem('arc-goal-lcrank');
+      if (savedLcRank) {
+        const found = LEETCODE_RANKS.find(r => r.label === savedLcRank);
+        if (found) setLcRank(found);
+      }
     } catch {
       // Ignore
     }

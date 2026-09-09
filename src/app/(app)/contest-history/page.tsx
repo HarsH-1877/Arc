@@ -101,29 +101,18 @@ export default function ContestHistoryPage() {
     ? Math.round(rankedContests.reduce((sum, c) => sum + (c.rank ?? 0), 0) / rankedContests.length)
     : platformFilter === 'ALL' ? (data?.stats?.avgRank ?? 0) : 0;
 
-  const bestContestCF = history.filter(c => c.platform === 'CODEFORCES').length > 0
-    ? history.filter(c => c.platform === 'CODEFORCES').reduce((best, c) => {
-        const deltaC = c.after - c.before;
-        const deltaB = best.after - best.before;
-        return deltaC > deltaB ? c : best;
-      }, history.filter(c => c.platform === 'CODEFORCES')[0])
-    : null;
+  function pickBestContest(list: ContestItem[]): ContestItem | null {
+    if (!list.length) return null;
+    const withRank = list.filter((c) => typeof c.rank === 'number' && (c.rank ?? 0) > 0);
+    if (withRank.length > 0) {
+      return withRank.reduce((best, c) => (c.rank! < best.rank! ? c : best));
+    }
+    return list.reduce((best, c) => (c.after - c.before > best.after - best.before ? c : best));
+  }
 
-  const bestContestLC = history.filter(c => c.platform === 'LEETCODE').length > 0
-    ? history.filter(c => c.platform === 'LEETCODE').reduce((best, c) => {
-        const deltaC = c.after - c.before;
-        const deltaB = best.after - best.before;
-        return deltaC > deltaB ? c : best;
-      }, history.filter(c => c.platform === 'LEETCODE')[0])
-    : null;
-
-  const bestContest = history.length > 0
-    ? history.reduce((best, c) => {
-        const deltaC = c.after - c.before;
-        const deltaB = best.after - best.before;
-        return deltaC > deltaB ? c : best;
-      }, history[0])
-    : null;
+  const bestContestCF = pickBestContest(history.filter((c) => c.platform === 'CODEFORCES'));
+  const bestContestLC = pickBestContest(history.filter((c) => c.platform === 'LEETCODE'));
+  const bestContest = pickBestContest(history);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -203,10 +192,15 @@ export default function ContestHistoryPage() {
                       <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{formatDate(bc.date)}</p>
                     </div>
                   </div>
-                  <div className="shrink-0 flex items-center gap-1">
-                    <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>{bc.before}</span>
-                    <ArrowUpRight size={12} style={{ color: 'var(--success)' }} />
-                    <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--text-primary)' }}>{bc.after}</span>
+                  <div className="shrink-0 text-right">
+                    <div className="flex items-center gap-1">
+                      <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>{bc.before}</span>
+                      <ArrowUpRight size={12} style={{ color: 'var(--success)' }} />
+                      <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--text-primary)' }}>{bc.after}</span>
+                    </div>
+                    {typeof bc.rank === 'number' && bc.rank > 0 && (
+                      <p className="font-mono-data text-[10px] font-bold mt-0.5" style={{ color: 'var(--text-muted)' }}>#{bc.rank.toLocaleString()}</p>
+                    )}
                   </div>
                 </a>
               ) : null)}
@@ -240,6 +234,11 @@ export default function ContestHistoryPage() {
                     +{bestContest.after - bestContest.before}
                   </span>
                 </div>
+                {typeof bestContest.rank === 'number' && bestContest.rank > 0 && (
+                  <p className="mt-0.5 font-mono-data text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>
+                    #{bestContest.rank.toLocaleString()}
+                  </p>
+                )}
               </div>
               <ExternalLink size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
             </a>

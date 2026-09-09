@@ -249,6 +249,11 @@ export async function GET() {
     .map((platform) => {
       const platformHistory = history.filter((contest) => contest.platform === platform);
       if (!platformHistory.length) return null;
+      // Best = lowest rank (rank 1 = best). Fall back to highest ratingChange if no rank data.
+      const withRank = platformHistory.filter((c) => typeof c.rank === 'number' && c.rank! > 0);
+      if (withRank.length > 0) {
+        return withRank.reduce((best, contest) => (contest.rank! < best.rank! ? contest : best));
+      }
       return platformHistory.reduce((best, contest) =>
         contest.ratingChange > best.ratingChange ? contest : best,
       );

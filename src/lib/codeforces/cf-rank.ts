@@ -12,14 +12,14 @@ export function cfRankColor(rating: number): string {
 }
 
 export function cfRankName(rating: number): string {
-  if (rating >= 3000) return 'Legendary Grandmaster';
-  if (rating >= 2600) return 'International Grandmaster';
-  if (rating >= 2400) return 'Grandmaster';
-  if (rating >= 2300) return 'International Master';
-  if (rating >= 2100) return 'Master';
-  if (rating >= 1900) return 'Candidate Master';
-  if (rating >= 1600) return 'Expert';
-  if (rating >= 1400) return 'Specialist';
-  if (rating >= 1200) return 'Pupil';
-  return 'Newbie';
+  if (rating >= 3000) return 'LGM';
+  if (rating >= 2600) return 'IGM';
+  if (rating >= 2400) return 'GM';
+  if (rating >= 2300) return 'IM';
+  if (rating >= 2100) return 'M';
+  if (rating >= 1900) return 'CM';
+  if (rating >= 1600) return 'EXP';
+  if (rating >= 1400) return 'SP';
+  if (rating >= 1200) return 'PPL';
+  return 'NB';
 }

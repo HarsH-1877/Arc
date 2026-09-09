@@ -418,7 +418,7 @@ export function ProblemsClient() {
                     ? '1px solid rgba(30,136,229,0.55)'
                     : platform === 'LEETCODE'
                     ? '1px solid rgba(255,161,22,0.55)'
-                    : '1px solid var(--border-default)',
+                    : '1px solid rgba(255,255,255,0.3)',
                 }}
               >
                 {[

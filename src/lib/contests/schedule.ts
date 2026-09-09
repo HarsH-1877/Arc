@@ -131,8 +131,8 @@ export async function fetchContestSchedule(): Promise<UpcomingContest[]> {
     for (const contest of cfContests) {
       if (contest.startTimeSeconds < twoMonthsAgo) continue;
       if (contest.phase === 'BEFORE' && contest.startTimeSeconds > now) {
-        // CF opens registration about 1-5 days before the contest
-        const registrationOpen = contest.startTimeSeconds - now <= 5 * 24 * 60 * 60;
+        // CF opens registration ~1-2 days before the contest. Use 2 days as threshold.
+        const registrationOpen = contest.startTimeSeconds - now <= 2 * 24 * 60 * 60;
         contests.push({
           id: `cf-${contest.id}`,
           name: contest.name,

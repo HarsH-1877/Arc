@@ -399,14 +399,6 @@ export function RatingChart({ data, loading, compact = false, compareMode = fals
                 strokeDasharray="4 4"
                 strokeWidth={1}
                 strokeOpacity={0.45}
-                label={{
-                  value: (milestone as any).abbr || milestone.label,
-                  position: 'insideTopRight',
-                  fill: (milestone as any).color || 'var(--text-muted)',
-                  fontSize: 9,
-                  fontWeight: 700,
-                  offset: 4,
-                }}
               />
             ))}
           </ComposedChart>
