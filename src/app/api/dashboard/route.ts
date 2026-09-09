@@ -39,7 +39,6 @@ export async function GET() {
     db.submission.findMany({
       where: {
         connectionId: { in: connectionIds },
-        verdict: { in: ['OK', 'Accepted', 'AC'] },
         timestamp: { gte: new Date(Date.now() - 365 * 86400000) },
       },
       select: { timestamp: true, platform: true },
@@ -70,12 +69,15 @@ export async function GET() {
     CODEFORCES: {},
     LEETCODE: {},
   };
+  const allHeatmapMap: Record<string, number> = {};
   for (const sub of heatmapSubs) {
     const day = sub.timestamp.toISOString().slice(0, 10);
     heatmapMaps[sub.platform][day] = (heatmapMaps[sub.platform][day] ?? 0) + 1;
+    allHeatmapMap[day] = (allHeatmapMap[day] ?? 0) + 1;
   }
   const codeforcesHeatmapData = Object.entries(heatmapMaps.CODEFORCES).map(([date, count]) => ({ date, count }));
   const leetcodeHeatmapData = Object.entries(heatmapMaps.LEETCODE).map(([date, count]) => ({ date, count }));
+  const allHeatmapData = Object.entries(allHeatmapMap).map(([date, count]) => ({ date, count }));
 
   // ── Build LC rating history ──────────────────────────────────────────────
   // Fallback chain (most to least preferred):
@@ -380,7 +382,7 @@ export async function GET() {
           totalActiveDays: user.streaks.totalActiveDays,
         }
       : { currentStreak: 0, longestStreak: 0, freezeTokens: 2, totalActiveDays: 0 },
-    heatmapData: codeforcesHeatmapData,
+    heatmapData: allHeatmapData,
     codeforcesHeatmapData,
     leetcodeHeatmapData,
     ratingChartData,

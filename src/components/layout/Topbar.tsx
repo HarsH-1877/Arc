@@ -40,21 +40,19 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
     ? (['ALL', 'CODEFORCES', 'LEETCODE'] as const)
     : (['CODEFORCES', 'LEETCODE'] as const);
 
-  // When leaving contest-history, reset ALL → CODEFORCES so other pages get a valid platform
-  // When entering contest-history, default to ALL
+  const prevIsContestHistoryRef = useRef(false);
+
+  // When entering contest-history, default display to ALL platforms.
+  // When leaving contest-history, reset ALL → CODEFORCES so other pages get a valid platform.
   useEffect(() => {
-    if (isContestHistoryPage) {
-      // When entering contest-history, only override if current value is invalid
-      const current = useUIStore.getState().selectedPlatform;
-      if (current !== 'ALL' && current !== 'CODEFORCES' && current !== 'LEETCODE') {
-        setSelectedPlatform('ALL');
-      }
-    } else {
-      // When leaving contest-history, reset ALL → CODEFORCES so other pages get a valid platform
+    if (isContestHistoryPage && !prevIsContestHistoryRef.current) {
+      setSelectedPlatform('ALL');
+    } else if (!isContestHistoryPage && prevIsContestHistoryRef.current) {
       if (useUIStore.getState().selectedPlatform === 'ALL') {
         setSelectedPlatform('CODEFORCES');
       }
     }
+    prevIsContestHistoryRef.current = isContestHistoryPage;
   }, [isContestHistoryPage, setSelectedPlatform]);
 
   const displayPlatform = (!isContestHistoryPage && selectedPlatform === 'ALL') ? 'CODEFORCES' : selectedPlatform;

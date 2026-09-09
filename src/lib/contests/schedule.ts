@@ -131,8 +131,9 @@ export async function fetchContestSchedule(): Promise<UpcomingContest[]> {
     for (const contest of cfContests) {
       if (contest.startTimeSeconds < twoMonthsAgo) continue;
       if (contest.phase === 'BEFORE' && contest.startTimeSeconds > now) {
-        // CF opens registration ~1-2 days before the contest. Use 2 days as threshold.
-        const registrationOpen = contest.startTimeSeconds - now <= 2 * 24 * 60 * 60;
+        // CF opens registration ~3 days (72-76 hours) before the contest.
+        // Contests ~2-3 days away are open, but 4+ days away are not yet open.
+        const registrationOpen = contest.startTimeSeconds - now <= Math.floor(3.2 * 24 * 60 * 60);
         contests.push({
           id: `cf-${contest.id}`,
           name: contest.name,
@@ -226,6 +227,15 @@ export function buildContestCalendarEvents(
     });
   }
 
+  // Index schedule contests by platform:date to detect multiple contests on the same day
+  const scheduleByPlatformDate = new Map<string, UpcomingContest[]>();
+  for (const contest of schedule) {
+    const d = contest.startTime.slice(0, 10);
+    const k = `${contest.platform}:${d}`;
+    if (!scheduleByPlatformDate.has(k)) scheduleByPlatformDate.set(k, []);
+    scheduleByPlatformDate.get(k)!.push(contest);
+  }
+
   for (const contest of schedule) {
     const startMs = new Date(contest.startTime).getTime();
     const date = contest.startTime.slice(0, 10);
@@ -237,13 +247,25 @@ export function buildContestCalendarEvents(
     if (alreadyListed || attendedContestKeys.has(key) || attendedDates.has(datePlatformKey)) continue;
 
     if (startMs >= now) {
+      const sameDay = scheduleByPlatformDate.get(datePlatformKey) ?? [contest];
+      const isMultiple = sameDay.length > 1;
+      const isCf = contest.platform === 'CODEFORCES';
+      const registrationOpen = sameDay.some((c) => c.registrationOpen);
+      // If multiple CF contests on the same day, take user to the general /contests page
+      const href = isMultiple && isCf
+        ? 'https://codeforces.com/contests'
+        : contest.href;
+      const label = isMultiple
+        ? sameDay.map((c) => c.name).join(' & ')
+        : contest.name;
+
       events.push({
         date,
-        label: contest.name,
+        label,
         platform: contest.platform,
         type: 'upcoming',
-        href: contest.href,
-        registrationOpen: contest.registrationOpen,
+        href,
+        registrationOpen,
       });
       continue;
     }

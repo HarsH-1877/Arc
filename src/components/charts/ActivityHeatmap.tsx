@@ -179,7 +179,7 @@ export function ActivityHeatmap({ data, loading, accentColor = 'blue', compact =
 
       {tooltip && (
         <div className="fixed z-50 rounded-lg px-3 py-2 text-xs pointer-events-none" style={{ left: tooltip.x - 60, top: tooltip.y - 52, background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', color: 'var(--text-primary)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>
-          <p className="font-medium">{tooltip.count} {tooltip.count === 1 ? 'problem' : 'problems'} solved</p>
+          <p className="font-medium">{tooltip.count} {tooltip.count === 1 ? 'submission' : 'submissions'}</p>
           <p style={{ color: 'var(--text-secondary)' }}>{tooltip.date}</p>
         </div>
       )}

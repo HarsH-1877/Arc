@@ -259,7 +259,6 @@ export async function GET(_req: Request, { params }: { params: { friendId: strin
       const subs = await db.submission.findMany({
         where: {
           connectionId: { in: connections.map((c) => c.id) },
-          verdict: { in: ['OK', 'Accepted', 'AC'] },
           timestamp: { gte: oneYearAgo },
         },
         select: { timestamp: true, connectionId: true },
