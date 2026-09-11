@@ -293,10 +293,11 @@ export function ProblemsClient() {
           data={dashboardData}
           platform={platform as any}
           loading={dashboardLoading}
+          className="min-h-[180px] overflow-hidden"
         />
 
         {/* Card 2: Accuracy */}
-        <Card padding="12px 16px" className="flex flex-col justify-between min-h-[100px]">
+        <Card padding="12px 16px" className="flex flex-col justify-between min-h-[180px]">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Accuracy</span>
             <div className="p-1.5 rounded-lg" style={{ background: 'rgba(79,142,247,0.1)', border: '1px solid rgba(79,142,247,0.2)' }}>
@@ -317,7 +318,7 @@ export function ProblemsClient() {
         </Card>
 
         {/* Card 3: Topic Weakness */}
-        <Card padding="12px 14px" className="flex flex-col min-h-[100px]">
+        <Card padding="12px 14px" className="flex flex-col min-h-[180px]">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Topic Weakness</span>
             <div className="p-1 rounded-lg" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)' }}>
@@ -352,7 +353,7 @@ export function ProblemsClient() {
         </Card>
 
         {/* Card 4: Language Distribution */}
-        <Card padding="12px 14px" className="flex flex-col min-h-[100px]">
+        <Card padding="12px 14px" className="flex flex-col min-h-[180px]">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>Language Distribution</span>
             <div className="p-1 rounded-lg" style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)' }}>

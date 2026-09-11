@@ -7,9 +7,43 @@ import { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import gsap from 'gsap';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNotifications } from '@/hooks/useNotifications';
 import { MOCK_PROFILE } from '@/lib/mock/data';
+
+/** Silently prefetches all main page data in the background the moment the shell mounts.
+ * Fills the React Query cache so navigation to any page feels near-instant. */
+function DataPrefetcher() {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    const tasks = [
+      { key: ['dashboard'], url: '/api/dashboard', delay: 0 },
+      { key: ['contests'], url: '/api/contests', delay: 300 },
+      { key: ['problems', 'stats'], url: '/api/problems/stats', delay: 600 },
+      { key: ['friends'], url: '/api/friends', delay: 900 },
+    ];
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    for (const { key, url, delay } of tasks) {
+      timers.push(
+        setTimeout(() => {
+          queryClient.prefetchQuery({
+            queryKey: key,
+            queryFn: async () => {
+              const res = await fetch(url);
+              if (!res.ok) return null;
+              return res.json();
+            },
+            staleTime: 60_000,
+          });
+        }, delay),
+      );
+    }
+    return () => timers.forEach(clearTimeout);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return null;
+}
+
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -55,6 +89,7 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="relative z-10 flex h-screen w-full overflow-hidden">
+      <DataPrefetcher />
       <div
         className="relative flex h-screen w-full overflow-hidden"
         style={{

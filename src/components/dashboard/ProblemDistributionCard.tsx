@@ -67,7 +67,7 @@ function HistogramTooltip({ active, payload }: any) {
   );
 }
 
-export function ProblemDistributionCard({ data, platform, loading, children }: ProblemDistributionCardProps) {
+export function ProblemDistributionCard({ data, platform, loading, children, className }: ProblemDistributionCardProps & { className?: string }) {
   const leetcode = data?.platforms.leetcode;
   const total = leetcode?.totalSolved ?? 0;
   const pieData = [
@@ -79,7 +79,7 @@ export function ProblemDistributionCard({ data, platform, loading, children }: P
   const cfTotal = data?.platforms.codeforces?.totalSolved ?? histogram.reduce((sum, bucket) => sum + bucket.count, 0);
 
   return (
-    <Card variant="base" className="min-h-[128px] overflow-hidden" padding="20px 24px">
+    <Card variant="base" className={className || "min-h-[128px] overflow-hidden"} padding="20px 24px">
       {children}
       <div className="relative z-10 flex h-full flex-col gap-4">
         <div className="flex items-center justify-between">

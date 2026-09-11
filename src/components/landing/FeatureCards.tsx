@@ -144,7 +144,7 @@ export function FeatureCards() {
               </h2>
               <p className="text-base md:text-lg font-light leading-relaxed text-[#EDEAE4] mb-12 max-w-2xl">
                 Every platform ranks you against millions of strangers. None rank you against your friends. 
-                Arc builds that leaderboard, pulling stats from every platform you and your friends use giving a detailed 1v1 breakdowns.
+                Arc builds that leaderboard, pulling stats from every platform you and your friends use, also giving a detailed 1v1 breakdowns.
               </p>
               <div className="flex items-center gap-12 pt-6">
                 <div>

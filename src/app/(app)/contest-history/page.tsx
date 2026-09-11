@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Card } from '@/components/shared/Card';
+import { CombinedRatingCard } from '@/components/contest-history/CombinedRatingCard';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
 import { ArrowDownRight, ArrowUpRight, CalendarClock, ExternalLink, Loader2, TrendingUp, Trophy } from 'lucide-react';
 import { UpcomingContestCard } from '@/components/contest-history/UpcomingContestCard';
@@ -121,9 +122,9 @@ export default function ContestHistoryPage() {
         <p className="text-sm text-[var(--color-danger)]">Could not load contest data. Link your platforms and sync from Settings.</p>
       )}
 
-      {/* Top 3 Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card padding="18px" className="gap-2">
+      {/* Top Stats Cards: [Total] [Combined Avg+Rating] [Best Contest] */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[160px_1fr_280px] items-stretch">
+        <Card padding="18px" className="gap-2 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>
               Total Contests
@@ -140,110 +141,107 @@ export default function ContestHistoryPage() {
           </div>
         </Card>
 
-        <Card padding="18px" className="gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>
-              Avg Rank
-            </span>
-            <TrendingUp size={18} style={{ color: 'var(--accent-purple)' }} />
-          </div>
-          <div className="mt-1">
-            <span className="font-mono-data text-2xl font-black" style={{ color: 'var(--text-primary)' }}>
-              {isLoading ? '...' : avgRank > 0 ? `#${avgRank.toLocaleString()}` : 'N/A'}
-            </span>
-            <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-              {rankedContests.length > 0 ? `From ${rankedContests.length} ranked contests` : 'No ranked contests'}
-            </p>
-          </div>
-        </Card>
+        <CombinedRatingCard
+          avgRank={avgRank}
+          rankedContests={rankedContests.length}
+          history={history}
+          isLoading={isLoading}
+        />
 
-        <Card padding="18px" className="gap-2">
-          <div className="flex items-center justify-between">
+        <Card padding="18px" className="gap-2 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>
               Best Contest
             </span>
-            <Trophy size={18} style={{ color: 'var(--accent-amber)' }} />
+            <Trophy size={16} style={{ color: 'var(--accent-amber)' }} />
           </div>
           {isLoading ? (
-            <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>Loading...</p>
+            <div className="space-y-2">
+              <div className="skeleton h-12 w-full rounded-xl" />
+              <div className="skeleton h-12 w-full rounded-xl" />
+            </div>
           ) : platformFilter === 'ALL' ? (
-            // Show both CF and LC best when ALL is selected
-            <div className="mt-1 flex flex-col gap-2">
+            /* Show both CF and LC best */
+            <div className="flex flex-col gap-2.5 flex-1 justify-end">
               {[bestContestCF, bestContestLC].map((bc) => bc ? (
                 <a
                   key={bc.id}
                   href={bc.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center justify-between gap-2 rounded-xl px-3 py-2 transition-all hover:-translate-y-0.5"
+                  className="group flex items-center gap-3 rounded-2xl px-3.5 py-3 transition-all duration-200 hover:-translate-y-0.5"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(251,191,36,0.08), rgba(79,142,247,0.04))',
-                    border: '1px solid rgba(251,191,36,0.25)',
+                    background: 'rgba(251,191,36,0.05)',
+                    border: '1px solid rgba(251,191,36,0.18)',
                     textDecoration: 'none',
-                    boxShadow: '0 0 12px rgba(251,191,36,0.08)',
                   }}
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <PlatformLogo platform={bc.platform} size={14} />
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-bold" style={{ color: 'var(--text-primary)' }} title={bc.name}>
-                        {bc.name}
-                      </p>
-                      <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{formatDate(bc.date)}</p>
-                    </div>
+                  <PlatformLogo platform={bc.platform} size={16} />
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate text-[11px] font-semibold leading-tight" style={{ color: 'var(--text-primary)' }} title={bc.name}>
+                      {bc.name}
+                    </p>
+                    <p className="text-[9px] mt-0.5 font-medium" style={{ color: 'var(--text-muted)' }}>{formatDate(bc.date)}</p>
                   </div>
-                  <div className="shrink-0 text-right">
-                    <div className="flex items-center gap-1">
-                      <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>{bc.before}</span>
-                      <ArrowUpRight size={12} style={{ color: 'var(--success)' }} />
-                      <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--text-primary)' }}>{bc.after}</span>
-                    </div>
+                  <div className="shrink-0 flex flex-col items-end gap-0.5">
+                    <span className="font-mono-data text-[11px] font-black px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(52,211,153,0.1)', color: 'var(--success)', border: '1px solid rgba(52,211,153,0.2)' }}>
+                      +{bc.after - bc.before}
+                    </span>
                     {typeof bc.rank === 'number' && bc.rank > 0 && (
-                      <p className="font-mono-data text-[10px] font-bold mt-0.5" style={{ color: 'var(--text-muted)' }}>#{bc.rank.toLocaleString()}</p>
+                      <span className="font-mono-data text-[9px] font-semibold" style={{ color: 'var(--text-muted)' }}>
+                        #{bc.rank.toLocaleString()}
+                      </span>
                     )}
                   </div>
                 </a>
               ) : null)}
               {!bestContestCF && !bestContestLC && (
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>No contest data</p>
+                <p className="text-xs py-4 text-center" style={{ color: 'var(--text-muted)' }}>No contest data</p>
               )}
             </div>
           ) : bestContest ? (
+            /* Single platform: full detail layout */
             <a
               href={bestContest.href}
               target="_blank"
               rel="noreferrer"
-              className="mt-1 flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 transition-all hover:-translate-y-0.5"
+              className="flex-1 flex flex-col justify-between rounded-2xl px-4 py-3.5 transition-all duration-200 hover:-translate-y-0.5"
               style={{
-                background: 'linear-gradient(135deg, rgba(251,191,36,0.10), rgba(79,142,247,0.04))',
-                border: '1px solid rgba(251,191,36,0.30)',
+                background: 'linear-gradient(135deg, rgba(251,191,36,0.07), rgba(251,191,36,0.02))',
+                border: '1px solid rgba(251,191,36,0.22)',
                 textDecoration: 'none',
-                boxShadow: '0 0 16px rgba(251,191,36,0.10)',
               }}
             >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold" style={{ color: 'var(--text-primary)' }} title={bestContest.name}>
+              <div>
+                <p className="text-[11px] font-bold leading-snug" style={{ color: 'var(--text-primary)' }} title={bestContest.name}>
                   {bestContest.name}
                 </p>
-                <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{formatDate(bestContest.date)}</p>
-                <div className="mt-1 flex items-center gap-1.5">
-                  <span className="font-mono-data text-xs font-bold" style={{ color: 'var(--text-secondary)' }}>{bestContest.before}</span>
-                  <ArrowUpRight size={13} style={{ color: 'var(--success)' }} />
-                  <span className="font-mono-data text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{bestContest.after}</span>
-                  <span className="rounded-md px-1.5 py-0.5 font-mono-data text-[10px] font-black" style={{ border: '1px solid rgba(52,211,153,0.3)', background: 'rgba(52,211,153,0.1)', color: 'var(--success)' }}>
-                    +{bestContest.after - bestContest.before}
-                  </span>
+                <p className="text-[9px] mt-0.5 font-medium" style={{ color: 'var(--text-muted)' }}>{formatDate(bestContest.date)}</p>
+              </div>
+              <div className="flex items-end justify-between mt-3">
+                <div>
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.06em] mb-0.5" style={{ color: 'var(--text-muted)' }}>Rating Change</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono-data text-[11px]" style={{ color: 'var(--text-muted)' }}>{bestContest.before}</span>
+                    <ArrowUpRight size={11} style={{ color: 'var(--success)' }} />
+                    <span className="font-mono-data text-sm font-black" style={{ color: 'var(--text-primary)' }}>{bestContest.after}</span>
+                    <span className="font-mono-data text-[10px] font-black px-1.5 py-0.5 rounded-md ml-0.5" style={{ background: 'rgba(52,211,153,0.1)', color: 'var(--success)', border: '1px solid rgba(52,211,153,0.2)' }}>
+                      +{bestContest.after - bestContest.before}
+                    </span>
+                  </div>
                 </div>
                 {typeof bestContest.rank === 'number' && bestContest.rank > 0 && (
-                  <p className="mt-0.5 font-mono-data text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>
-                    #{bestContest.rank.toLocaleString()}
-                  </p>
+                  <div className="text-right">
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.06em] mb-0.5" style={{ color: 'var(--text-muted)' }}>Rank</p>
+                    <p className="font-mono-data text-lg font-black leading-none" style={{ color: 'var(--accent-amber)' }}>
+                      #{bestContest.rank.toLocaleString()}
+                    </p>
+                  </div>
                 )}
               </div>
-              <ExternalLink size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
             </a>
           ) : (
-            <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>No contest data</p>
+            <p className="text-xs py-4 text-center flex-1 flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>No contest data</p>
           )}
         </Card>
       </div>
