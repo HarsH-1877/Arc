@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, CalendarClock, CheckCircle2, ChevronDown, Sun, RefreshCw, Menu, UserPlus } from 'lucide-react';
+import { Bell, CalendarClock, CheckCircle2, ChevronDown, Sun, RefreshCw, Menu, UserPlus, Layers3, Plus } from 'lucide-react';
 import { useUIStore } from '@/store/useUIStore';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, useEffect } from 'react';
@@ -12,14 +12,17 @@ import { useDismissOnOutsideClick } from '@/hooks/useDismissOnOutsideClick';
 import { useMarkNotificationRead, useNotifications } from '@/hooks/useNotifications';
 import { formatRelativeTime } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 interface TopbarProps {
   notificationCount?: number;
   userDisplayName?: string;
+  connectedPlatforms?: Array<'CODEFORCES' | 'LEETCODE'>;
 }
 
-export function Topbar({ notificationCount = 0 }: TopbarProps) {
+export function Topbar({ notificationCount = 0, connectedPlatforms = [] }: TopbarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const isProblemsPage = pathname === '/problems' || pathname.startsWith('/problems/');
   const isContestHistoryPage = pathname === '/contest-history' || pathname.startsWith('/contest-history/');
 
@@ -36,16 +39,16 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
   useDismissOnOutsideClick(notificationMenuRef, () => setNotificationsOpen(false), notificationsOpen);
   const unreadCount = notifications.filter((notification) => !notification.read).length || notificationCount;
 
-  const availablePlatforms = isContestHistoryPage
-    ? (['ALL', 'CODEFORCES', 'LEETCODE'] as const)
-    : (['CODEFORCES', 'LEETCODE'] as const);
+  const availablePlatforms = (isContestHistoryPage && connectedPlatforms.length > 1
+    ? ['ALL', ...connectedPlatforms]
+    : connectedPlatforms) as Array<'ALL' | 'CODEFORCES' | 'LEETCODE'>;
 
   const prevIsContestHistoryRef = useRef(false);
 
   // When entering contest-history, default display to ALL platforms.
   // When leaving contest-history, reset ALL → CODEFORCES so other pages get a valid platform.
   useEffect(() => {
-    if (isContestHistoryPage && !prevIsContestHistoryRef.current) {
+    if (isContestHistoryPage && !prevIsContestHistoryRef.current && connectedPlatforms.length > 1) {
       setSelectedPlatform('ALL');
     } else if (!isContestHistoryPage && prevIsContestHistoryRef.current) {
       if (useUIStore.getState().selectedPlatform === 'ALL') {
@@ -53,9 +56,16 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
       }
     }
     prevIsContestHistoryRef.current = isContestHistoryPage;
-  }, [isContestHistoryPage, setSelectedPlatform]);
+  }, [isContestHistoryPage, setSelectedPlatform, connectedPlatforms.length]);
+
+  useEffect(() => {
+    if (connectedPlatforms.length && !availablePlatforms.includes(selectedPlatform)) {
+      setSelectedPlatform(connectedPlatforms[0]);
+    }
+  }, [availablePlatforms, connectedPlatforms, selectedPlatform, setSelectedPlatform]);
 
   const displayPlatform = (!isContestHistoryPage && selectedPlatform === 'ALL') ? 'CODEFORCES' : selectedPlatform;
+  const unconnectedPlatforms = (['CODEFORCES', 'LEETCODE'] as const).filter((platform) => !connectedPlatforms.includes(platform));
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -88,15 +98,14 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
           <div ref={platformMenuRef} className="relative">
             <button
               type="button"
-              onClick={() => setPlatformOpen((value) => !value)}
+              onClick={() => connectedPlatforms.length ? setPlatformOpen((value) => !value) : router.push('/settings/connections')}
               className="flex min-w-[148px] items-center justify-between gap-2 rounded-full"
               style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: '7px 13px', fontSize: 'var(--text-sm)', color: 'var(--text-primary)', cursor: 'pointer' }}
             >
               <div className="flex items-center gap-2">
-                {displayPlatform !== 'ALL' && <PlatformLogo platform={displayPlatform} size={22} active={true} />}
-                {displayPlatform === 'ALL' ? '🌐 All Platforms' : displayPlatform === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
+                {connectedPlatforms.length === 0 ? 'Connect Handle' : <>{displayPlatform !== 'ALL' && <PlatformLogo platform={displayPlatform} size={22} active={true} />}{displayPlatform === 'ALL' ? <><Layers3 size={18} style={{ color: 'var(--accent-blue)' }} />All Platforms</> : displayPlatform === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}</>}
               </div>
-              <ChevronDown size={14} className={cn('opacity-50 transition-transform duration-200', platformOpen && 'rotate-180')} />
+              {connectedPlatforms.length > 0 && <ChevronDown size={14} className={cn('opacity-50 transition-transform duration-200', platformOpen && 'rotate-180')} />}
             </button>
             <AnimatePresence>
             {platformOpen && (
@@ -119,8 +128,14 @@ export function Topbar({ notificationCount = 0 }: TopbarProps) {
                     className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-sm hover:bg-[var(--bg-card-hover)] transition-colors"
                     style={{ background: 'transparent', color: 'var(--text-primary)' }}
                   >
-                    {item !== 'ALL' && <PlatformLogo platform={item} size={20} active={true} />}
-                    {item === 'ALL' ? '🌐 All Platforms' : item === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
+                    {item === 'ALL' ? <Layers3 size={18} style={{ color: 'var(--accent-blue)' }} /> : <PlatformLogo platform={item} size={20} active={true} />}
+                    {item === 'ALL' ? 'All Platforms' : item === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
+                  </button>
+                ))}
+                {unconnectedPlatforms.map((platform) => (
+                  <button key={`connect-${platform}`} type="button" onClick={() => { setPlatformOpen(false); router.push('/settings/connections'); }} className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-sm hover:bg-[var(--bg-card-hover)]" style={{ color: 'var(--text-primary)' }}>
+                    <Plus size={16} style={{ color: 'var(--accent-blue)' }} />
+                    Connect {platform === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
                   </button>
                 ))}
               </motion.div>

@@ -24,21 +24,26 @@ function ComparePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const friendId = searchParams.get('friend');
+  const externalHandle = searchParams.get('external');
+  const externalPlatform = searchParams.get('platform');
   const reducedMotion = useReducedMotion();
   const [activeTab, setActiveTab] = useState<Tab>('Overview');
   const { selectedPlatform } = useUIStore();
-  const { data, isLoading, error } = useCompareData(friendId);
+  const external = externalHandle && (externalPlatform === 'CODEFORCES' || externalPlatform === 'LEETCODE')
+    ? { handle: externalHandle, platform: externalPlatform as 'CODEFORCES' | 'LEETCODE' }
+    : null;
+  const { data, isLoading, error } = useCompareData(friendId, external);
   const { data: friends, isLoading: friendsLoading } = useFriends();
 
   useEffect(() => {
-    if (friendId || friendsLoading || !friends || friends.length === 0) return;
+    if (friendId || external || friendsLoading || !friends || friends.length === 0) return;
     const sorted = [...friends].sort((a, b) => {
       const aRating = Math.max(a.cfRating ?? 0, a.lcRating ?? 0);
       const bRating = Math.max(b.cfRating ?? 0, b.lcRating ?? 0);
       return bRating - aRating;
     });
     router.replace('/compare?friend=' + sorted[0].id);
-  }, [friendId, friends, friendsLoading, router]);
+  }, [friendId, external, friends, friendsLoading, router]);
 
   const mergedRatingData = useMemo(() => {
     if (!data) return [];
@@ -79,7 +84,7 @@ function ComparePageContent() {
           <UserSelector />
         </div>
       </div>
-      {!friendId ? (
+      {!(friendId || external) ? (
         <Card padding="32px">
           <EmptyState icon={<GitCompare size={48} />} title="Select a friend" description="Choose a friend from the dropdown above to start comparing stats." />
         </Card>

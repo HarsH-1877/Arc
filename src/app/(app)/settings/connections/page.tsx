@@ -6,6 +6,7 @@ import { Card } from '@/components/shared/Card';
 import { SyncStatusDot } from '@/components/shared/SyncStatusDot';
 import { CheckCircle2, Loader2, RefreshCw, Unlink, Plus, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { formatRelativeTime } from '@/lib/utils';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
 
@@ -17,6 +18,7 @@ interface PlatformData {
 }
 
 export default function ConnectionsSettingsPage() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [linkingPlatform, setLinkingPlatform] = useState<'CODEFORCES' | 'LEETCODE' | null>(null);
   const [syncingPlatform, setSyncingPlatform] = useState<'CODEFORCES' | 'LEETCODE' | null>(null);
@@ -33,8 +35,10 @@ export default function ConnectionsSettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['problems'] }),
       queryClient.invalidateQueries({ queryKey: ['problems-stats'] }),
       queryClient.invalidateQueries({ queryKey: ['compare'] }),
+      queryClient.invalidateQueries({ queryKey: ['profile'] }),
     ]);
-    await queryClient.refetchQueries({ queryKey: ['dashboard'], type: 'active' });
+    await queryClient.refetchQueries({ type: 'active' });
+    router.refresh();
   };
 
   const { data: dashboard, isLoading } = useQuery({

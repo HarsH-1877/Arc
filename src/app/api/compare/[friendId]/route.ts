@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/utils';
 import type { CompareWinner } from '@/types';
 import type { Prisma } from '@prisma/client';
-import { USE_MOCK_DATA, getMockCompare } from '@/lib/mock';
+import { USE_MOCK_DATA, getMockCompare, MOCK_FRIENDS } from '@/lib/mock';
 import { getStoredCodeforcesProblemKey } from '@/lib/codeforces/solved-problems';
 
 type UserWithPlatforms = Prisma.UserGetPayload<{
@@ -203,7 +203,7 @@ function computeStrongerTopics(
 export async function GET(_req: Request, { params }: { params: { friendId: string } }) {
   try {
     if (USE_MOCK_DATA) {
-      const data = getMockCompare(params.friendId);
+      const data = getMockCompare(params.friendId === 'self' ? MOCK_FRIENDS[0]?.id ?? '' : params.friendId);
       if (!data) {
         return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'Friend not found' } }, { status: 404 });
       }
@@ -220,26 +220,13 @@ export async function GET(_req: Request, { params }: { params: { friendId: strin
       return NextResponse.json({ error: { code: 'MISSING_FRIEND', message: 'friendId required' } }, { status: 400 });
     }
 
-    const friendship = await db.friendship.findFirst({
-      where: {
-        OR: [
-          { userAId: session.id, userBId: friendId },
-          { userAId: friendId, userBId: session.id },
-        ],
-      },
-    });
-
-    if (!friendship) {
-      return NextResponse.json({ error: { code: 'NOT_FRIENDS', message: 'Not friends' } }, { status: 403 });
-    }
-
     const [user, friend] = await Promise.all([
       db.user.findUnique({
         where: { id: session.id },
         include: { platforms: { include: { codeforcesData: true, leetcodeData: true } }, streaks: true },
       }),
       db.user.findUnique({
-        where: { id: friendId },
+        where: { id: friendId === 'self' ? session.id : friendId },
         include: { platforms: { include: { codeforcesData: true, leetcodeData: true } }, streaks: true },
       }),
     ]);

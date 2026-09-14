@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/shared/Card';
 import { useProblemsList, useProblemsStats, TopicWeaknessItem } from '@/hooks/useProblemsData';
 import { useDashboardData } from '@/hooks/useDashboardData';
@@ -256,6 +256,18 @@ export function ProblemsClient() {
   }, [platform, difficulty, difficultyMin, difficultyMax]);
 
   const { data: dashboardData, isLoading: dashboardLoading } = useDashboardData();
+  const connectedPlatforms = useMemo(() => {
+    const platforms: Array<'CODEFORCES' | 'LEETCODE'> = [];
+    if (dashboardData?.platforms.codeforces) platforms.push('CODEFORCES');
+    if (dashboardData?.platforms.leetcode) platforms.push('LEETCODE');
+    return platforms;
+  }, [dashboardData]);
+
+  useEffect(() => {
+    if (connectedPlatforms.length && platform !== 'ALL' && !connectedPlatforms.includes(platform as 'CODEFORCES' | 'LEETCODE')) {
+      setPlatform(connectedPlatforms.length === 1 ? connectedPlatforms[0] : 'ALL');
+    }
+  }, [connectedPlatforms, platform]);
   const { data: stats, isLoading: statsLoading } = useProblemsStats(platform);
   const { data: problems, isLoading: problemsLoading } = useProblemsList({
     platform,
@@ -423,9 +435,8 @@ export function ProblemsClient() {
                 }}
               >
                 {[
-                  { id: 'ALL', label: 'All' },
-                  { id: 'CODEFORCES', label: 'Codeforces' },
-                  { id: 'LEETCODE', label: 'LeetCode' },
+                  ...(connectedPlatforms.length > 1 ? [{ id: 'ALL', label: 'All' }] : []),
+                  ...connectedPlatforms.map((id) => ({ id, label: id === 'CODEFORCES' ? 'Codeforces' : 'LeetCode' })),
                 ].map((p) => {
                   const isActive = platform === p.id;
                   const activeColor = p.id === 'CODEFORCES'

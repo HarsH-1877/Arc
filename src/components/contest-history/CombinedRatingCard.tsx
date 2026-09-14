@@ -26,6 +26,8 @@ export function CombinedRatingCard({
       rating: c.after,
       delta: c.after - c.before,
       rank: c.rank,
+      solved: c.solved,
+      total: c.total,
     }));
   }, [history]);
 
@@ -33,7 +35,7 @@ export function CombinedRatingCard({
 
   if (isLoading) {
     return (
-      <Card padding="18px" className="flex items-center justify-center min-h-[140px] col-span-1 lg:col-span-2">
+      <Card padding="18px" className="flex min-h-[152px] items-center justify-center">
         <span className="text-xs text-[var(--text-muted)]">Loading...</span>
       </Card>
     );
@@ -42,7 +44,7 @@ export function CombinedRatingCard({
   const currentDisplay = hovered || chartData[chartData.length - 1];
 
   return (
-    <Card padding="16px" className="flex flex-col sm:flex-row gap-4 h-full relative overflow-hidden col-span-1 lg:col-span-2">
+    <Card padding="16px" className="relative flex min-h-[180px] flex-col gap-4 overflow-hidden sm:flex-row">
       {/* Left side: Avg Rank */}
       <div className="flex flex-col justify-between shrink-0 sm:border-r border-[var(--border-subtle)] sm:pr-4 sm:w-[140px]">
         <div>
@@ -89,13 +91,17 @@ export function CombinedRatingCard({
                   <p className="text-[10px] font-medium uppercase tracking-[0.05em]" style={{ color: 'var(--text-muted)' }}>Rank</p>
                   <p className="text-[12px] font-mono-data font-bold" style={{ color: 'var(--text-primary)' }}>{currentDisplay.rank ? currentDisplay.rank.toLocaleString() : '-'}</p>
                 </div>
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-[0.05em]" style={{ color: 'var(--text-muted)' }}>Solved</p>
+                  <p className="text-[12px] font-mono-data font-bold" style={{ color: 'var(--text-primary)' }}>{currentDisplay.solved}/{currentDisplay.total}</p>
+                </div>
               </div>
             </>
           ) : (
             <div className="text-xs text-[var(--text-muted)]">No contest history to chart.</div>
           )}
         </div>
-        <div className="flex-1 w-full relative -mx-1 -mb-1 mt-1 min-h-[70px]">
+        <div className="relative mt-1 min-h-[58px] w-full flex-1 -mx-1 -mb-1">
           {chartData.length > 0 && (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart 

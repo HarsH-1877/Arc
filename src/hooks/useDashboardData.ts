@@ -49,6 +49,7 @@ export interface DashboardApiData {
   }[];
   contestCalendarEvents: Array<{
     date: string;
+    startTime?: string;
     label: string;
     platform: 'CODEFORCES' | 'LEETCODE';
     type: 'given' | 'upcoming' | 'missed';

@@ -279,11 +279,8 @@ export async function GET() {
       name: contest.name,
       platform: contest.platform,
       date: contest.startTime.slice(0, 10),
-      time: new Date(contest.startTime).toLocaleTimeString('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      }),
+      time: '',
+      startTime: contest.startTime,
       before,
       after: before,
       solved: 0,

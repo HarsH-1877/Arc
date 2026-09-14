@@ -218,6 +218,7 @@ export function buildContestCalendarEvents(
   for (const contest of history) {
     events.push({
       date: contest.date,
+      startTime: `${contest.date}T${contest.time}:00.000Z`,
       label: contest.name,
       platform: contest.platform,
       type: 'given',
@@ -261,6 +262,7 @@ export function buildContestCalendarEvents(
 
       events.push({
         date,
+        startTime: contest.startTime,
         label,
         platform: contest.platform,
         type: 'upcoming',
@@ -274,6 +276,7 @@ export function buildContestCalendarEvents(
     if (endedMs >= now - 60 * 86400000) {
       events.push({
         date,
+        startTime: contest.startTime,
         label: contest.name,
         platform: contest.platform,
         type: 'missed',
@@ -310,6 +313,7 @@ export function contestResultsToHistory(
         platform: row.platform,
         date: dateIso.slice(0, 10),
         time: formatContestTime(dateIso),
+        startTime: dateIso,
         before,
         after,
         ratingChange,

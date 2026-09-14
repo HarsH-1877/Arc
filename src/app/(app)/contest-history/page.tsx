@@ -10,7 +10,7 @@ import { useContestsData, type ContestItem } from '@/hooks/useContestsData';
 import { useUIStore } from '@/store/useUIStore';
 
 function formatDate(date: string) {
-  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(date));
+  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(date));
 }
 
 function ContestRow({ contest, upcoming = false }: { contest: ContestItem; upcoming?: boolean }) {
@@ -34,7 +34,7 @@ function ContestRow({ contest, upcoming = false }: { contest: ContestItem; upcom
             <span className="whitespace-nowrap">{contest.name}</span>
             <ExternalLink size={12} className="shrink-0" style={{ color: 'var(--text-muted)' }} />
           </p>
-          <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(contest.date)} at {contest.time}</p>
+          <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(contest.startTime ?? contest.date)} at {new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date(contest.startTime ?? `${contest.date}T${contest.time}:00`))}</p>
         </div>
       </div>
       <div className="hidden shrink-0 items-center justify-start sm:flex w-[130px]">
@@ -92,8 +92,7 @@ export default function ContestHistoryPage() {
 
   const history = (data?.history ?? []).filter((contest) => platformFilter === 'ALL' || contest.platform === platformFilter);
   const upcomingAll = (data?.upcoming ?? []).filter((contest) => platformFilter === 'ALL' || contest.platform === platformFilter);
-  // Only show contests for which registration has started
-  const upcoming = upcomingAll.filter((c) => c.registrationOpen === true);
+  const upcoming = upcomingAll.filter((contest) => contest.registrationOpen === true);
 
   const totalContests = history.length;
   const rankedContests = history.filter((c) => typeof c.rank === 'number' && c.rank > 0);
@@ -123,8 +122,8 @@ export default function ContestHistoryPage() {
       )}
 
       {/* Top Stats Cards: [Total] [Combined Avg+Rating] [Best Contest] */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[160px_1fr_280px] items-stretch">
-        <Card padding="18px" className="gap-2 flex flex-col justify-between">
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[180px_250px_minmax(0,1fr)]">
+        <Card padding="18px" className="min-h-[180px] gap-3 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>
               Total Contests
@@ -141,14 +140,7 @@ export default function ContestHistoryPage() {
           </div>
         </Card>
 
-        <CombinedRatingCard
-          avgRank={avgRank}
-          rankedContests={rankedContests.length}
-          history={history}
-          isLoading={isLoading}
-        />
-
-        <Card padding="18px" className="gap-2 flex flex-col justify-between">
+        <Card padding="18px" className="min-h-[180px] gap-3 flex flex-col justify-start">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>
               Best Contest
@@ -162,7 +154,7 @@ export default function ContestHistoryPage() {
             </div>
           ) : platformFilter === 'ALL' ? (
             /* Show both CF and LC best */
-            <div className="flex flex-col gap-2.5 flex-1 justify-end">
+            <div className="flex flex-col gap-2.5">
               {[bestContestCF, bestContestLC].map((bc) => bc ? (
                 <a
                   key={bc.id}
@@ -205,7 +197,7 @@ export default function ContestHistoryPage() {
               href={bestContest.href}
               target="_blank"
               rel="noreferrer"
-              className="flex-1 flex flex-col justify-between rounded-2xl px-4 py-3.5 transition-all duration-200 hover:-translate-y-0.5"
+              className="flex flex-col gap-5 rounded-2xl px-4 py-3.5 transition-all duration-200 hover:-translate-y-0.5"
               style={{
                 background: 'linear-gradient(135deg, rgba(251,191,36,0.07), rgba(251,191,36,0.02))',
                 border: '1px solid rgba(251,191,36,0.22)',
@@ -244,6 +236,13 @@ export default function ContestHistoryPage() {
             <p className="text-xs py-4 text-center flex-1 flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>No contest data</p>
           )}
         </Card>
+
+        <CombinedRatingCard
+          avgRank={avgRank}
+          rankedContests={rankedContests.length}
+          history={history}
+          isLoading={isLoading}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">

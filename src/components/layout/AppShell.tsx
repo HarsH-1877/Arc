@@ -150,6 +150,7 @@ export function AppShell({ children }: AppShellProps) {
           <Topbar
             notificationCount={unreadCount}
             userDisplayName={profile?.username ?? 'Arc User'}
+            connectedPlatforms={profile?.connectedPlatforms ?? []}
           />
           <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden" style={{ padding: '18px 22px 22px' }}>
             <motion.div

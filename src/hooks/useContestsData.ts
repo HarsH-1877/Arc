@@ -8,6 +8,7 @@ export interface ContestItem {
   platform: 'CODEFORCES' | 'LEETCODE';
   date: string;
   time: string;
+  startTime?: string;
   before: number;
   after: number;
   ratingChange?: number;

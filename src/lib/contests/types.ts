@@ -16,6 +16,7 @@ export interface UserContestHistoryItem {
   platform: ContestPlatform;
   date: string;
   time: string;
+  startTime?: string;
   before: number;
   after: number;
   ratingChange: number;
@@ -27,6 +28,8 @@ export interface UserContestHistoryItem {
 
 export interface ContestCalendarEvent {
   date: string;
+  /** Exact ISO start time; date remains the calendar grouping key. */
+  startTime?: string;
   label: string;
   platform: ContestPlatform;
   type: 'given' | 'upcoming' | 'missed';

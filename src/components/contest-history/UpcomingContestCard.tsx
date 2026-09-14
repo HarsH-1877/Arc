@@ -9,6 +9,7 @@ interface ContestItem {
   platform: 'CODEFORCES' | 'LEETCODE';
   date: string;
   time: string;
+  startTime?: string;
   href: string;
   registrationOpen?: boolean;
 }
@@ -23,7 +24,7 @@ export function UpcomingContestCard({ contest }: { contest: ContestItem }) {
   const [timeLeft, setTimeLeft] = useState<{ d: number; h: number; m: number; s: number } | null>(null);
 
   useEffect(() => {
-    const target = new Date(`${contest.date}T${contest.time}:00`).getTime();
+    const target = new Date(contest.startTime ?? `${contest.date}T${contest.time}:00`).getTime();
     
     const tick = () => {
       const now = new Date().getTime();
@@ -47,7 +48,9 @@ export function UpcomingContestCard({ contest }: { contest: ContestItem }) {
     }, 1000);
     
     return () => clearInterval(interval);
-  }, [contest.date, contest.time]);
+  }, [contest.date, contest.time, contest.startTime]);
+
+  const launchTime = new Date(contest.startTime ?? `${contest.date}T${contest.time}:00`);
 
   let displayId: string | null = null;
   let roundNumber: string | null = null;
@@ -112,7 +115,7 @@ export function UpcomingContestCard({ contest }: { contest: ContestItem }) {
           <div className="flex flex-col items-end text-right">
             <p className="text-[8px] font-bold tracking-[0.15em] text-[var(--text-muted)]">LAUNCH</p>
             <p className="mt-0.5 text-[11px] font-bold text-[var(--text-primary)]">
-              {new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(contest.date))} <span className="font-normal text-[var(--text-muted)]">{contest.time}</span>
+              {new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(launchTime)} <span className="font-normal text-[var(--text-muted)]">{new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(launchTime)}</span>
             </p>
           </div>
         </div>

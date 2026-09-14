@@ -15,6 +15,7 @@ interface ContestCalendarProps {
 
 interface ContestDay {
   date: Date;
+  startTime?: Date;
   label: string;
   delta?: number;
   type: 'given' | 'upcoming' | 'missed';
@@ -32,7 +33,7 @@ function LiveContestTimer({ nextContest }: { nextContest?: ContestDay }) {
     }
 
     const updateTimer = () => {
-      const diffMs = nextContest.date.getTime() - Date.now();
+      const diffMs = (nextContest.startTime?.getTime() ?? nextContest.date.getTime()) - Date.now();
       if (diffMs <= 0) {
         setTimeLeft('Live');
         return;
@@ -96,7 +97,7 @@ function LiveContestTimer({ nextContest }: { nextContest?: ContestDay }) {
           <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
             <span>Date:</span>
             <span className="font-mono-data font-semibold text-[var(--text-secondary)]">
-              {format(nextContest.date, 'MMM d, yyyy HH:mm')}
+              {new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(nextContest.startTime ?? nextContest.date)}
             </span>
           </div>
           <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
@@ -116,6 +117,7 @@ function buildContestDays(events: NonNullable<DashboardApiData['contestCalendarE
 
   for (const event of events) {
     const date = new Date(event.date + 'T12:00:00');
+    const startTime = event.startTime ? new Date(event.startTime) : undefined;
     const key = date.toDateString();
     const existing = grouped.get(key);
 
@@ -133,6 +135,7 @@ function buildContestDays(events: NonNullable<DashboardApiData['contestCalendarE
     } else {
       grouped.set(key, {
         date,
+        startTime,
         label: event.label,
         delta: event.delta,
         type: event.type,
@@ -161,7 +164,9 @@ export function ContestCalendar({ events = [], loading = false }: ContestCalenda
   }
 
   const now = new Date();
-  const nextContest = contests.find((contest) => contest.type === 'upcoming' && contest.date.getTime() >= now.getTime());
+  const nextContest = contests
+    .filter((contest) => contest.type === 'upcoming' && (contest.startTime?.getTime() ?? contest.date.getTime()) >= now.getTime())
+    .sort((a, b) => (a.startTime?.getTime() ?? a.date.getTime()) - (b.startTime?.getTime() ?? b.date.getTime()))[0];
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const gridStart = new Date(monthStart);
   gridStart.setDate(monthStart.getDate() - monthStart.getDay());
