@@ -6,6 +6,7 @@ export interface Friend {
   avatarUrl: string | null;
   cfRating: number | null;
   lcRating: number | null;
+  ccRating?: number | null;
   friendshipId?: string;
   relationship?: 'NONE' | 'FRIEND' | 'PENDING_INCOMING' | 'PENDING_OUTGOING';
 }

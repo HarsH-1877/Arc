@@ -108,7 +108,45 @@ export async function GET() {
       }];
     });
   });
-  let contestRowsWithFallback = [...contestRows, ...cfHistoryFallback];
+  const storedCcResultKeys = new Set(
+    contestRows
+      .filter((row) => row.platform === 'CODECHEF')
+      .map((row) => `${row.connectionId}:${row.contestId}`),
+  );
+  const ccHistoryFallback = connections.flatMap((connection) => {
+    const history = (connection.codechefData?.ratingHistory ?? []) as Array<{
+      contestId: string;
+      contestName: string;
+      rank: number | null;
+      rating?: number;
+      newRating?: number;
+      ratingChange?: number;
+      oldRating?: number;
+      date: string;
+    }>;
+    let prevRating: number | null = null;
+    return history.flatMap((entry) => {
+      const contestId = String(entry.contestId);
+      const key = `${connection.id}:${contestId}`;
+      const newRating = entry.newRating ?? entry.rating ?? 0;
+      const change = entry.ratingChange ?? (prevRating != null ? newRating - prevRating : 0);
+      prevRating = newRating;
+      if (storedCcResultKeys.has(key)) return [];
+
+      return [{
+        id: `rating-history-${connection.id}-${contestId}`,
+        connectionId: connection.id,
+        platform: 'CODECHEF' as const,
+        contestId,
+        contestName: entry.contestName,
+        rank: entry.rank,
+        ratingChange: change,
+        newRating,
+        timestamp: new Date(entry.date),
+      }];
+    });
+  });
+  let contestRowsWithFallback = [...contestRows, ...cfHistoryFallback, ...ccHistoryFallback];
 
   // If no LC ContestResult rows exist in DB, live-fetch and backfill
   const hasLcRows = contestRowsWithFallback.some((r) => r.platform === 'LEETCODE');

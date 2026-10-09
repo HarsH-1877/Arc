@@ -344,8 +344,9 @@ export function contestResultsToHistory(
 export function mergeRatingChartData(
   cfHistory: Array<{ date: string; rating: number; contestId?: number }>,
   lcHistory: Array<{ date: string; rating: number }>,
+  ccHistory: Array<{ date: string; rating: number }> = [],
 ) {
-  if (cfHistory.length === 0 && lcHistory.length === 0) return [];
+  if (cfHistory.length === 0 && lcHistory.length === 0 && ccHistory.length === 0) return [];
 
   // Build per-day lookup maps (keyed to YYYY-MM-DD)
   const cfMap = new Map<string, number>();
@@ -354,16 +355,25 @@ export function mergeRatingChartData(
   const lcMap = new Map<string, number>();
   for (const point of lcHistory) lcMap.set(point.date.slice(0, 10), point.rating);
 
+  const ccMap = new Map<string, number>();
+  for (const point of ccHistory) ccMap.set(point.date.slice(0, 10), point.rating);
+
   // Unified sorted date list
-  const allDates = Array.from(new Set([...Array.from(cfMap.keys()), ...Array.from(lcMap.keys())])).sort();
+  const allDates = Array.from(new Set([
+    ...Array.from(cfMap.keys()),
+    ...Array.from(lcMap.keys()),
+    ...Array.from(ccMap.keys()),
+  ])).sort();
 
   // Forward-fill so each series is continuous across the combined timeline
   let lastCf: number | undefined;
   let lastLc: number | undefined;
+  let lastCc: number | undefined;
 
   return allDates.map((date) => {
     if (cfMap.has(date)) lastCf = cfMap.get(date);
     if (lcMap.has(date)) lastLc = lcMap.get(date);
-    return { date, cfRating: lastCf, lcRating: lastLc };
+    if (ccMap.has(date)) lastCc = ccMap.get(date);
+    return { date, cfRating: lastCf, lcRating: lastLc, ccRating: lastCc };
   });
 }

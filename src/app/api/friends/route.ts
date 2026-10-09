@@ -15,8 +15,8 @@ export async function GET() {
         OR: [{ userAId: session.id }, { userBId: session.id }],
       },
       include: {
-        userA: { include: { platforms: { include: { codeforcesData: true, leetcodeData: true } } } },
-        userB: { include: { platforms: { include: { codeforcesData: true, leetcodeData: true } } } },
+        userA: { include: { platforms: { include: { codeforcesData: true, leetcodeData: true, codechefData: true } } } },
+        userB: { include: { platforms: { include: { codeforcesData: true, leetcodeData: true, codechefData: true } } } },
       },
     });
 
@@ -24,12 +24,14 @@ export async function GET() {
       const friend = f.userAId === session.id ? f.userB : f.userA;
       const cf = friend.platforms.find((p) => p.platform === 'CODEFORCES');
       const lc = friend.platforms.find((p) => p.platform === 'LEETCODE');
+      const cc = friend.platforms.find((p) => p.platform === 'CODECHEF');
       return {
         id: friend.id,
         username: friend.username,
         avatarUrl: friend.avatarUrl,
         cfRating: cf?.codeforcesData?.currentRating ?? null,
         lcRating: lc?.leetcodeData?.contestRating ?? null,
+        ccRating: cc?.codechefData?.currentRating ?? null,
         friendshipId: f.id,
       };
     });

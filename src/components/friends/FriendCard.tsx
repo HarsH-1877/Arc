@@ -6,6 +6,7 @@ import { BarChart2, UserMinus } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
 import { cfRankName, cfRankColor } from '@/lib/codeforces/cf-rank';
+import { ccRankStars, ccRankColor } from '@/lib/codechef/cc-rank';
 interface FriendCardProps {
   friend: Friend;
   onUnfriend?: (friendshipId: string) => void;
@@ -34,10 +35,11 @@ function colorForName(name: string) {
   return colors[hash % colors.length];
 }
 
-function PlatformBadge({ platform, value }: { platform: 'CODEFORCES' | 'LEETCODE'; value: number }) {
+function PlatformBadge({ platform, value }: { platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF'; value: number }) {
   const isCf = platform === 'CODEFORCES';
-  const rankStr = isCf ? cfRankName(value) : null;
-  const rankCol = isCf ? cfRankColor(value) : undefined;
+  const isCc = platform === 'CODECHEF';
+  const rankStr = isCf ? cfRankName(value) : isCc ? ccRankStars(value) : null;
+  const rankCol = isCf ? cfRankColor(value) : isCc ? ccRankColor(value) : undefined;
   
   return (
     <span className="font-mono-data inline-flex items-center gap-1.5" style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)', borderRadius: '999px', padding: '3px 9px 3px 5px', fontSize: '12px', fontWeight: 700 }}>
@@ -81,6 +83,7 @@ export function FriendCard({ friend, onUnfriend, isUnfriending, rank }: FriendCa
       <div className="hidden shrink-0 items-center gap-2 sm:flex">
         {friend.cfRating != null && <PlatformBadge platform="CODEFORCES" value={friend.cfRating} />}
         {friend.lcRating != null && <PlatformBadge platform="LEETCODE" value={friend.lcRating} />}
+        {friend.ccRating != null && <PlatformBadge platform="CODECHEF" value={friend.ccRating} />}
       </div>
 
       <div className="flex shrink-0 items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">

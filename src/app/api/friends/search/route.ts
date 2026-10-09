@@ -34,7 +34,7 @@ export async function GET(req: Request) {
       },
       take: 10,
       include: {
-        platforms: { include: { codeforcesData: true, leetcodeData: true } },
+        platforms: { include: { codeforcesData: true, leetcodeData: true, codechefData: true } },
         friendsA: { where: { userBId: session.id } },
         friendsB: { where: { userAId: session.id } },
         sentRequests: { where: { receiverId: session.id } },
@@ -45,6 +45,7 @@ export async function GET(req: Request) {
     const results = users.map((u) => {
       const cf = u.platforms.find((p) => p.platform === 'CODEFORCES');
       const lc = u.platforms.find((p) => p.platform === 'LEETCODE');
+      const cc = u.platforms.find((p) => p.platform === 'CODECHEF');
 
       const isFriend = u.friendsA.length > 0 || u.friendsB.length > 0;
       const sentReq = u.sentRequests.find(r => r.status === 'PENDING');
@@ -66,6 +67,7 @@ export async function GET(req: Request) {
         avatarUrl: u.avatarUrl,
         cfRating: cf?.codeforcesData?.currentRating ?? null,
         lcRating: lc?.leetcodeData?.contestRating ?? null,
+        ccRating: cc?.codechefData?.currentRating ?? null,
         relationship,
       };
     });

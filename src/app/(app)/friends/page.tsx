@@ -27,7 +27,7 @@ export default function FriendsPage() {
   const sortedFriends = useMemo(() => {
     const list = [...(friends ?? [])];
     if (sortMode === 'rating') {
-      return list.sort((a, b) => Math.max(b.cfRating ?? 0, b.lcRating ?? 0) - Math.max(a.cfRating ?? 0, a.lcRating ?? 0));
+      return list.sort((a, b) => Math.max(b.cfRating ?? 0, b.lcRating ?? 0, b.ccRating ?? 0) - Math.max(a.cfRating ?? 0, a.lcRating ?? 0, a.ccRating ?? 0));
     }
     return list.sort((a, b) => sortMode === 'oldest' ? friendSortDate(a).localeCompare(friendSortDate(b)) : friendSortDate(b).localeCompare(friendSortDate(a)));
   }, [friends, sortMode]);
