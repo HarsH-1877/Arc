@@ -10,6 +10,7 @@ import { ProblemDistributionCard } from '@/components/dashboard/ProblemDistribut
 import { useUIStore } from '@/store/useUIStore';
 import { motion, useSpring, useTransform } from 'framer-motion';
 import { useEffect } from 'react';
+import { ccRankColor, ccRankStars } from '@/lib/codechef/cc-rank';
 
 interface HeroStatsProps {
   data?: DashboardApiData;
@@ -40,6 +41,8 @@ export function HeroStats({ data, loading }: HeroStatsProps) {
   const rating = selectedPlatform === 'CODEFORCES' ? cf?.currentRating ?? null : selectedPlatform === 'CODECHEF' ? cc?.currentRating ?? null : lc?.contestRating ?? null;
   const maxRating = selectedPlatform === 'CODEFORCES' ? cf?.maxRating ?? null : selectedPlatform === 'CODECHEF' ? cc?.maxRating ?? null : lc?.contestRating ?? null;
   const isGrowing = selectedPlatform === 'CODEFORCES' ? (cf?.currentRating ?? 0) > 1200 : selectedPlatform === 'CODECHEF' ? (cc?.currentRating ?? 0) > 1400 : (lc?.contestRating ?? 0) > 1500;
+  const starText = cc?.stars || (rating != null ? ccRankStars(rating) : null);
+  const starColor = rating != null ? ccRankColor(rating) : '#f59e0b';
 
   const spring = useSpring(0, { bounce: 0, duration: 800 });
   const displayRating = useTransform(spring, (val) => Math.round(val).toLocaleString());
@@ -71,11 +74,27 @@ export function HeroStats({ data, loading }: HeroStatsProps) {
               </div>
             ) : (
               <>
-                <div className="flex items-end gap-3">
+                <div className="flex items-end gap-3 flex-wrap">
                   <motion.span className="font-mono-data" style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.045em', lineHeight: 0.9 }}>
                     {rating != null ? displayRating : '-'}
                   </motion.span>
-                  {rating && <span className="mb-0.5 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: 'var(--success-dim)', border: '1px solid var(--border-default)', color: 'var(--success)' }}>+12</span>}
+                  {selectedPlatform === 'CODECHEF' && starText && (
+                    <span
+                      className="mb-1.5 inline-flex items-center gap-1 rounded-lg px-2.5 py-0.5 text-xs font-extrabold tracking-wide"
+                      style={{
+                        background: `${starColor}20`,
+                        color: starColor,
+                        border: `1px solid ${starColor}45`,
+                        boxShadow: `0 0 12px ${starColor}25`,
+                      }}
+                    >
+                      <span className="text-[11px]">★</span>
+                      <span>{starText}</span>
+                    </span>
+                  )}
+                  {selectedPlatform !== 'CODECHEF' && rating && (
+                    <span className="mb-0.5 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: 'var(--success-dim)', border: '1px solid var(--border-default)', color: 'var(--success)' }}>+12</span>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 divide-x rounded-[20px] px-5 py-4" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--border-default)', borderColor: 'var(--border-default)' }}>
                   <div className="pr-4">

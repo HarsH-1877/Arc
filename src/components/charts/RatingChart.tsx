@@ -24,6 +24,7 @@ export interface RatingPoint {
   date: string;
   cfRating?: number;
   lcRating?: number;
+  ccRating?: number;
   userRating?: number;
   friendRating?: number;
   friend1?: number;
@@ -55,6 +56,14 @@ const CF_MILESTONES = [
   { value: 2400, label: 'Grandmaster',        abbr: 'GM',  color: '#FF0000' },
   { value: 2600, label: 'Int. Grandmaster',   abbr: 'IGM', color: '#FF0000' },
   { value: 3000, label: 'Legendary GM',       abbr: 'LGM', color: '#FF0000' },
+];
+const CC_MILESTONES = [
+  { value: 1400, label: '2 Star', abbr: '2★', color: '#22c55e' },
+  { value: 1600, label: '3 Star', abbr: '3★', color: '#3b82f6' },
+  { value: 1800, label: '4 Star', abbr: '4★', color: '#a855f7' },
+  { value: 2000, label: '5 Star', abbr: '5★', color: '#eab308' },
+  { value: 2200, label: '6 Star', abbr: '6★', color: '#f97316' },
+  { value: 2500, label: '7 Star', abbr: '7★', color: '#ef4444' },
 ];
 const LC_MILESTONES = [
   { value: 1850, label: 'Knight',   abbr: 'KNT', color: undefined as string | undefined },
@@ -103,18 +112,23 @@ export function RatingChart({ data, loading, compact = false, compareMode = fals
   const modeMenuRef = useRef<HTMLDivElement>(null);
   useDismissOnOutsideClick(modeMenuRef, () => setModeOpen(false), modeOpen);
   const { selectedPlatform } = useUIStore();
-  const milestones = selectedPlatform === 'CODEFORCES' ? CF_MILESTONES : LC_MILESTONES;
+  const milestones = selectedPlatform === 'CODEFORCES'
+    ? CF_MILESTONES
+    : selectedPlatform === 'CODECHEF'
+    ? CC_MILESTONES
+    : LC_MILESTONES;
 
   const chartData = useMemo(() => {
     const isLc = selectedPlatform === 'LEETCODE';
+    const isCc = selectedPlatform === 'CODECHEF';
     const mapped = data.map((d) => {
       const point = {
         ...d,
-        userRating: d.userRating ?? (isLc ? d.lcRating : d.cfRating),
-        friend1: compareMode ? (d.friend1 ?? d.friendRating) : (isLc ? (d as any).lcFriend1 : d.friend1),
-        friend2: compareMode ? d.friend2 : (isLc ? (d as any).lcFriend2 : d.friend2),
-        friend3: compareMode ? d.friend3 : (isLc ? (d as any).lcFriend3 : d.friend3),
-        friend4: compareMode ? d.friend4 : (isLc ? (d as any).lcFriend4 : d.friend4),
+        userRating: d.userRating ?? (isLc ? d.lcRating : isCc ? d.ccRating : d.cfRating),
+        friend1: compareMode ? (d.friend1 ?? d.friendRating) : (isLc ? (d as any).lcFriend1 : isCc ? (d as any).ccFriend1 : d.friend1),
+        friend2: compareMode ? d.friend2 : (isLc ? (d as any).lcFriend2 : isCc ? (d as any).ccFriend2 : d.friend2),
+        friend3: compareMode ? d.friend3 : (isLc ? (d as any).lcFriend3 : isCc ? (d as any).ccFriend3 : d.friend3),
+        friend4: compareMode ? d.friend4 : (isLc ? (d as any).lcFriend4 : isCc ? (d as any).ccFriend4 : d.friend4),
         avgTop4: undefined as number | undefined,
       };
       const friendValues = FRIEND_KEYS.map((key) => point[key]).filter((value): value is number => typeof value === 'number');
@@ -159,12 +173,17 @@ export function RatingChart({ data, loading, compact = false, compareMode = fals
   if (selectedPlatform === 'LEETCODE') {
     domainMin = Math.max(1400, Math.floor((minRating - 60) / 50) * 50);
     domainMax = Math.ceil((maxRating + 60) / 50) * 50;
+  } else if (selectedPlatform === 'CODECHEF') {
+    domainMin = Math.max(1000, Math.floor((minRating - 100) / 100) * 100);
+    domainMax = Math.ceil((maxRating + 100) / 100) * 100;
   } else {
     domainMin = Math.max(0, Math.floor((minRating - 120) / 100) * 100);
     domainMax = Math.ceil((maxRating + 120) / 100) * 100;
   }
   const axisTickCandidates = selectedPlatform === 'CODEFORCES'
     ? CF_MILESTONES.map((milestone) => milestone.value)
+    : selectedPlatform === 'CODECHEF'
+    ? CC_MILESTONES.map((milestone) => milestone.value)
     : LC_AXIS_TICKS;
   const axisTicks = axisTickCandidates.filter((value) => value >= domainMin && value <= domainMax);
   const activeMilestones = milestones.filter((milestone) => milestone.value >= domainMin && milestone.value <= domainMax);
@@ -191,7 +210,9 @@ export function RatingChart({ data, loading, compact = false, compareMode = fals
         <div className={compact ? 'flex h-[250px] flex-col items-center justify-center gap-2' : 'flex h-[240px] flex-col items-center justify-center gap-2'}>
           <p className="text-sm font-semibold" style={{ color: 'var(--text-muted)' }}>No rating history yet</p>
           <p className="text-xs text-center max-w-[240px]" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
-            {selectedPlatform === 'LEETCODE'
+            {selectedPlatform === 'CODECHEF'
+              ? 'Sync your CodeChef account from Settings → Connections to load contest history.'
+              : selectedPlatform === 'LEETCODE'
               ? 'Sync your LeetCode account from Settings → Connections to load contest history.'
               : 'Sync your Codeforces account from Settings → Connections to load rating history.'}
           </p>
@@ -390,7 +411,7 @@ export function RatingChart({ data, loading, compact = false, compareMode = fals
                 strokeWidth={1.5}
               />
             ))}
-            {selectedPlatform === 'CODEFORCES' && activeMilestones.map((milestone) => (
+            {(selectedPlatform === 'CODEFORCES' || selectedPlatform === 'CODECHEF') && activeMilestones.map((milestone) => (
               <ReferenceLine
                 yAxisId="left"
                 key={`refline-${milestone.value}`}

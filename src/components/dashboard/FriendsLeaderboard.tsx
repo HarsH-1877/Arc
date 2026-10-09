@@ -59,13 +59,19 @@ export function FriendsLeaderboard({ compact = false }: FriendsLeaderboardProps)
 
   const userRating = selectedPlatform === 'CODEFORCES'
     ? dashboardData?.platforms?.codeforces?.currentRating ?? 0
+    : selectedPlatform === 'CODECHEF'
+    ? dashboardData?.platforms?.codechef?.currentRating ?? 0
     : dashboardData?.platforms?.leetcode?.contestRating ?? 0;
 
   const sortedLeaderboard = [
     ...friends.map((f: any) => ({
       id: f.id,
       name: f.username,
-      rating: selectedPlatform === 'CODEFORCES' ? (f.cfRating ?? 0) : (f.lcRating ?? 0),
+      rating: selectedPlatform === 'CODEFORCES'
+        ? (f.cfRating ?? 0)
+        : selectedPlatform === 'CODECHEF'
+        ? (f.ccRating ?? 0)
+        : (f.lcRating ?? 0),
       isYou: false,
     })),
     {

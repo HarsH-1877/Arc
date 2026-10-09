@@ -17,13 +17,14 @@ export function DashboardClient() {
 
   const cf = data?.platforms.codeforces;
   const lc = data?.platforms.leetcode;
-  const noPlatforms = !cf && !lc && !isLoading;
+  const cc = data?.platforms.codechef;
+  const noPlatforms = !cf && !lc && !cc && !isLoading;
 
   return (
     <div className="flex min-w-0 flex-col gap-4 overflow-x-hidden">
       {noPlatforms && (
         <Card variant="base" padding="32px">
-          <EmptyState icon={<LinkIcon size={48} />} title="No platforms connected" description="Connect your Codeforces or LeetCode account to see your stats." action={{ label: 'Connect in Settings', href: '/settings/connections' }} />
+          <EmptyState icon={<LinkIcon size={48} />} title="No platforms connected" description="Connect your Codeforces, LeetCode, or CodeChef account to see your stats." action={{ label: 'Connect in Settings', href: '/settings/connections' }} />
         </Card>
       )}
 
@@ -52,10 +53,13 @@ export function DashboardClient() {
                       ? (data?.codeforcesHeatmapData?.length ? data.codeforcesHeatmapData : data?.heatmapData ?? [])
                       : selectedPlatform === 'LEETCODE'
                       ? (data?.leetcodeHeatmapData?.length ? data.leetcodeHeatmapData : data?.heatmapData ?? [])
+                      : selectedPlatform === 'CODECHEF'
+                      ? (data?.codechefHeatmapData?.length ? data.codechefHeatmapData : data?.heatmapData ?? [])
                       : data?.heatmapData ?? []
                   }
                   loading={isLoading}
                   compact
+                  accentColor={selectedPlatform === 'CODECHEF' ? 'amber' : 'blue'}
                 />
               </Card>
 
@@ -69,6 +73,8 @@ export function DashboardClient() {
                     ? (data?.codeforcesTopicStats?.length ? data.codeforcesTopicStats : data?.topicStats ?? [])
                     : selectedPlatform === 'LEETCODE'
                     ? (data?.leetcodeTopicStats?.length ? data.leetcodeTopicStats : data?.topicStats ?? [])
+                    : selectedPlatform === 'CODECHEF'
+                    ? (data?.codechefTopicStats?.length ? data.codechefTopicStats : data?.topicStats ?? [])
                     : data?.topicStats ?? []
                 }
                 loading={isLoading}
