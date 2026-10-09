@@ -71,6 +71,12 @@ export function UpcomingContestCard({ contest }: { contest: ContestItem }) {
     } else if (/Global/i.test(contest.name)) {
       displayId = 'Global';
     }
+  } else if (contest.platform === 'CODECHEF') {
+    const starMatch = contest.name.match(/Starters\s+(\d+)/i);
+    if (starMatch) {
+      roundNumber = starMatch[1];
+      displayId = `CC ${starMatch[1]}`;
+    }
   }
 
   return (

@@ -112,6 +112,7 @@ export default function ContestHistoryPage() {
 
   const bestContestCF = pickBestContest(history.filter((c) => c.platform === 'CODEFORCES'));
   const bestContestLC = pickBestContest(history.filter((c) => c.platform === 'LEETCODE'));
+  const bestContestCC = pickBestContest(history.filter((c) => c.platform === 'CODECHEF'));
   const bestContest = pickBestContest(history);
 
   return (
@@ -135,7 +136,7 @@ export default function ContestHistoryPage() {
               {isLoading ? '...' : totalContests}
             </span>
             <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-              {platformFilter === 'ALL' ? 'Across all platforms' : platformFilter === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
+              {platformFilter === 'ALL' ? 'Across all platforms' : platformFilter === 'CODEFORCES' ? 'Codeforces' : platformFilter === 'CODECHEF' ? 'CodeChef' : 'LeetCode'}
             </p>
           </div>
         </Card>
@@ -153,9 +154,9 @@ export default function ContestHistoryPage() {
               <div className="skeleton h-12 w-full rounded-xl" />
             </div>
           ) : platformFilter === 'ALL' ? (
-            /* Show both CF and LC best */
+            /* Show CF, LC, and CC best */
             <div className="flex flex-col gap-2.5">
-              {[bestContestCF, bestContestLC].map((bc) => bc ? (
+              {[bestContestCF, bestContestLC, bestContestCC].map((bc) => bc ? (
                 <a
                   key={bc.id}
                   href={bc.href}
@@ -187,7 +188,7 @@ export default function ContestHistoryPage() {
                   </div>
                 </a>
               ) : null)}
-              {!bestContestCF && !bestContestLC && (
+              {!bestContestCF && !bestContestLC && !bestContestCC && (
                 <p className="text-xs py-4 text-center" style={{ color: 'var(--text-muted)' }}>No contest data</p>
               )}
             </div>
@@ -249,7 +250,7 @@ export default function ContestHistoryPage() {
         <Card padding="18px" className="gap-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>
-              Past {platformFilter === 'ALL' ? 'Platform' : platformFilter === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'} Contests
+              Past {platformFilter === 'ALL' ? 'Platform' : platformFilter === 'CODEFORCES' ? 'Codeforces' : platformFilter === 'CODECHEF' ? 'CodeChef' : 'LeetCode'} Contests
             </span>
             <CalendarClock size={18} style={{ color: 'var(--accent-blue)' }} />
           </div>
@@ -262,7 +263,7 @@ export default function ContestHistoryPage() {
               {history.length > 0 ? (
                 history.map((contest) => <ContestRow key={contest.id} contest={contest} />)
               ) : (
-                <p className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>No contest history yet. Link Codeforces or LeetCode to sync your results.</p>
+                <p className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>No contest history yet. Link Codeforces, LeetCode, or CodeChef to sync your results.</p>
               )}
             </div>
           )}
