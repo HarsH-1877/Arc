@@ -29,9 +29,11 @@ function ComparePageContent() {
   const reducedMotion = useReducedMotion();
   const [activeTab, setActiveTab] = useState<Tab>('Overview');
   const { selectedPlatform } = useUIStore();
-  const external = externalHandle && (externalPlatform === 'CODEFORCES' || externalPlatform === 'LEETCODE')
-    ? { handle: externalHandle, platform: externalPlatform as 'CODEFORCES' | 'LEETCODE' }
-    : null;
+  const external = useMemo(() => {
+    return externalHandle && (externalPlatform === 'CODEFORCES' || externalPlatform === 'LEETCODE' || externalPlatform === 'CODECHEF')
+      ? { handle: externalHandle, platform: externalPlatform as 'CODEFORCES' | 'LEETCODE' | 'CODECHEF' }
+      : null;
+  }, [externalHandle, externalPlatform]);
   const { data, isLoading, error } = useCompareData(friendId, external);
   const { data: friends, isLoading: friendsLoading } = useFriends();
 
@@ -49,9 +51,13 @@ function ComparePageContent() {
     if (!data) return [];
     const userHistory = (selectedPlatform === 'CODEFORCES'
       ? (data.user.cfRatingHistory?.length ? data.user.cfRatingHistory : data.user.ratingHistory)
+      : selectedPlatform === 'CODECHEF'
+      ? (data.user.ccRatingHistory?.length ? data.user.ccRatingHistory : [])
       : (data.user.lcRatingHistory?.length ? data.user.lcRatingHistory : data.user.ratingHistory)) ?? [];
     const friendHistory = (selectedPlatform === 'CODEFORCES'
       ? (data.friend.cfRatingHistory?.length ? data.friend.cfRatingHistory : data.friend.ratingHistory)
+      : selectedPlatform === 'CODECHEF'
+      ? (data.friend.ccRatingHistory?.length ? data.friend.ccRatingHistory : [])
       : (data.friend.lcRatingHistory?.length ? data.friend.lcRatingHistory : data.friend.ratingHistory)) ?? [];
     if (userHistory.length === 0 && friendHistory.length === 0) return [];
     const allDates = Array.from(new Set([

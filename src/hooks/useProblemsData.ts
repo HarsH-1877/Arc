@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 
 export interface ProblemItem {
   id: string;
-  externalId: string;
+  externalId?: string;
+  problemId?: string;
   problemName: string;
   problemSlug: string | null;
   platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF';

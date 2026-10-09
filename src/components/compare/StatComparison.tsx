@@ -48,6 +48,11 @@ export function StatComparison({ user, friend }: StatComparisonProps) {
     { label: 'Avg. Rank', userValue: user.cfAverageRank, friendValue: friend.cfAverageRank, userMeta: `(${user.cfContestCount} contests)`, friendMeta: `(${friend.cfContestCount} contests)`, lowerWins: true },
     { label: 'CF Solved', userValue: user.cfSolvedCount, friendValue: friend.cfSolvedCount, userMeta: null, friendMeta: null, lowerWins: false },
     { label: 'Longest Streak', userValue: longestStreak(user.cfHeatmapData || user.heatmapData), friendValue: longestStreak(friend.cfHeatmapData || friend.heatmapData), userMeta: null, friendMeta: null, lowerWins: false },
+  ] : selectedPlatform === 'CODECHEF' ? [
+    { label: 'CC Rating', userValue: user.ccRating ?? null, friendValue: friend.ccRating ?? null, userMeta: `(${formatValue(user.ccMaxRating ?? null)} max)`, friendMeta: `(${formatValue(friend.ccMaxRating ?? null)} max)`, lowerWins: false },
+    { label: 'Avg. Rank', userValue: user.ccAverageRank ?? null, friendValue: friend.ccAverageRank ?? null, userMeta: `(${user.ccContestCount ?? 0} contests)`, friendMeta: `(${friend.ccContestCount ?? 0} contests)`, lowerWins: true },
+    { label: 'CC Solved', userValue: user.ccSolvedCount ?? 0, friendValue: friend.ccSolvedCount ?? 0, userMeta: null, friendMeta: null, lowerWins: false },
+    { label: 'Longest Streak', userValue: longestStreak(user.ccHeatmapData || user.heatmapData), friendValue: longestStreak(friend.ccHeatmapData || friend.heatmapData), userMeta: null, friendMeta: null, lowerWins: false },
   ] : [
     { label: 'LC Rating', userValue: user.lcRating, friendValue: friend.lcRating, userMeta: `(${formatValue(user.lcMaxRating)} max)`, friendMeta: `(${formatValue(friend.lcMaxRating)} max)`, lowerWins: false },
     { label: 'Avg. Rank', userValue: user.lcAverageRank, friendValue: friend.lcAverageRank, userMeta: `(${user.lcContestCount} contests)`, friendMeta: `(${friend.lcContestCount} contests)`, lowerWins: true },

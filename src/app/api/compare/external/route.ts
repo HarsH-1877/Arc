@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { getCFAllSubmissions, getCFRatingHistory, getCFUser } from '@/lib/fetchers/codeforces';
 import { getLCAllAcSubmissions, getLCContestHistory, getLCContestInfo, getLCProfile, getLCSolvedStats, getLCTagStats } from '@/lib/fetchers/leetcode';
+import { getCodeChefUser, getCodeChefRatingHistory, getCodeChefRecentSubmissions } from '@/lib/fetchers/codechef';
 
 const normaliseTopics = (entries: Array<[string, number]>) => {
   const max = Math.max(...entries.map(([, count]) => count), 1);
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const platform = searchParams.get('platform');
   const handle = searchParams.get('handle')?.trim();
-  if (!handle || (platform !== 'CODEFORCES' && platform !== 'LEETCODE')) {
+  if (!handle || (platform !== 'CODEFORCES' && platform !== 'LEETCODE' && platform !== 'CODECHEF')) {
     return NextResponse.json({ error: { message: 'A platform and handle are required' } }, { status: 400 });
   }
 
@@ -42,6 +43,70 @@ export async function GET(request: Request) {
         streak: 0, totalActiveDays: heatmap.size, ratingHistory: history, cfRatingHistory: history, lcRatingHistory: [],
         topicStats: normaliseTopics(Array.from(tags.entries())), cfTopicStats: normaliseTopics(Array.from(tags.entries())), lcTopicStats: [],
         heatmapData: Array.from(heatmap, ([date, count]) => ({ date, count })), cfHeatmapData: Array.from(heatmap, ([date, count]) => ({ date, count })), lcHeatmapData: [], lastSyncedAt: null,
+      });
+    }
+
+    if (platform === 'CODECHEF') {
+      const [profile, ratingHistory, submissions] = await Promise.all([
+        getCodeChefUser(handle),
+        getCodeChefRatingHistory(handle),
+        getCodeChefRecentSubmissions(handle),
+      ]);
+      const heatmap = new Map<string, number>();
+      for (const submission of submissions) {
+        const day = submission.timestamp
+          ? (submission.timestamp.includes('T') ? submission.timestamp.slice(0, 10) : new Date(submission.timestamp).toISOString().slice(0, 10))
+          : '';
+        if (day) heatmap.set(day, (heatmap.get(day) ?? 0) + 1);
+      }
+      const history = ratingHistory.map((item) => ({
+        date: new Date(item.date).toISOString(),
+        rating: item.newRating,
+        contestId: item.contestId,
+      }));
+      const averageRank = ratingHistory.length
+        ? Math.round(ratingHistory.reduce((sum, item) => sum + (item.rank ? Number(item.rank) : 0), 0) / ratingHistory.length)
+        : null;
+      return NextResponse.json({
+        id: `cc:${profile.handle}`,
+        username: profile.handle,
+        avatarUrl: null,
+        cfHandle: null,
+        lcHandle: null,
+        ccHandle: profile.handle,
+        cfRating: null,
+        cfMaxRating: null,
+        cfRank: null,
+        lcRating: null,
+        lcMaxRating: null,
+        ccRating: profile.currentRating,
+        ccMaxRating: profile.maxRating,
+        ccStars: profile.stars,
+        totalSolved: profile.totalSolved ?? 0,
+        cfSolvedCount: 0,
+        lcSolvedCount: 0,
+        ccSolvedCount: profile.totalSolved ?? 0,
+        cfContestCount: 0,
+        cfAverageRank: null,
+        lcContestCount: 0,
+        lcAverageRank: null,
+        ccContestCount: profile.contestsAttended ?? ratingHistory.length,
+        ccAverageRank: averageRank,
+        streak: 0,
+        totalActiveDays: heatmap.size,
+        ratingHistory: history,
+        cfRatingHistory: [],
+        lcRatingHistory: [],
+        ccRatingHistory: history,
+        topicStats: [],
+        cfTopicStats: [],
+        lcTopicStats: [],
+        ccTopicStats: [],
+        heatmapData: Array.from(heatmap, ([date, count]) => ({ date, count })),
+        cfHeatmapData: [],
+        lcHeatmapData: [],
+        ccHeatmapData: Array.from(heatmap, ([date, count]) => ({ date, count })),
+        lastSyncedAt: null,
       });
     }
 

@@ -7,30 +7,40 @@ export interface CompareUser {
   avatarUrl: string | null;
   cfHandle?: string | null;
   lcHandle?: string | null;
+  ccHandle?: string | null;
   cfRating: number | null;
   cfMaxRating: number | null;
   cfRank: string | null;
   lcRating: number | null;
   lcMaxRating: number | null;
+  ccRating?: number | null;
+  ccMaxRating?: number | null;
+  ccStars?: string | null;
   totalSolved: number;
   cfSolvedCount: number;
   lcSolvedCount: number;
+  ccSolvedCount?: number;
   cfContestCount: number;
   cfAverageRank: number | null;
   lcContestCount: number;
   lcAverageRank: number | null;
+  ccContestCount?: number;
+  ccAverageRank?: number | null;
   streak: number;
   totalActiveDays: number;
   lastSyncedAt: string | null;
-  ratingHistory: { date: string; rating: number; contestId?: number }[];
-  cfRatingHistory?: { date: string; rating: number; contestId?: number }[];
-  lcRatingHistory?: { date: string; rating: number; contestId?: number }[];
+  ratingHistory: { date: string; rating: number; contestId?: any }[];
+  cfRatingHistory?: { date: string; rating: number; contestId?: any }[];
+  lcRatingHistory?: { date: string; rating: number; contestId?: any }[];
+  ccRatingHistory?: { date: string; rating: number; contestId?: any; name?: string }[];
   topicStats: { topic: string; rawCount: number; value: number }[];
   cfTopicStats?: { topic: string; rawCount: number; value: number }[];
   lcTopicStats?: { topic: string; rawCount: number; value: number }[];
+  ccTopicStats?: { topic: string; rawCount: number; value: number }[];
   heatmapData: { date: string; count: number }[];
   cfHeatmapData?: { date: string; count: number }[];
   lcHeatmapData?: { date: string; count: number }[];
+  ccHeatmapData?: { date: string; count: number }[];
 }
 
 export interface CompareData {
@@ -39,7 +49,7 @@ export interface CompareData {
   verdict: CompareVerdict;
 }
 
-export function useCompareData(friendId?: string | null, external?: { platform: 'CODEFORCES' | 'LEETCODE'; handle: string } | null) {
+export function useCompareData(friendId?: string | null, external?: { platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF'; handle: string } | null) {
   return useQuery<CompareData>({
     queryKey: ['compare', friendId, external],
     queryFn: async () => {
@@ -63,6 +73,7 @@ export function useCompareData(friendId?: string | null, external?: { platform: 
             consistency: winner(self.user.totalActiveDays, friend.totalActiveDays),
             cfRating: winner(self.user.cfRating, friend.cfRating),
             lcRating: winner(self.user.lcRating, friend.lcRating),
+            ccRating: winner(self.user.ccRating, friend.ccRating),
             strongerTopics: { user: [], friend: [] },
           },
         };

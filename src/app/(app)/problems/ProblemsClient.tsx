@@ -257,14 +257,15 @@ export function ProblemsClient() {
 
   const { data: dashboardData, isLoading: dashboardLoading } = useDashboardData();
   const connectedPlatforms = useMemo(() => {
-    const platforms: Array<'CODEFORCES' | 'LEETCODE'> = [];
+    const platforms: Array<'CODEFORCES' | 'LEETCODE' | 'CODECHEF'> = [];
     if (dashboardData?.platforms.codeforces) platforms.push('CODEFORCES');
     if (dashboardData?.platforms.leetcode) platforms.push('LEETCODE');
+    if (dashboardData?.platforms.codechef) platforms.push('CODECHEF');
     return platforms;
   }, [dashboardData]);
 
   useEffect(() => {
-    if (connectedPlatforms.length && platform !== 'ALL' && !connectedPlatforms.includes(platform as 'CODEFORCES' | 'LEETCODE')) {
+    if (connectedPlatforms.length && platform !== 'ALL' && !connectedPlatforms.includes(platform as 'CODEFORCES' | 'LEETCODE' | 'CODECHEF')) {
       setPlatform(connectedPlatforms.length === 1 ? connectedPlatforms[0] : 'ALL');
     }
   }, [connectedPlatforms, platform]);
@@ -431,28 +432,39 @@ export function ProblemsClient() {
                     ? '1px solid rgba(30,136,229,0.55)'
                     : platform === 'LEETCODE'
                     ? '1px solid rgba(255,161,22,0.55)'
+                    : platform === 'CODECHEF'
+                    ? '1px solid rgba(245,158,11,0.55)'
                     : '1px solid rgba(255,255,255,0.3)',
                 }}
               >
                 {[
                   ...(connectedPlatforms.length > 1 ? [{ id: 'ALL', label: 'All' }] : []),
-                  ...connectedPlatforms.map((id) => ({ id, label: id === 'CODEFORCES' ? 'Codeforces' : 'LeetCode' })),
+                  ...connectedPlatforms.map((id) => ({
+                    id,
+                    label: id === 'CODEFORCES' ? 'Codeforces' : id === 'CODECHEF' ? 'CodeChef' : 'LeetCode',
+                  })),
                 ].map((p) => {
                   const isActive = platform === p.id;
                   const activeColor = p.id === 'CODEFORCES'
                     ? 'rgba(30,136,229,0.18)'
                     : p.id === 'LEETCODE'
                     ? 'rgba(255,161,22,0.18)'
+                    : p.id === 'CODECHEF'
+                    ? 'rgba(245,158,11,0.18)'
                     : 'rgba(255,255,255,0.10)';
                   const activeBorder = p.id === 'CODEFORCES'
                     ? '1px solid rgba(30,136,229,0.45)'
                     : p.id === 'LEETCODE'
                     ? '1px solid rgba(255,161,22,0.45)'
+                    : p.id === 'CODECHEF'
+                    ? '1px solid rgba(245,158,11,0.45)'
                     : '1px solid rgba(255,255,255,0.2)';
                   const activeText = p.id === 'CODEFORCES'
                     ? '#4f8ef7'
                     : p.id === 'LEETCODE'
                     ? '#ffa116'
+                    : p.id === 'CODECHEF'
+                    ? '#f59e0b'
                     : 'var(--text-primary)';
                   return (
                     <button
@@ -467,7 +479,7 @@ export function ProblemsClient() {
                       }}
                     >
                       {p.id !== 'ALL' ? (
-                        <PlatformLogo platform={p.id as 'CODEFORCES' | 'LEETCODE'} size={16} active={isActive} />
+                        <PlatformLogo platform={p.id as 'CODEFORCES' | 'LEETCODE' | 'CODECHEF'} size={16} active={isActive} />
                       ) : (
                         <span className="text-[11px] font-bold">All</span>
                       )}
@@ -705,6 +717,8 @@ export function ProblemsClient() {
                   const href =
                     p.platform === 'CODEFORCES' && p.contestId
                       ? (getCodeforcesProblemUrl(p.contestId, p.problemSlug) ?? `https://codeforces.com/contest/${p.contestId}`)
+                      : p.platform === 'CODECHEF'
+                      ? `https://www.codechef.com/problems/${p.problemId || p.problemSlug || ''}`
                       : p.problemSlug
                       ? `https://leetcode.com/problems/${p.problemSlug}`
                       : '#';

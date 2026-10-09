@@ -5,6 +5,7 @@ import { formatRelativeTime } from '@/lib/utils';
 import type { CompareUser } from '@/hooks/useCompareData';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
 import { cfRankName, cfRankColor } from '@/lib/codeforces/cf-rank';
+import { ccRankColor, ccRankStars } from '@/lib/codechef/cc-rank';
 
 interface CompareHeaderProps {
   user: CompareUser;
@@ -18,18 +19,25 @@ function getLCRank(rating: number) {
 }
 
 function ratingLabel(
-  platform: 'CODEFORCES' | 'LEETCODE',
+  platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF',
   value: number | null,
   won: boolean,
   handle?: string | null,
 ) {
   const isCf = platform === 'CODEFORCES';
-  const rank = isCf ? (value ? cfRankName(value) : null) : (value ? getLCRank(value) : null);
-  const rankColor = isCf && value ? cfRankColor(value) : undefined;
-  const accent = isCf ? 'var(--accent-cyan)' : 'var(--accent-amber)';
+  const isCc = platform === 'CODECHEF';
+  const rank = isCf
+    ? (value ? cfRankName(value) : null)
+    : isCc
+    ? (value ? ccRankStars(value) : null)
+    : (value ? getLCRank(value) : null);
+  const rankColor = isCf && value ? cfRankColor(value) : isCc && value ? ccRankColor(value) : undefined;
+  const accent = isCf ? 'var(--accent-cyan)' : isCc ? '#f59e0b' : 'var(--accent-amber)';
   const profileUrl = handle
     ? platform === 'CODEFORCES'
       ? `https://codeforces.com/profile/${handle}`
+      : platform === 'CODECHEF'
+      ? `https://www.codechef.com/users/${handle}`
       : `https://leetcode.com/u/${handle}`
     : null;
 
@@ -37,7 +45,7 @@ function ratingLabel(
     <span
       className="font-mono-data inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all hover:scale-105"
       style={{
-        background: won ? (isCf ? 'rgba(34,211,238,0.1)' : 'rgba(251,191,36,0.1)') : 'var(--bg-input)',
+        background: won ? (isCf ? 'rgba(34,211,238,0.1)' : isCc ? 'rgba(245,158,11,0.1)' : 'rgba(251,191,36,0.1)') : 'var(--bg-input)',
         border: won ? `1px solid ${accent}` : '1px solid var(--border-default)',
         color: won ? accent : 'var(--text-secondary)',
         cursor: profileUrl ? 'pointer' : 'default',
@@ -85,6 +93,7 @@ function IdentityBlock({ person, opponent, accent, align }: { person: CompareUse
   const right = align === 'right';
   const cfWon = person.cfRating != null && opponent.cfRating != null && person.cfRating > opponent.cfRating;
   const lcWon = person.lcRating != null && opponent.lcRating != null && person.lcRating > opponent.lcRating;
+  const ccWon = person.ccRating != null && opponent.ccRating != null && person.ccRating > opponent.ccRating;
 
   return (
     <div className={'flex items-center gap-4 p-5 ' + (right ? 'flex-row-reverse text-right' : '')} style={{ background: 'transparent' }}>
@@ -94,8 +103,9 @@ function IdentityBlock({ person, opponent, accent, align }: { person: CompareUse
       <div className="min-w-0">
         <p className="truncate font-semibold font-mono-data" style={{ color: 'var(--text-primary)' }}>{person.username}</p>
         <div className={'mt-2 flex flex-wrap gap-2 ' + (right ? 'justify-end' : '')}>
-          {ratingLabel('CODEFORCES', person.cfRating, cfWon, person.cfHandle)}
-          {ratingLabel('LEETCODE', person.lcRating, lcWon, person.lcHandle)}
+          {person.cfHandle && ratingLabel('CODEFORCES', person.cfRating, cfWon, person.cfHandle)}
+          {person.lcHandle && ratingLabel('LEETCODE', person.lcRating, lcWon, person.lcHandle)}
+          {person.ccHandle && ratingLabel('CODECHEF', person.ccRating ?? null, ccWon, person.ccHandle)}
         </div>
       </div>
     </div>

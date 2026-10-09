@@ -9,7 +9,7 @@ import { getStoredCodeforcesProblemKey } from '@/lib/codeforces/solved-problems'
 
 type UserWithPlatforms = Prisma.UserGetPayload<{
   include: {
-    platforms: { include: { codeforcesData: true; leetcodeData: true } };
+    platforms: { include: { codeforcesData: true; leetcodeData: true; codechefData: true } };
     streaks: true;
   };
 }>;
@@ -24,17 +24,25 @@ function compareWinner(a: number | null | undefined, b: number | null | undefine
 
 async function formatUser(
   u: UserWithPlatforms,
-  heatmaps: { all: { date: string; count: number }[]; cf: { date: string; count: number }[]; lc: { date: string; count: number }[] }
+  heatmaps: {
+    all: { date: string; count: number }[];
+    cf: { date: string; count: number }[];
+    lc: { date: string; count: number }[];
+    cc: { date: string; count: number }[];
+  }
 ) {
   const cf = u.platforms.find((p) => p.platform === 'CODEFORCES');
   const lc = u.platforms.find((p) => p.platform === 'LEETCODE');
+  const cc = u.platforms.find((p) => p.platform === 'CODECHEF');
 
   const cfTags = (cf?.codeforcesData?.tagStats as Record<string, number>) ?? {};
   const lcTags = (lc?.leetcodeData?.tagStats as Record<string, number>) ?? {};
+  const ccTags = (cc?.codechefData?.tagStats as Record<string, number>) ?? {};
 
   const topicStatsRaw: Record<string, number> = {
     ...cfTags,
     ...lcTags,
+    ...ccTags,
   };
 
   const buildTopics = (tags: Record<string, number>) => {
@@ -51,8 +59,10 @@ async function formatUser(
   const topicStats = buildTopics(topicStatsRaw);
   const cfTopicStats = buildTopics(cfTags);
   const lcTopicStats = buildTopics(lcTags);
+  const ccTopicStats = buildTopics(ccTags);
 
   const cfRatingHistory = (cf?.codeforcesData?.ratingHistory as Array<{ date: string; rating: number; contestId: number }>) ?? [];
+  const ccRatingHistory = (cc?.codechefData?.ratingHistory as Array<{ date: string; rating: number; contestId?: any; name?: string }>) ?? [];
   const lcStreakData = lc?.leetcodeData?.streakData as { ratingHistory?: Array<{ startTime: number; rating: number }> } | null;
   const streakRatingHistory = lcStreakData?.ratingHistory ?? [];
 
@@ -131,10 +141,12 @@ async function formatUser(
     cfSubs.map(getStoredCodeforcesProblemKey),
   ).size;
   const lcSolvedCount = lc?.leetcodeData?.totalSolved ?? 0;
+  const ccSolvedCount = cc?.codechefData?.totalSolved ?? 0;
   const cfContestCount = cfRatingHistory.length;
   const lcContestCount = lc?.leetcodeData?.contestsAttended ?? 0;
+  const ccContestCount = cc?.codechefData?.contestsAttended ?? ccRatingHistory.length;
   const contestRanks = await db.contestResult.findMany({
-    where: { connectionId: { in: [cf?.id, lc?.id].filter((id): id is string => Boolean(id)) }, rank: { not: null } },
+    where: { connectionId: { in: [cf?.id, lc?.id, cc?.id].filter((id): id is string => Boolean(id)) }, rank: { not: null } },
     select: { connectionId: true, rank: true },
   });
   const averageRankFor = (connectionId?: string) => {
@@ -143,8 +155,10 @@ async function formatUser(
   };
   const cfAverageRank = averageRankFor(cf?.id);
   const lcAverageRank = averageRankFor(lc?.id);
+  const ccAverageRank = averageRankFor(cc?.id);
   const cfMaxRating = cf?.codeforcesData?.maxRating ?? null;
   const lcMaxRating = Math.max(lc?.leetcodeData?.contestRating ?? 0, ...lcRatingHistory.map((point) => point.rating)) || null;
+  const ccMaxRating = cc?.codechefData?.maxRating ?? null;
 
   return {
     id: u.id,
@@ -152,30 +166,40 @@ async function formatUser(
     avatarUrl: u.avatarUrl,
     cfHandle: cf?.handle ?? null,
     lcHandle: lc?.handle ?? null,
+    ccHandle: cc?.handle ?? null,
     cfRating: cf?.codeforcesData?.currentRating ?? null,
     cfMaxRating,
     cfRank: cf?.codeforcesData?.rank ?? null,
     lcRating: lc?.leetcodeData?.contestRating ?? null,
     lcMaxRating,
-    totalSolved: cfSolvedCount + lcSolvedCount,
+    ccRating: cc?.codechefData?.currentRating ?? null,
+    ccMaxRating,
+    ccStars: cc?.codechefData?.stars ?? null,
+    totalSolved: cfSolvedCount + lcSolvedCount + ccSolvedCount,
     cfSolvedCount,
     lcSolvedCount,
+    ccSolvedCount,
     cfContestCount,
     cfAverageRank,
     lcContestCount,
     lcAverageRank,
+    ccContestCount,
+    ccAverageRank,
     streak: u.streaks?.currentStreak ?? 0,
     totalActiveDays: heatmaps.all.filter((d) => d.count > 0).length,
     ratingHistory: cfRatingHistory,
     cfRatingHistory,
     lcRatingHistory,
+    ccRatingHistory,
     topicStats,
     cfTopicStats,
     lcTopicStats,
+    ccTopicStats,
     heatmapData: heatmaps.all,
     cfHeatmapData: heatmaps.cf,
     lcHeatmapData: heatmaps.lc,
-    lastSyncedAt: cf?.lastSyncedAt?.toISOString() ?? lc?.lastSyncedAt?.toISOString() ?? null,
+    ccHeatmapData: heatmaps.cc,
+    lastSyncedAt: cf?.lastSyncedAt?.toISOString() ?? lc?.lastSyncedAt?.toISOString() ?? cc?.lastSyncedAt?.toISOString() ?? null,
   };
 }
 
@@ -223,11 +247,11 @@ export async function GET(_req: Request, { params }: { params: { friendId: strin
     const [user, friend] = await Promise.all([
       db.user.findUnique({
         where: { id: session.id },
-        include: { platforms: { include: { codeforcesData: true, leetcodeData: true } }, streaks: true },
+        include: { platforms: { include: { codeforcesData: true, leetcodeData: true, codechefData: true } }, streaks: true },
       }),
       db.user.findUnique({
         where: { id: friendId === 'self' ? session.id : friendId },
-        include: { platforms: { include: { codeforcesData: true, leetcodeData: true } }, streaks: true },
+        include: { platforms: { include: { codeforcesData: true, leetcodeData: true, codechefData: true } }, streaks: true },
       }),
     ]);
 
@@ -253,21 +277,25 @@ export async function GET(_req: Request, { params }: { params: { friendId: strin
 
       const cfConnId = connections.find((c) => c.platform === 'CODEFORCES')?.id;
       const lcConnId = connections.find((c) => c.platform === 'LEETCODE')?.id;
+      const ccConnId = connections.find((c) => c.platform === 'CODECHEF')?.id;
 
       const mapAll: Record<string, number> = {};
       const mapCf: Record<string, number> = {};
       const mapLc: Record<string, number> = {};
+      const mapCc: Record<string, number> = {};
 
       for (const s of subs) {
         const day = s.timestamp.toISOString().slice(0, 10);
         mapAll[day] = (mapAll[day] ?? 0) + 1;
         if (s.connectionId === cfConnId) mapCf[day] = (mapCf[day] ?? 0) + 1;
         if (s.connectionId === lcConnId) mapLc[day] = (mapLc[day] ?? 0) + 1;
+        if (s.connectionId === ccConnId) mapCc[day] = (mapCc[day] ?? 0) + 1;
       }
       return {
         all: Object.entries(mapAll).map(([date, count]) => ({ date, count })),
         cf: Object.entries(mapCf).map(([date, count]) => ({ date, count })),
         lc: Object.entries(mapLc).map(([date, count]) => ({ date, count })),
+        cc: Object.entries(mapCc).map(([date, count]) => ({ date, count })),
       };
     };
 
@@ -284,6 +312,7 @@ export async function GET(_req: Request, { params }: { params: { friendId: strin
       consistency: compareWinner(formattedUser.totalActiveDays, formattedFriend.totalActiveDays),
       cfRating: compareWinner(formattedUser.cfRating, formattedFriend.cfRating),
       lcRating: compareWinner(formattedUser.lcRating, formattedFriend.lcRating),
+      ccRating: compareWinner(formattedUser.ccRating, formattedFriend.ccRating),
       strongerTopics: computeStrongerTopics(formattedUser.topicStats, formattedFriend.topicStats),
     };
 

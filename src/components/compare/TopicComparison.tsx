@@ -32,8 +32,16 @@ export function TopicComparison({ user, friend }: TopicComparisonProps) {
   const { selectedPlatform } = useUIStore();
 
   const rows = useMemo<TopicRow[]>(() => {
-    const userStats = selectedPlatform === 'CODEFORCES' ? (user.cfTopicStats ?? user.topicStats) : (user.lcTopicStats ?? user.topicStats);
-    const friendStats = selectedPlatform === 'CODEFORCES' ? (friend.cfTopicStats ?? friend.topicStats) : (friend.lcTopicStats ?? friend.topicStats);
+    const userStats = selectedPlatform === 'CODEFORCES'
+      ? (user.cfTopicStats ?? user.topicStats)
+      : selectedPlatform === 'CODECHEF'
+      ? (user.ccTopicStats ?? user.topicStats)
+      : (user.lcTopicStats ?? user.topicStats);
+    const friendStats = selectedPlatform === 'CODEFORCES'
+      ? (friend.cfTopicStats ?? friend.topicStats)
+      : selectedPlatform === 'CODECHEF'
+      ? (friend.ccTopicStats ?? friend.topicStats)
+      : (friend.lcTopicStats ?? friend.topicStats);
     
     const allTopics = new Set([...userStats.map((t) => t.topic), ...friendStats.map((t) => t.topic)]);
     return Array.from(allTopics).map((topic) => {

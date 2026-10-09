@@ -14,11 +14,15 @@ export function ConsistencyComparison({ user, friend }: ConsistencyComparisonPro
   const { selectedPlatform } = useUIStore();
   const uHeatmap = selectedPlatform === 'CODEFORCES'
     ? (user.cfHeatmapData?.length ? user.cfHeatmapData : user.heatmapData)
+    : selectedPlatform === 'CODECHEF'
+    ? (user.ccHeatmapData?.length ? user.ccHeatmapData : user.heatmapData)
     : selectedPlatform === 'LEETCODE'
     ? (user.lcHeatmapData?.length ? user.lcHeatmapData : user.heatmapData)
     : user.heatmapData;
   const fHeatmap = selectedPlatform === 'CODEFORCES'
     ? (friend.cfHeatmapData?.length ? friend.cfHeatmapData : friend.heatmapData)
+    : selectedPlatform === 'CODECHEF'
+    ? (friend.ccHeatmapData?.length ? friend.ccHeatmapData : friend.heatmapData)
     : selectedPlatform === 'LEETCODE'
     ? (friend.lcHeatmapData?.length ? friend.lcHeatmapData : friend.heatmapData)
     : friend.heatmapData;

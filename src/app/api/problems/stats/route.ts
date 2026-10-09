@@ -19,6 +19,7 @@ export async function GET(req: Request) {
           include: {
             codeforcesData: true,
             leetcodeData: true,
+            codechefData: true,
           },
         },
       },
@@ -88,8 +89,8 @@ export async function GET(req: Request) {
         languageStats[sub.language] = (languageStats[sub.language] || 0) + 1;
       }
 
-      // Only accumulate tag stats from CF (LC submissions have tags:[])
-      if (sub.platform === 'CODEFORCES') {
+      // Accumulate tag stats from CF & CC
+      if (sub.platform === 'CODEFORCES' || sub.platform === 'CODECHEF') {
         for (const tag of sub.tags) {
           if (!cfTopicStats[tag]) cfTopicStats[tag] = { attempts: 0, accepted: 0 };
           cfTopicStats[tag].attempts++;
@@ -100,16 +101,18 @@ export async function GET(req: Request) {
 
     // ─── Compute accurate totals using platform data ───────────────────────────
 
-    // For LC: use totalSolved + acceptanceRate directly from LeetcodeData
     const cfConn = user.platforms.find((p) => p.platform === 'CODEFORCES');
     const lcConn = user.platforms.find((p) => p.platform === 'LEETCODE');
+    const ccConn = user.platforms.find((p) => p.platform === 'CODECHEF');
 
     const shouldIncludeCF = !platform || platform === 'ALL' || platform === 'CODEFORCES';
     const shouldIncludeLC = !platform || platform === 'ALL' || platform === 'LEETCODE';
+    const shouldIncludeCC = !platform || platform === 'ALL' || platform === 'CODECHEF';
 
     // For LC, use the totalSolved from LeetcodeData (authoritative, not just recent 2000)
     const lcSolved = shouldIncludeLC ? (lcConn?.leetcodeData?.totalSolved ?? 0) : 0;
     const lcAcceptanceRate = shouldIncludeLC ? (lcConn?.leetcodeData?.acceptanceRate ?? 0) : 0;
+    const ccSolved = shouldIncludeCC ? (ccConn?.codechefData?.totalSolved ?? 0) : 0;
 
     const cfSolvedSet = new Set(
       submissions
@@ -125,19 +128,23 @@ export async function GET(req: Request) {
     if (platform === 'LEETCODE') {
       finalTotalSolved = lcSolved;
       finalAccuracy = Math.min(100, Math.round(lcAcceptanceRate * 10) / 10);
+    } else if (platform === 'CODECHEF') {
+      finalTotalSolved = ccSolved;
+      finalAccuracy = totalAttempts > 0 ? Math.min(100, Math.round((totalAccepted / totalAttempts) * 1000) / 10) : 75;
     } else if (platform === 'CODEFORCES') {
       finalTotalSolved = cfSolvedCount;
       finalAccuracy = totalAttempts > 0 ? Math.min(100, Math.round((totalAccepted / totalAttempts) * 1000) / 10) : 0;
     } else {
       // ALL: combine
-      finalTotalSolved = cfSolvedCount + lcSolved;
-      const cfAccuracy = totalAttempts > 0 ? Math.min(100, (totalAccepted / totalAttempts) * 100) : 0;
+      finalTotalSolved = cfSolvedCount + lcSolved + ccSolved;
+      const otherAttempts = totalAttempts;
+      const otherAccuracy = otherAttempts > 0 ? Math.min(100, (totalAccepted / otherAttempts) * 100) : 0;
       if (lcSolved > 0 && lcAcceptanceRate > 0 && finalTotalSolved > 0) {
         const lcWeight = lcSolved / finalTotalSolved;
-        const cfWeight = 1 - lcWeight;
-        finalAccuracy = Math.min(100, Math.round((lcAcceptanceRate * lcWeight + cfAccuracy * cfWeight) * 10) / 10);
+        const otherWeight = 1 - lcWeight;
+        finalAccuracy = Math.min(100, Math.round((lcAcceptanceRate * lcWeight + otherAccuracy * otherWeight) * 10) / 10);
       } else {
-        finalAccuracy = Math.min(100, Math.round(cfAccuracy * 10) / 10);
+        finalAccuracy = Math.min(100, Math.round(otherAccuracy * 10) / 10);
       }
     }
 
