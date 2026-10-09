@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { getSession } from '@/lib/session';
 import { getCFUser } from '@/lib/fetchers/codeforces';
 import { getLCSolvedStats } from '@/lib/fetchers/leetcode';
+import { getCodeChefUser } from '@/lib/fetchers/codechef';
 import { syncPlatform } from '@/workers/syncWorker';
 import { isPlatformHandleFormatValid } from '@/lib/handle-validation';
 
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
     }
 
-    const { cfHandle, lcUsername } = await request.json();
+    const { cfHandle, lcUsername, ccHandle } = await request.json();
 
     if (cfHandle && !isPlatformHandleFormatValid(cfHandle)) {
       return NextResponse.json({ error: 'Invalid Codeforces handle format.' }, { status: 400 });
@@ -22,6 +23,10 @@ export async function POST(request: NextRequest) {
 
     if (lcUsername && !isPlatformHandleFormatValid(lcUsername)) {
       return NextResponse.json({ error: 'Invalid LeetCode username format.' }, { status: 400 });
+    }
+
+    if (ccHandle && !isPlatformHandleFormatValid(ccHandle)) {
+      return NextResponse.json({ error: 'Invalid CodeChef handle format.' }, { status: 400 });
     }
 
     await db.user.update({ where: { id: session.id }, data: { onboarded: true } });
@@ -75,6 +80,31 @@ export async function POST(request: NextRequest) {
         where: { userId_platform: { userId: session.id, platform: 'LEETCODE' } },
         create: { userId: session.id, platform: 'LEETCODE', handle: lcUsername, syncStatus: 'PENDING' },
         update: { handle: lcUsername, syncStatus: 'PENDING', syncError: null },
+      }));
+    }
+
+    if (ccHandle) {
+      try {
+        await getCodeChefUser(ccHandle);
+      } catch {
+        return NextResponse.json({ error: 'CodeChef handle not found.' }, { status: 422 });
+      }
+
+      const taken = await db.platformConnection.findFirst({
+        where: {
+          platform: 'CODECHEF',
+          handle: ccHandle,
+          userId: { not: session.id },
+        },
+      });
+      if (taken) {
+        return NextResponse.json({ error: 'This CodeChef handle is already linked to another Arc account.' }, { status: 409 });
+      }
+
+      connections.push(await db.platformConnection.upsert({
+        where: { userId_platform: { userId: session.id, platform: 'CODECHEF' } },
+        create: { userId: session.id, platform: 'CODECHEF', handle: ccHandle, syncStatus: 'PENDING' },
+        update: { handle: ccHandle, syncStatus: 'PENDING', syncError: null },
       }));
     }
 

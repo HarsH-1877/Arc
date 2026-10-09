@@ -20,13 +20,15 @@ interface PlatformData {
 export default function ConnectionsSettingsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [linkingPlatform, setLinkingPlatform] = useState<'CODEFORCES' | 'LEETCODE' | null>(null);
-  const [syncingPlatform, setSyncingPlatform] = useState<'CODEFORCES' | 'LEETCODE' | null>(null);
-  const [unlinkingPlatform, setUnlinkingPlatform] = useState<'CODEFORCES' | 'LEETCODE' | null>(null);
+  const [linkingPlatform, setLinkingPlatform] = useState<'CODEFORCES' | 'LEETCODE' | 'CODECHEF' | null>(null);
+  const [syncingPlatform, setSyncingPlatform] = useState<'CODEFORCES' | 'LEETCODE' | 'CODECHEF' | null>(null);
+  const [unlinkingPlatform, setUnlinkingPlatform] = useState<'CODEFORCES' | 'LEETCODE' | 'CODECHEF' | null>(null);
   const [cfHandle, setCfHandle] = useState('');
   const [lcHandle, setLcHandle] = useState('');
+  const [ccHandle, setCcHandle] = useState('');
   const [cfError, setCfError] = useState('');
   const [lcError, setLcError] = useState('');
+  const [ccError, setCcError] = useState('');
 
   const refreshConnectedData = async () => {
     await Promise.all([
@@ -52,7 +54,7 @@ export default function ConnectionsSettingsPage() {
   });
 
   const { mutate: linkPlatform } = useMutation({
-    mutationFn: async ({ platform, handle }: { platform: 'CODEFORCES' | 'LEETCODE'; handle: string }) => {
+    mutationFn: async ({ platform, handle }: { platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF'; handle: string }) => {
       const res = await fetch('/api/platforms/link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -67,6 +69,7 @@ export default function ConnectionsSettingsPage() {
     onSuccess: async (_data, variables) => {
       await refreshConnectedData();
       if (variables.platform === 'CODEFORCES') setCfHandle('');
+      else if (variables.platform === 'CODECHEF') setCcHandle('');
       else setLcHandle('');
     },
   });
@@ -101,8 +104,9 @@ export default function ConnectionsSettingsPage() {
     },
   });
 
-  const handleLink = (platform: 'CODEFORCES' | 'LEETCODE', handle: string) => {
+  const handleLink = (platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF', handle: string) => {
     if (platform === 'CODEFORCES') setCfError('');
+    else if (platform === 'CODECHEF') setCcError('');
     else setLcError('');
 
     setLinkingPlatform(platform);
@@ -111,6 +115,7 @@ export default function ConnectionsSettingsPage() {
       {
         onError: (err) => {
           if (platform === 'CODEFORCES') setCfError(err.message);
+          else if (platform === 'CODECHEF') setCcError(err.message);
           else setLcError(err.message);
         },
         onSettled: () => setLinkingPlatform(null),
@@ -118,14 +123,14 @@ export default function ConnectionsSettingsPage() {
     );
   };
 
-  const handleSync = (platform: 'CODEFORCES' | 'LEETCODE') => {
+  const handleSync = (platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF') => {
     setSyncingPlatform(platform);
     syncPlatformMutation(platform, {
       onSettled: () => setSyncingPlatform(null),
     });
   };
 
-  const handleUnlink = (platform: 'CODEFORCES' | 'LEETCODE') => {
+  const handleUnlink = (platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF') => {
     setUnlinkingPlatform(platform);
     unlinkPlatform(platform, {
       onSettled: () => setUnlinkingPlatform(null),
@@ -138,6 +143,7 @@ export default function ConnectionsSettingsPage() {
 
   const cf = dashboard?.platforms?.codeforces as PlatformData | null | undefined;
   const lc = dashboard?.platforms?.leetcode as PlatformData | null | undefined;
+  const cc = dashboard?.platforms?.codechef as PlatformData | null | undefined;
 
   return (
     <div className="space-y-6">
@@ -149,7 +155,7 @@ export default function ConnectionsSettingsPage() {
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <PlatformCard
             name="Codeforces"
             platform="CODEFORCES"
@@ -174,6 +180,20 @@ export default function ConnectionsSettingsPage() {
             isLinking={linkingPlatform === 'LEETCODE'}
             isSyncing={syncingPlatform === 'LEETCODE'}
             isUnlinking={unlinkingPlatform === 'LEETCODE'}
+            onLink={handleLink}
+            onSync={handleSync}
+            onUnlink={handleUnlink}
+          />
+          <PlatformCard
+            name="CodeChef"
+            platform="CODECHEF"
+            data={cc}
+            handle={ccHandle}
+            setHandle={setCcHandle}
+            error={ccError}
+            isLinking={linkingPlatform === 'CODECHEF'}
+            isSyncing={syncingPlatform === 'CODECHEF'}
+            isUnlinking={unlinkingPlatform === 'CODECHEF'}
             onLink={handleLink}
             onSync={handleSync}
             onUnlink={handleUnlink}
@@ -214,7 +234,7 @@ function PlatformCard({
   onUnlink,
 }: {
   name: string;
-  platform: 'CODEFORCES' | 'LEETCODE';
+  platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF';
   data?: PlatformData | null;
   handle: string;
   setHandle: (value: string) => void;
@@ -222,9 +242,9 @@ function PlatformCard({
   isLinking: boolean;
   isSyncing: boolean;
   isUnlinking: boolean;
-  onLink: (platform: 'CODEFORCES' | 'LEETCODE', handle: string) => void;
-  onSync: (platform: 'CODEFORCES' | 'LEETCODE') => void;
-  onUnlink: (platform: 'CODEFORCES' | 'LEETCODE') => void;
+  onLink: (platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF', handle: string) => void;
+  onSync: (platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF') => void;
+  onUnlink: (platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF') => void;
 }) {
   // Only animate while our own mutation is in-flight. Once it settles, stop spinning
   // even if the DB poll hasn't caught up yet — avoids stuck spinner.
@@ -240,7 +260,13 @@ function PlatformCard({
             {data ? (
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <a
-                  href={platform === 'CODEFORCES' ? `https://codeforces.com/profile/${data.handle}` : `https://leetcode.com/u/${data.handle}`}
+                  href={
+                    platform === 'CODEFORCES'
+                      ? `https://codeforces.com/profile/${data.handle}`
+                      : platform === 'CODECHEF'
+                      ? `https://www.codechef.com/users/${data.handle}`
+                      : `https://leetcode.com/u/${data.handle}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-mono-data inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-sm hover:underline hover:opacity-85 transition-opacity"

@@ -4,6 +4,7 @@ import type { Platform } from '@prisma/client';
 import { getSession } from '@/lib/session';
 import { getCFUser } from '@/lib/fetchers/codeforces';
 import { getLCSolvedStats } from '@/lib/fetchers/leetcode';
+import { getCodeChefUser } from '@/lib/fetchers/codechef';
 import { syncPlatform } from '@/workers/syncWorker';
 import { isPlatformHandleFormatValid } from '@/lib/handle-validation';
 
@@ -34,6 +35,12 @@ export async function POST(request: NextRequest) {
       } catch {
         return NextResponse.json({ error: 'LeetCode username not found' }, { status: 422 });
       }
+    } else if (platform === 'CODECHEF') {
+      try {
+        await getCodeChefUser(handle);
+      } catch {
+        return NextResponse.json({ error: 'CodeChef handle not found' }, { status: 422 });
+      }
     } else {
       return NextResponse.json({ error: 'Unsupported platform' }, { status: 400 });
     }
@@ -58,6 +65,7 @@ export async function POST(request: NextRequest) {
       await db.contestResult.deleteMany({ where: { connectionId: existingConnection.id } });
       await db.codeforcesData.deleteMany({ where: { connectionId: existingConnection.id } });
       await db.leetcodeData.deleteMany({ where: { connectionId: existingConnection.id } });
+      await db.codechefData.deleteMany({ where: { connectionId: existingConnection.id } });
     }
 
     const connection = await db.platformConnection.upsert({

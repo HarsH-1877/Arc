@@ -1,4 +1,5 @@
 import { getCFContests } from '@/lib/fetchers/codeforces';
+import { getCodeChefUpcomingContests } from '@/lib/fetchers/codechef';
 import type { ContestCalendarEvent, ContestPlatform, UpcomingContest, UserContestHistoryItem } from '@/lib/contests/types';
 
 const LC_WEEKLY_QUERY = `
@@ -194,6 +195,15 @@ export async function fetchContestSchedule(): Promise<UpcomingContest[]> {
     }
   } catch {
     // LC schedule is best-effort
+  }
+
+  try {
+    const ccContests = await getCodeChefUpcomingContests();
+    for (const contest of ccContests) {
+      contests.push(contest);
+    }
+  } catch {
+    // CC schedule is best-effort
   }
 
   return contests.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());

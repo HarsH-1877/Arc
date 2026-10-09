@@ -9,7 +9,7 @@ import {
 import type { UserContestHistoryItem } from '@/lib/contests/types';
 import { USE_MOCK_DATA } from '@/lib/mock';
 
-// GET /api/contests — user contest history + global upcoming schedule
+// GET /api/contests â€” user contest history + global upcoming schedule
 export async function GET() {
   if (USE_MOCK_DATA) {
     return NextResponse.json({
@@ -26,7 +26,7 @@ export async function GET() {
 
   const connections = await db.platformConnection.findMany({
     where: { userId: session.id },
-    include: { leetcodeData: true, codeforcesData: true },
+    include: { leetcodeData: true, codeforcesData: true, codechefData: true },
   });
 
   const connectionIds = connections.map((connection) => connection.id);
@@ -245,7 +245,7 @@ export async function GET() {
   const upcoming = fullSchedule.filter((c) => new Date(c.startTime).getTime() > Date.now());
   const calendarEvents = buildContestCalendarEvents(history, fullSchedule, attendedKeys);
 
-  const bestByPlatform = (['CODEFORCES', 'LEETCODE'] as const)
+  const bestByPlatform = (['CODEFORCES', 'LEETCODE', 'CODECHEF'] as const)
     .map((platform) => {
       const platformHistory = history.filter((contest) => contest.platform === platform);
       if (!platformHistory.length) return null;
@@ -261,7 +261,7 @@ export async function GET() {
     .filter(Boolean);
 
   const now = Date.now();
-  const upcomingForUser = (['CODEFORCES', 'LEETCODE'] as const).flatMap((platform) =>
+  const upcomingForUser = (['CODEFORCES', 'LEETCODE', 'CODECHEF'] as const).flatMap((platform) =>
     upcoming.filter((contest) => {
       if (contest.platform !== platform) return false;
       if (new Date(contest.startTime).getTime() <= now) return false;
@@ -272,7 +272,9 @@ export async function GET() {
       connections.find((connection) => connection.platform === 'CODEFORCES')?.codeforcesData?.currentRating ?? null;
     const lcConnection = connections.find((connection) => connection.platform === 'LEETCODE');
     const lcRating = lcConnection?.leetcodeData?.contestRating ?? null;
-    const before = contest.platform === 'CODEFORCES' ? cfRating ?? 1823 : lcRating ?? 2450;
+    const ccConnection = connections.find((connection) => connection.platform === 'CODECHEF');
+    const ccRating = ccConnection?.codechefData?.currentRating ?? null;
+    const before = contest.platform === 'CODEFORCES' ? cfRating ?? 1823 : contest.platform === 'CODECHEF' ? ccRating ?? 1500 : lcRating ?? 2450;
 
     return {
       id: contest.id,

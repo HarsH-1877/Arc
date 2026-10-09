@@ -17,7 +17,7 @@ export async function GET() {
     where: { id: session.id },
     include: {
       platforms: {
-        include: { codeforcesData: true, leetcodeData: true },
+        include: { codeforcesData: true, leetcodeData: true, codechefData: true },
       },
       streaks: true,
     },
@@ -27,6 +27,7 @@ export async function GET() {
 
   const cf = user.platforms.find((p) => p.platform === 'CODEFORCES');
   const lc = user.platforms.find((p) => p.platform === 'LEETCODE');
+  const cc = user.platforms.find((p) => p.platform === 'CODECHEF');
 
   const connectionIds = user.platforms.map((p) => p.id);
 
@@ -373,6 +374,21 @@ export async function GET() {
             hardSolved: lc.leetcodeData?.hardSolved ?? 0,
             contestRating: lc.leetcodeData?.contestRating ?? null,
             contestCount: lcContestCount,
+          }
+        : null,
+      codechef: cc
+        ? {
+            handle: cc.handle,
+            syncStatus: cc.syncStatus,
+            lastSyncedAt: cc.lastSyncedAt ? cc.lastSyncedAt.toISOString() : null,
+            syncError: cc.syncError,
+            currentRating: cc.codechefData?.currentRating ?? null,
+            maxRating: cc.codechefData?.maxRating ?? null,
+            stars: cc.codechefData?.stars ?? null,
+            globalRank: cc.codechefData?.globalRank ?? null,
+            countryRank: cc.codechefData?.countryRank ?? null,
+            contestCount: cc.codechefData?.contestsAttended ?? 0,
+            totalSolved: cc.codechefData?.totalSolved ?? 0,
           }
         : null,
     },

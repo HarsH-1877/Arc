@@ -10,6 +10,7 @@ import { AuthStepper } from '@/components/auth/AuthStepper';
 import { useDebounce } from '@/hooks/useDebounce';
 import { EASE_OUT_FAST } from '@/lib/animations';
 import { cfRankName, cfRankColor } from '@/lib/codeforces/cf-rank';
+import { ccRankColor } from '@/lib/codechef/cc-rank';
 
 interface CFUser {
   handle: string;
@@ -25,20 +26,33 @@ interface LCUser {
   avatar: string | null;
 }
 
+interface CCUser {
+  handle: string;
+  currentRating: number | null;
+  maxRating: number | null;
+  stars: string;
+  totalSolved: number;
+}
+
 export default function LinkAccountPage() {
   const router = useRouter();
   const [cfHandle, setCfHandle] = useState('');
   const [lcUsername, setLcUsername] = useState('');
+  const [ccHandle, setCcHandle] = useState('');
   const [cfStatus, setCfStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
   const [lcStatus, setLcStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
+  const [ccStatus, setCcStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
   const [cfUser, setCfUser] = useState<CFUser | null>(null);
   const [lcUser, setLcUser] = useState<LCUser | null>(null);
+  const [ccUser, setCcUser] = useState<CCUser | null>(null);
   const [cfError, setCfError] = useState('');
   const [lcError, setLcError] = useState('');
+  const [ccError, setCcError] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [saving, setSaving] = useState(false);
   const debouncedCfHandle = useDebounce(cfHandle, 300);
   const debouncedLcUsername = useDebounce(lcUsername, 300);
+  const debouncedCcHandle = useDebounce(ccHandle, 300);
 
   useEffect(() => {
     if (!debouncedCfHandle) {
@@ -104,10 +118,44 @@ export default function LinkAccountPage() {
     return () => controller.abort();
   }, [debouncedLcUsername]);
 
+  useEffect(() => {
+    if (!debouncedCcHandle) {
+      setCcStatus('idle');
+      setCcUser(null);
+      setCcError('');
+      return;
+    }
+
+    const controller = new AbortController();
+    setCcStatus('checking');
+    fetch(`/api/onboarding/validate-cc?handle=${encodeURIComponent(debouncedCcHandle)}`, { signal: controller.signal })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.valid) {
+          setCcStatus('valid');
+          setCcUser(data.user);
+          setCcError('');
+        } else {
+          setCcStatus('invalid');
+          setCcUser(null);
+          setCcError(data.error ?? 'Handle not found.');
+        }
+      })
+      .catch((err: unknown) => {
+        if ((err as { name?: string }).name === 'AbortError') return;
+        setCcStatus('invalid');
+        setCcError('Could not reach CodeChef.');
+      });
+
+    return () => controller.abort();
+  }, [debouncedCcHandle]);
+
   const canSave =
     !saving &&
-    ((cfHandle.length === 0 || cfStatus === 'valid') && (lcUsername.length === 0 || lcStatus === 'valid')) &&
-    (cfStatus === 'valid' || lcStatus === 'valid');
+    ((cfHandle.length === 0 || cfStatus === 'valid') &&
+     (lcUsername.length === 0 || lcStatus === 'valid') &&
+     (ccHandle.length === 0 || ccStatus === 'valid')) &&
+    (cfStatus === 'valid' || lcStatus === 'valid' || ccStatus === 'valid');
 
   const complete = async () => {
     if (!canSave) return;
@@ -120,6 +168,7 @@ export default function LinkAccountPage() {
         body: JSON.stringify({
           cfHandle: cfStatus === 'valid' ? cfHandle : undefined,
           lcUsername: lcStatus === 'valid' ? lcUsername : undefined,
+          ccHandle: ccStatus === 'valid' ? ccHandle : undefined,
         }),
       });
       const data = await response.json();
@@ -161,7 +210,7 @@ export default function LinkAccountPage() {
             <div>
               <h1 className="mt-3 text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)]">Connect your handles</h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">
-                Arc reads public Codeforces and LeetCode data, syncs your history, and builds your dashboard from it.
+                Arc reads public Codeforces, LeetCode, and CodeChef data, syncs your history, and builds your dashboard from it.
               </p>
             </div>
             <span className="mt-4 rounded-full border border-[rgba(79,110,247,0.28)] bg-[rgba(79,110,247,0.1)] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--accent-blue)] md:mt-0">
@@ -169,7 +218,7 @@ export default function LinkAccountPage() {
             </span>
           </div>
 
-          <div className="grid gap-4 p-7 md:grid-cols-2">
+          <div className="grid gap-4 p-7 md:grid-cols-3">
             <HandleCard
               label="Codeforces"
               icon={<Trophy size={18} />}
@@ -215,6 +264,33 @@ export default function LinkAccountPage() {
                   image={lcUser.avatar}
                   name={lcUser.username}
                   meta={`${lcUser.totalSolved} solved${lcUser.ranking ? ` · Rank #${lcUser.ranking.toLocaleString()}` : ''}`}
+                />
+              )}
+            </HandleCard>
+
+            <HandleCard
+              label="CodeChef"
+              icon={<Trophy size={18} />}
+              logo="/codechef-logo.png"
+              value={ccHandle}
+              placeholder="tourist"
+              status={ccStatus}
+              error={ccError}
+              onChange={setCcHandle}
+            >
+              {ccUser && (
+                <PreviewRow
+                  image={null}
+                  name={ccUser.handle}
+                  meta={
+                    <>
+                      <span style={{ color: ccRankColor(ccUser.currentRating ?? 0) }}>
+                        {ccUser.stars}
+                      </span>
+                      {ccUser.currentRating ? ` · ${ccUser.currentRating}` : ''}
+                      {` · ${ccUser.totalSolved} solved`}
+                    </>
+                  }
                 />
               )}
             </HandleCard>

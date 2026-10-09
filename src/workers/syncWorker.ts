@@ -2,9 +2,10 @@ import { db } from '@/lib/db';
 import { getCFUser, getCFRatingHistory, getCFAllSubmissions } from '@/lib/fetchers/codeforces';
 import { getCodeforcesProblemKey, getUniqueAcceptedCodeforcesProblems } from '@/lib/codeforces/solved-problems';
 import { getLCSolvedStats, getLCContestInfo, getLCAllAcSubmissions, getLCRecentSubmissions, getLCProblemTags, getLCTagStats, getLCContestHistory, getLCProfile } from '@/lib/fetchers/leetcode';
+import { getCodeChefUser, getCodeChefRatingHistory, getCodeChefRecentSubmissions } from '@/lib/fetchers/codechef';
 import type { Platform } from '@prisma/client';
 
-// ─── Streak calculation ──────────────────────────────────────────────────────
+// â”€â”€â”€ Streak calculation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function recalculateStreak(userId: string): Promise<void> {
   // Get all platform connections for this user
@@ -89,7 +90,7 @@ export async function recalculateStreak(userId: string): Promise<void> {
   });
 }
 
-// ─── Platform sync ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Platform sync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function syncPlatform(connectionId: string, options?: { quick?: boolean }): Promise<void> {
   const connection = await db.platformConnection.findUnique({
@@ -108,6 +109,8 @@ export async function syncPlatform(connectionId: string, options?: { quick?: boo
   try {
     if (connection.platform === 'CODEFORCES') {
       await syncCodeforces(connectionId, connection.handle, connection.user.id, options?.quick);
+    } else if (connection.platform === 'CODECHEF') {
+      await syncCodeChef(connectionId, connection.handle, connection.user.id, options?.quick);
     } else {
       await syncLeetCode(connectionId, connection.handle, connection.user.id, options?.quick);
     }
@@ -125,6 +128,102 @@ export async function syncPlatform(connectionId: string, options?: { quick?: boo
       data: { syncStatus: 'ERROR', syncError: message },
     });
     throw err;
+  }
+}
+
+async function syncCodeChef(connectionId: string, handle: string, userId: string, quick = false) {
+  void userId;
+  void quick;
+  const [ccUser, ratingHistory, submissions] = await Promise.all([
+    getCodeChefUser(handle),
+    getCodeChefRatingHistory(handle),
+    getCodeChefRecentSubmissions(handle, 2),
+  ]);
+
+  // Upsert CodeChef profile data
+  await db.codechefData.upsert({
+    where: { connectionId },
+    create: {
+      connectionId,
+      currentRating: ccUser.currentRating ?? null,
+      maxRating: ccUser.maxRating ?? null,
+      stars: ccUser.stars,
+      globalRank: ccUser.globalRank ?? null,
+      countryRank: ccUser.countryRank ?? null,
+      totalSolved: ccUser.totalSolved,
+      contestsAttended: ccUser.contestsAttended,
+      ratingHistory: ratingHistory.map((r) => ({
+        contestId: r.contestId,
+        contestName: r.contestName,
+        rating: r.newRating,
+        date: r.date,
+      })),
+    },
+    update: {
+      currentRating: ccUser.currentRating ?? null,
+      maxRating: ccUser.maxRating ?? null,
+      stars: ccUser.stars,
+      globalRank: ccUser.globalRank ?? null,
+      countryRank: ccUser.countryRank ?? null,
+      totalSolved: ccUser.totalSolved,
+      contestsAttended: ccUser.contestsAttended,
+      ratingHistory: ratingHistory.map((r) => ({
+        contestId: r.contestId,
+        contestName: r.contestName,
+        rating: r.newRating,
+        date: r.date,
+      })),
+    },
+  });
+
+  // Store contest results in DB
+  for (const r of ratingHistory) {
+    await db.contestResult.upsert({
+      where: {
+        connectionId_contestId_platform: {
+          connectionId,
+          contestId: r.contestId,
+          platform: 'CODECHEF',
+        },
+      },
+      create: {
+        connectionId,
+        platform: 'CODECHEF',
+        contestId: r.contestId,
+        contestName: r.contestName,
+        rank: r.rank,
+        ratingChange: r.ratingChange,
+        newRating: r.newRating,
+        timestamp: new Date(r.date),
+      },
+      update: {
+        contestName: r.contestName,
+        rank: r.rank,
+        ratingChange: r.ratingChange,
+        newRating: r.newRating,
+        timestamp: new Date(r.date),
+      },
+    });
+  }
+
+  // Store submissions
+  await db.submission.deleteMany({ where: { connectionId, platform: 'CODECHEF' } });
+  if (submissions.length > 0) {
+    await db.submission.createMany({
+      data: submissions.map((sub) => ({
+        connectionId,
+        externalId: sub.id,
+        problemName: sub.problemName,
+        problemSlug: sub.problemCode,
+        platform: 'CODECHEF' as const,
+        verdict: sub.verdict,
+        language: sub.language,
+        timestamp: new Date(sub.timestamp),
+        difficulty: null,
+        tags: [],
+      })),
+      skipDuplicates: true,
+    });
   }
 }
 

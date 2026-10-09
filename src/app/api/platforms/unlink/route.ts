@@ -22,6 +22,7 @@ export async function DELETE(request: NextRequest) {
       await db.contestResult.deleteMany({ where: { connectionId: c.id } });
       await db.codeforcesData.deleteMany({ where: { connectionId: c.id } });
       await db.leetcodeData.deleteMany({ where: { connectionId: c.id } });
+      await db.codechefData.deleteMany({ where: { connectionId: c.id } });
     }
 
     await db.platformConnection.deleteMany({
