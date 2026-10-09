@@ -19,7 +19,7 @@ interface ContestDay {
   label: string;
   delta?: number;
   type: 'given' | 'upcoming' | 'missed';
-  platforms: Array<{ platform: 'CODEFORCES' | 'LEETCODE'; href?: string; registrationOpen?: boolean }>;
+  platforms: Array<{ platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF'; href?: string; registrationOpen?: boolean }>;
 }
 
 function LiveContestTimer({ nextContest }: { nextContest?: ContestDay }) {

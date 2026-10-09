@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 export interface ContestItem {
   id: string;
   name: string;
-  platform: 'CODEFORCES' | 'LEETCODE';
+  platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF';
   date: string;
   time: string;
   startTime?: string;

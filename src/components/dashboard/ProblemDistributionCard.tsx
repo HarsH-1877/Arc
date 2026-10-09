@@ -7,7 +7,7 @@ import type { DashboardApiData } from '@/hooks/useDashboardData';
 
 interface ProblemDistributionCardProps {
   data?: DashboardApiData;
-  platform: 'ALL' | 'CODEFORCES' | 'LEETCODE';
+  platform: 'ALL' | 'CODEFORCES' | 'LEETCODE' | 'CODECHEF';
   loading?: boolean;
   children?: React.ReactNode;
 }
@@ -77,6 +77,7 @@ export function ProblemDistributionCard({ data, platform, loading, children, cla
   ];
   const histogram = cfHistogramData(data);
   const cfTotal = data?.platforms.codeforces?.totalSolved ?? histogram.reduce((sum, bucket) => sum + bucket.count, 0);
+  const ccTotal = data?.platforms.codechef?.totalSolved ?? 0;
 
   return (
     <Card variant="base" className={className || "min-h-[128px] overflow-hidden"} padding="20px 24px">
@@ -141,25 +142,51 @@ export function ProblemDistributionCard({ data, platform, loading, children, cla
               </ResponsiveContainer>
             </div>
           </div>
+        ) : platform === 'CODECHEF' ? (
+          <div className="flex flex-col justify-between flex-1 py-1">
+            <div className="flex flex-col">
+              <span className="font-mono-data text-3xl sm:text-4xl font-black leading-none" style={{ color: 'var(--text-primary)' }}>
+                {ccTotal.toLocaleString()}
+              </span>
+              <span className="text-[10px] uppercase font-semibold tracking-wider mt-1 text-[var(--text-muted)]">
+                CodeChef Problems Solved
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mt-3">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-600/10 text-amber-500 border border-amber-600/20">
+                <PlatformLogo platform="CODECHEF" size={14} />
+                <span>{data?.platforms.codechef?.stars ?? '1★'}</span>
+              </div>
+              {data?.platforms.codechef?.currentRating && (
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-mono-data font-semibold bg-white/[0.04] border border-[var(--border-subtle)] text-[var(--text-secondary)]">
+                  <span>Rating: {data.platforms.codechef.currentRating}</span>
+                </div>
+              )}
+            </div>
+          </div>
         ) : (
           /* platform === 'ALL' */
           <div className="flex flex-col justify-between flex-1 py-1">
             <div className="flex flex-col">
               <span className="font-mono-data text-3xl sm:text-4xl font-black leading-none" style={{ color: 'var(--text-primary)' }}>
-                {(total + cfTotal).toLocaleString()}
+                {(total + cfTotal + ccTotal).toLocaleString()}
               </span>
               <span className="text-[10px] uppercase font-semibold tracking-wider mt-1 text-[var(--text-muted)]">
                 Total Solved Across All Platforms
               </span>
             </div>
-            <div className="flex items-center gap-3 mt-3">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                <PlatformLogo platform="LEETCODE" size={14} />
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <PlatformLogo platform="LEETCODE" size={13} />
                 <span className="font-mono-data font-bold">{total}</span>
               </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                <PlatformLogo platform="CODEFORCES" size={14} />
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <PlatformLogo platform="CODEFORCES" size={13} />
                 <span className="font-mono-data font-bold">{cfTotal}</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-600/10 text-amber-500 border border-amber-600/20">
+                <PlatformLogo platform="CODECHEF" size={13} />
+                <span className="font-mono-data font-bold">{ccTotal}</span>
               </div>
             </div>
           </div>

@@ -6,7 +6,7 @@ import { useDashboardData } from '@/hooks/useDashboardData';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDismissOnOutsideClick } from '@/hooks/useDismissOnOutsideClick';
 
-type Platform = 'ALL' | 'CODEFORCES' | 'LEETCODE';
+type Platform = 'ALL' | 'CODEFORCES' | 'LEETCODE' | 'CODECHEF';
 type GoalType = 'rating' | 'questions' | 'rank';
 
 interface RankGoal {
@@ -29,6 +29,15 @@ const LEETCODE_RANKS: RankGoal[] = [
   { label: 'Guardian', target: 2200 },
 ];
 
+const CODECHEF_RANKS: RankGoal[] = [
+  { label: '2★', target: 1400 },
+  { label: '3★', target: 1600 },
+  { label: '4★', target: 1800 },
+  { label: '5★', target: 2000 },
+  { label: '6★', target: 2200 },
+  { label: '7★', target: 2500 },
+];
+
 export function GoalSetter({ platform }: { platform: Platform }) {
   const { data } = useDashboardData();
   const [open, setOpen] = useState(false);
@@ -39,6 +48,7 @@ export function GoalSetter({ platform }: { platform: Platform }) {
   const [questionTarget, setQuestionTarget] = useState<number>(500);
   const [cfRank, setCfRank] = useState<RankGoal>(CODEFORCES_RANKS[2]);
   const [lcRank, setLcRank] = useState<RankGoal>(LEETCODE_RANKS[0]);
+  const [ccRank, setCcRank] = useState<RankGoal>(CODECHEF_RANKS[1]);
 
   const [rankOpen, setRankOpen] = useState(false);
   const goalMenuRef = useRef<HTMLDivElement>(null);
@@ -71,6 +81,12 @@ export function GoalSetter({ platform }: { platform: Platform }) {
         const found = LEETCODE_RANKS.find(r => r.label === savedLcRank);
         if (found) setLcRank(found);
       }
+
+      const savedCcRank = localStorage.getItem('arc-goal-ccrank');
+      if (savedCcRank) {
+        const found = CODECHEF_RANKS.find(r => r.label === savedCcRank);
+        if (found) setCcRank(found);
+      }
     } catch {
       // Ignore
     }
@@ -85,16 +101,22 @@ export function GoalSetter({ platform }: { platform: Platform }) {
       localStorage.setItem(`${storageKey}-questions`, String(questionTarget));
       localStorage.setItem('arc-goal-cfrank', cfRank.label);
       localStorage.setItem('arc-goal-lcrank', lcRank.label);
+      localStorage.setItem('arc-goal-ccrank', ccRank.label);
     } catch {
       // Ignore storage errors
     }
-  }, [platform, storageKey, goalType, customRatingTarget, questionTarget, cfRank, lcRank]);
+  }, [platform, storageKey, goalType, customRatingTarget, questionTarget, cfRank, lcRank, ccRank]);
 
   const currentRating = platform === 'CODEFORCES'
     ? data?.platforms.codeforces?.currentRating ?? 0
+    : platform === 'CODECHEF'
+    ? data?.platforms.codechef?.currentRating ?? 0
     : data?.platforms.leetcode?.contestRating ?? 0;
-  const currentQuestions = data?.platforms.leetcode?.totalSolved ?? 0;
-  const rankGoal = platform === 'CODEFORCES' ? cfRank : lcRank;
+  const currentQuestions = platform === 'CODECHEF'
+    ? data?.platforms.codechef?.totalSolved ?? 0
+    : data?.platforms.leetcode?.totalSolved ?? 0;
+  const rankGoal = platform === 'CODEFORCES' ? cfRank : platform === 'CODECHEF' ? ccRank : lcRank;
+  const ranks = platform === 'CODEFORCES' ? CODEFORCES_RANKS : platform === 'CODECHEF' ? CODECHEF_RANKS : LEETCODE_RANKS;
 
   const active = useMemo(() => {
     if (goalType === 'questions') {
@@ -126,7 +148,6 @@ export function GoalSetter({ platform }: { platform: Platform }) {
   const remaining = Math.max(0, Math.ceil(active.target - active.current));
   const progress = Math.min(100, Math.round((active.current / Math.max(active.target, 1)) * 100));
   const achieved = remaining === 0;
-  const ranks = platform === 'CODEFORCES' ? CODEFORCES_RANKS : LEETCODE_RANKS;
 
   return (
     <div ref={goalMenuRef} className="relative hidden min-w-[326px] md:block">
@@ -261,6 +282,7 @@ export function GoalSetter({ platform }: { platform: Platform }) {
                           type="button"
                           onClick={() => {
                             if (platform === 'CODEFORCES') setCfRank(rank);
+                            else if (platform === 'CODECHEF') setCcRank(rank);
                             else setLcRank(rank);
                             setRankOpen(false);
                           }}

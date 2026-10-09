@@ -29,19 +29,34 @@ export interface DashboardApiData {
       contestRating: number | null;
       contestCount: number;
     } | null;
+    codechef?: {
+      handle: string;
+      syncStatus: string;
+      lastSyncedAt: string | null;
+      syncError: string | null;
+      currentRating: number | null;
+      maxRating: number | null;
+      stars: string | null;
+      globalRank?: number | null;
+      countryRank?: number | null;
+      contestCount: number;
+      totalSolved?: number;
+    } | null;
   };
   streak: { currentStreak: number; longestStreak: number; freezeTokens: number; totalActiveDays: number };
   heatmapData: { date: string; count: number }[];
   codeforcesHeatmapData?: { date: string; count: number }[];
   leetcodeHeatmapData?: { date: string; count: number }[];
-  ratingChartData: { date: string; cfRating?: number; lcRating?: number; friend1?: number; friend2?: number; friend3?: number; friend4?: number }[];
+  codechefHeatmapData?: { date: string; count: number }[];
+  ratingChartData: { date: string; cfRating?: number; lcRating?: number; ccRating?: number; friend1?: number; friend2?: number; friend3?: number; friend4?: number }[];
   topicStats: { topic: string; value: number; rawCount: number }[];
   codeforcesTopicStats?: { topic: string; value: number; rawCount: number }[];
   leetcodeTopicStats?: { topic: string; value: number; rawCount: number }[];
+  codechefTopicStats?: { topic: string; value: number; rawCount: number }[];
   recentSubmissions: {
     id: string;
     problemName: string;
-    platform: 'CODEFORCES' | 'LEETCODE';
+    platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF';
     verdict: string;
     difficulty: string | null;
     tags: string[];
@@ -51,7 +66,7 @@ export interface DashboardApiData {
     date: string;
     startTime?: string;
     label: string;
-    platform: 'CODEFORCES' | 'LEETCODE';
+    platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF';
     type: 'given' | 'upcoming' | 'missed';
     delta?: number;
     contestId?: string;
@@ -61,7 +76,7 @@ export interface DashboardApiData {
   upcomingContests: Array<{
     id: string;
     name: string;
-    platform: 'CODEFORCES' | 'LEETCODE';
+    platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF';
     startTime: string;
     durationSeconds: number;
     href: string;

@@ -39,7 +39,7 @@ export interface TopicStat {
 export interface RatingPoint {
   date: string;
   rating: number;
-  platform: 'CODEFORCES' | 'LEETCODE';
+  platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF';
 }
 
 export type CompareWinner = 'user' | 'friend' | 'tie';
@@ -49,6 +49,7 @@ export interface CompareVerdict {
   consistency: CompareWinner;
   cfRating: CompareWinner;
   lcRating: CompareWinner;
+  ccRating?: CompareWinner;
   strongerTopics: {
     user: string[];
     friend: string[];
@@ -59,6 +60,7 @@ export interface DashboardData {
   profile: UserProfile;
   codeforces: CodeforcesDataSummary | null;
   leetcode: LeetcodeDataSummary | null;
+  codechef?: CodechefDataSummary | null;
   streak: StreakData;
   heatmapData: HeatmapDay[];
   recentSubmissions: SubmissionSummary[];
@@ -85,10 +87,21 @@ export interface LeetcodeDataSummary {
   tagStats: Record<string, number>;
 }
 
+export interface CodechefDataSummary {
+  currentRating: number | null;
+  maxRating: number | null;
+  stars: string | null;
+  globalRank: number | null;
+  countryRank: number | null;
+  totalSolved: number;
+  tagStats: Record<string, number>;
+  ratingHistory: Array<{ contestId: string; rating: number; date: string }>;
+}
+
 export interface SubmissionSummary {
   id: string;
   problemName: string;
-  platform: 'CODEFORCES' | 'LEETCODE';
+  platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF';
   verdict: string;
   difficulty: string | null;
   tags: string[];
@@ -101,6 +114,7 @@ export interface FriendSummary {
   avatarUrl: string | null;
   cfRating: number | null;
   lcRating: number | null;
+  ccRating?: number | null;
 }
 
 export interface FriendRequestSummary {

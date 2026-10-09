@@ -78,6 +78,7 @@ model PlatformConnection {
   user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   codeforcesData CodeforcesData?
   leetcodeData   LeetcodeData?
+  codechefData   CodechefData?
   submissions    Submission[]
   contests       ContestResult[]
 
@@ -89,6 +90,7 @@ model PlatformConnection {
 enum Platform {
   CODEFORCES
   LEETCODE
+  CODECHEF
 }
 
 enum SyncStatus {
@@ -129,6 +131,22 @@ model LeetcodeData {
   topPercentage    Float?
   tagStats         Json    @default("{}")
   streakData       Json?
+
+  connection PlatformConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+}
+
+model CodechefData {
+  id               String @id @default(cuid())
+  connectionId     String @unique
+  currentRating    Int?
+  maxRating        Int?
+  stars            String?
+  globalRank       Int?
+  countryRank      Int?
+  contestsAttended Int    @default(0)
+  ratingHistory    Json   @default("[]")
+  tagStats         Json   @default("{}")
+  totalSolved      Int    @default(0)
 
   connection PlatformConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
 }

@@ -29,12 +29,12 @@ export const profileSchema = z.object({
 });
 
 export const platformLinkSchema = z.object({
-  platform: z.enum(['CODEFORCES', 'LEETCODE']),
+  platform: z.enum(['CODEFORCES', 'LEETCODE', 'CODECHEF']),
   handle: z.string().min(1).max(50),
 });
 
 export const platformSyncSchema = z.object({
-  platform: z.enum(['CODEFORCES', 'LEETCODE']).optional(),
+  platform: z.enum(['CODEFORCES', 'LEETCODE', 'CODECHEF']).optional(),
   connectionId: z.string().cuid().optional(),
 });
 

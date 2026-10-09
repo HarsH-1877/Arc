@@ -65,9 +65,10 @@ export async function GET() {
     cfAcceptedSubs.map(getStoredCodeforcesProblemKey),
   ).size;
 
-  const heatmapMaps: Record<'CODEFORCES' | 'LEETCODE', Record<string, number>> = {
+  const heatmapMaps: Record<'CODEFORCES' | 'LEETCODE' | 'CODECHEF', Record<string, number>> = {
     CODEFORCES: {},
     LEETCODE: {},
+    CODECHEF: {},
   };
   const allHeatmapMap: Record<string, number> = {};
   for (const sub of heatmapSubs) {
@@ -77,13 +78,14 @@ export async function GET() {
   }
   const codeforcesHeatmapData = Object.entries(heatmapMaps.CODEFORCES).map(([date, count]) => ({ date, count }));
   const leetcodeHeatmapData = Object.entries(heatmapMaps.LEETCODE).map(([date, count]) => ({ date, count }));
+  const codechefHeatmapData = Object.entries(heatmapMaps.CODECHEF).map(([date, count]) => ({ date, count }));
   const allHeatmapData = Object.entries(allHeatmapMap).map(([date, count]) => ({ date, count }));
 
-  // ── Build LC rating history ──────────────────────────────────────────────
+  // â”€â”€ Build LC rating history â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Fallback chain (most to least preferred):
-  //   1. streakData.ratingHistory  — written by full sync
-  //   2. ContestResult DB rows     — written by every sync (including quick)
-  //   3. Live LeetCode API fetch   — for users whose quick sync stored nothing
+  //   1. streakData.ratingHistory  â€” written by full sync
+  //   2. ContestResult DB rows     â€” written by every sync (including quick)
+  //   3. Live LeetCode API fetch   â€” for users whose quick sync stored nothing
   //      (also backfills DB so this only happens once)
 
   const cfRatingHistory = (cf?.codeforcesData?.ratingHistory ?? []) as {
@@ -126,7 +128,7 @@ export async function GET() {
             rating: entry.rating,
           }));
 
-          // Backfill streakData (fire-and-forget — don't block response)
+          // Backfill streakData (fire-and-forget â€” don't block response)
           const ratingHistoryPayload = liveHistory.map((entry, index) => {
             const prev = liveHistory[index - 1]?.rating ?? entry.rating;
             return {
@@ -166,7 +168,7 @@ export async function GET() {
           }
         }
       } catch {
-        // Live fetch failed — chart will show empty state with sync prompt
+        // Live fetch failed â€” chart will show empty state with sync prompt
       }
     }
   }
@@ -174,7 +176,7 @@ export async function GET() {
   const cfContestCount = cfRatingHistory.length;
   const lcContestCount = lcRatingHistory.length || lc?.leetcodeData?.contestsAttended || 0;
 
-  // ── Fetch top-4 friends' rating history for the dashboard chart ─────────
+  // â”€â”€ Fetch top-4 friends' rating history for the dashboard chart â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Store both CF and LC histories per friend so the chart can pick based on selectedPlatform
   let friendChartData: Array<{
     date: string;
@@ -260,7 +262,7 @@ export async function GET() {
       return point as typeof friendChartData[number];
     });
   } catch {
-    // Friend data is non-critical — fall through with empty array
+    // Friend data is non-critical â€” fall through with empty array
   }
 
   const baseRatingData = mergeRatingChartData(cfRatingHistory, lcRatingHistory);
@@ -385,6 +387,7 @@ export async function GET() {
     heatmapData: allHeatmapData,
     codeforcesHeatmapData,
     leetcodeHeatmapData,
+    codechefHeatmapData,
     ratingChartData,
     contestCalendarEvents,
     upcomingContests: upcomingContests.slice(0, 5),

@@ -17,7 +17,7 @@ import { useRouter } from 'next/navigation';
 interface TopbarProps {
   notificationCount?: number;
   userDisplayName?: string;
-  connectedPlatforms?: Array<'CODEFORCES' | 'LEETCODE'>;
+  connectedPlatforms?: Array<'CODEFORCES' | 'LEETCODE' | 'CODECHEF'>;
 }
 
 export function Topbar({ notificationCount = 0, connectedPlatforms = [] }: TopbarProps) {
@@ -41,7 +41,7 @@ export function Topbar({ notificationCount = 0, connectedPlatforms = [] }: Topba
 
   const availablePlatforms = (isContestHistoryPage && connectedPlatforms.length > 1
     ? ['ALL', ...connectedPlatforms]
-    : connectedPlatforms) as Array<'ALL' | 'CODEFORCES' | 'LEETCODE'>;
+    : connectedPlatforms) as Array<'ALL' | 'CODEFORCES' | 'LEETCODE' | 'CODECHEF'>;
 
   const prevIsContestHistoryRef = useRef(false);
 
@@ -65,7 +65,7 @@ export function Topbar({ notificationCount = 0, connectedPlatforms = [] }: Topba
   }, [availablePlatforms, connectedPlatforms, selectedPlatform, setSelectedPlatform]);
 
   const displayPlatform = (!isContestHistoryPage && selectedPlatform === 'ALL') ? 'CODEFORCES' : selectedPlatform;
-  const unconnectedPlatforms = (['CODEFORCES', 'LEETCODE'] as const).filter((platform) => !connectedPlatforms.includes(platform));
+  const unconnectedPlatforms = (['CODEFORCES', 'LEETCODE', 'CODECHEF'] as const).filter((platform) => !connectedPlatforms.includes(platform));
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -103,7 +103,7 @@ export function Topbar({ notificationCount = 0, connectedPlatforms = [] }: Topba
               style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: '7px 13px', fontSize: 'var(--text-sm)', color: 'var(--text-primary)', cursor: 'pointer' }}
             >
               <div className="flex items-center gap-2">
-                {connectedPlatforms.length === 0 ? 'Connect Handle' : <>{displayPlatform !== 'ALL' && <PlatformLogo platform={displayPlatform} size={22} active={true} />}{displayPlatform === 'ALL' ? <><Layers3 size={18} style={{ color: 'var(--accent-blue)' }} />All Platforms</> : displayPlatform === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}</>}
+                {connectedPlatforms.length === 0 ? 'Connect Handle' : <>{displayPlatform !== 'ALL' && <PlatformLogo platform={displayPlatform} size={22} active={true} />}{displayPlatform === 'ALL' ? <><Layers3 size={18} style={{ color: 'var(--accent-blue)' }} />All Platforms</> : displayPlatform === 'CODEFORCES' ? 'Codeforces' : displayPlatform === 'CODECHEF' ? 'CodeChef' : 'LeetCode'}</>}
               </div>
               {connectedPlatforms.length > 0 && <ChevronDown size={14} className={cn('opacity-50 transition-transform duration-200', platformOpen && 'rotate-180')} />}
             </button>
@@ -129,13 +129,13 @@ export function Topbar({ notificationCount = 0, connectedPlatforms = [] }: Topba
                     style={{ background: 'transparent', color: 'var(--text-primary)' }}
                   >
                     {item === 'ALL' ? <Layers3 size={18} style={{ color: 'var(--accent-blue)' }} /> : <PlatformLogo platform={item} size={20} active={true} />}
-                    {item === 'ALL' ? 'All Platforms' : item === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
+                    {item === 'ALL' ? 'All Platforms' : item === 'CODEFORCES' ? 'Codeforces' : item === 'CODECHEF' ? 'CodeChef' : 'LeetCode'}
                   </button>
                 ))}
                 {unconnectedPlatforms.map((platform) => (
                   <button key={`connect-${platform}`} type="button" onClick={() => { setPlatformOpen(false); router.push('/settings/connections'); }} className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-sm hover:bg-[var(--bg-card-hover)]" style={{ color: 'var(--text-primary)' }}>
                     <Plus size={16} style={{ color: 'var(--accent-blue)' }} />
-                    Connect {platform === 'CODEFORCES' ? 'Codeforces' : 'LeetCode'}
+                    Connect {platform === 'CODEFORCES' ? 'Codeforces' : platform === 'CODECHEF' ? 'CodeChef' : 'LeetCode'}
                   </button>
                 ))}
               </motion.div>

@@ -1,5 +1,5 @@
 import { getCFContests } from '@/lib/fetchers/codeforces';
-import type { ContestCalendarEvent, UpcomingContest, UserContestHistoryItem } from '@/lib/contests/types';
+import type { ContestCalendarEvent, ContestPlatform, UpcomingContest, UserContestHistoryItem } from '@/lib/contests/types';
 
 const LC_WEEKLY_QUERY = `
   query upcomingContests {
@@ -49,9 +49,9 @@ async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
   // Weekly contests: every Sunday at 02:30 UTC
   // Anchor: Weekly Contest 514 on Sun Aug 9, 2026 02:30 UTC = 1786242600
   const baseWeeklyNum = 514;
-  const baseWeeklyTime = 1786242600; // Sun Aug 9 2026 02:30 UTC ✓
+  const baseWeeklyTime = 1786242600; // Sun Aug 9 2026 02:30 UTC âœ“
 
-  // Use Math.floor to avoid rounding drift — always snap to the most recent or current contest
+  // Use Math.floor to avoid rounding drift â€” always snap to the most recent or current contest
   const weeksSinceBase = Math.floor((now - baseWeeklyTime) / (7 * 86400));
   const nearestWeeklyNum = baseWeeklyNum + weeksSinceBase;
   const nearestWeeklyTime = baseWeeklyTime + weeksSinceBase * 7 * 86400;
@@ -71,7 +71,7 @@ async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
   // Biweekly contests: every other Saturday at 14:30 UTC
   // Anchor: Biweekly Contest 188 on Sat Aug 1, 2026 14:30 UTC = 1785594600
   const baseBiweeklyNum = 188;
-  const baseBiweeklyTime = 1785594600; // Sat Aug 1 2026 14:30 UTC ✓
+  const baseBiweeklyTime = 1785594600; // Sat Aug 1 2026 14:30 UTC âœ“
 
   const biweeksSinceBase = Math.floor((now - baseBiweeklyTime) / (14 * 86400));
   const nearestBiweeklyNum = baseBiweeklyNum + biweeksSinceBase;
@@ -89,7 +89,7 @@ async function fetchLCUpcomingContests(): Promise<LCUpcomingRaw[]> {
     });
   }
 
-  // Deduplicate by titleSlug — ALWAYS prefer generated contests over live API data.
+  // Deduplicate by titleSlug â€” ALWAYS prefer generated contests over live API data.
   // The LC API frequently returns stale/wrong contest numbers, so we treat generated
   // data as the source of truth and only accept API entries for slugs we didn't generate.
   const map = new Map<string, LCUpcomingRaw>();
@@ -291,7 +291,7 @@ export function buildContestCalendarEvents(
 export function contestResultsToHistory(
   rows: Array<{
     id: string;
-    platform: 'CODEFORCES' | 'LEETCODE';
+    platform: ContestPlatform;
     contestId: string;
     contestName: string;
     rank: number | null;
@@ -319,10 +319,12 @@ export function contestResultsToHistory(
         ratingChange,
         rank: row.rank,
         solved: row.metadata?.solved ?? 0,
-        total: row.metadata?.total ?? (row.platform === 'LEETCODE' ? 4 : 7),
+        total: row.metadata?.total ?? (row.platform === 'LEETCODE' ? 4 : row.platform === 'CODECHEF' ? 6 : 7),
         href:
           row.platform === 'CODEFORCES'
             ? `https://codeforces.com/contest/${row.contestId}`
+            : row.platform === 'CODECHEF'
+            ? `https://www.codechef.com/${row.contestId}`
             : lcContestHref(row.contestId.replace(/^\d+-/, '').replace(/-+/g, '-').toLowerCase()),
       };
     })

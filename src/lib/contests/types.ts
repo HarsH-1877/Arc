@@ -1,4 +1,4 @@
-export type ContestPlatform = 'CODEFORCES' | 'LEETCODE';
+export type ContestPlatform = 'CODEFORCES' | 'LEETCODE' | 'CODECHEF';
 
 export interface UpcomingContest {
   id: string;

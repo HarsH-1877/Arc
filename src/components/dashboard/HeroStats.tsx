@@ -34,11 +34,12 @@ function AccentStreak({ color }: { color: string }) {
 export function HeroStats({ data, loading }: HeroStatsProps) {
   const cf = data?.platforms.codeforces;
   const lc = data?.platforms.leetcode;
+  const cc = data?.platforms.codechef;
   const { selectedPlatform } = useUIStore();
-  const contestCount = selectedPlatform === 'CODEFORCES' ? cf?.contestCount ?? 0 : lc?.contestCount ?? 0;
-  const rating = selectedPlatform === 'CODEFORCES' ? cf?.currentRating ?? null : lc?.contestRating ?? null;
-  const maxRating = selectedPlatform === 'CODEFORCES' ? cf?.maxRating ?? null : lc?.contestRating ?? null;
-  const isGrowing = selectedPlatform === 'CODEFORCES' ? (cf?.currentRating ?? 0) > 1200 : (lc?.contestRating ?? 0) > 1500;
+  const contestCount = selectedPlatform === 'CODEFORCES' ? cf?.contestCount ?? 0 : selectedPlatform === 'CODECHEF' ? cc?.contestCount ?? 0 : lc?.contestCount ?? 0;
+  const rating = selectedPlatform === 'CODEFORCES' ? cf?.currentRating ?? null : selectedPlatform === 'CODECHEF' ? cc?.currentRating ?? null : lc?.contestRating ?? null;
+  const maxRating = selectedPlatform === 'CODEFORCES' ? cf?.maxRating ?? null : selectedPlatform === 'CODECHEF' ? cc?.maxRating ?? null : lc?.contestRating ?? null;
+  const isGrowing = selectedPlatform === 'CODEFORCES' ? (cf?.currentRating ?? 0) > 1200 : selectedPlatform === 'CODECHEF' ? (cc?.currentRating ?? 0) > 1400 : (lc?.contestRating ?? 0) > 1500;
 
   const spring = useSpring(0, { bounce: 0, duration: 800 });
   const displayRating = useTransform(spring, (val) => Math.round(val).toLocaleString());

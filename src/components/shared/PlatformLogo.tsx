@@ -53,7 +53,7 @@ export function PlatformLogo({ platform, size = 24, className, active = true }: 
         <span
           className="font-mono-data text-[10px] font-bold px-1 py-0.5 rounded"
           style={{
-            color: isCodeforces ? '#ff6b6b' : isLeetcode ? 'var(--accent-amber)' : 'var(--accent-purple)',
+            color: isCodeforces ? '#ff6b6b' : isLeetcode ? 'var(--accent-amber)' : isCodechef ? '#d97706' : 'var(--accent-purple)',
             background: 'var(--bg-elevated)',
             border: '1px solid var(--border-subtle)',
           }}

@@ -6,7 +6,7 @@ import { Calendar, Clock, ChevronRight } from 'lucide-react';
 interface ContestItem {
   id: string;
   name: string;
-  platform: 'CODEFORCES' | 'LEETCODE';
+  platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF';
   date: string;
   time: string;
   startTime?: string;

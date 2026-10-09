@@ -2,13 +2,14 @@ import { cn } from '@/lib/utils';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
 
 interface PlatformBadgeProps {
-  platform: 'CODEFORCES' | 'LEETCODE';
+  platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF';
   size?: number;
   className?: string;
 }
 
 export function PlatformBadge({ platform, className }: PlatformBadgeProps) {
   const isCF = platform === 'CODEFORCES';
+  const isLC = platform === 'LEETCODE';
 
   return (
     <span
@@ -18,8 +19,8 @@ export function PlatformBadge({ platform, className }: PlatformBadgeProps) {
         'leading-none select-none',
         className,
       )}
-      title={isCF ? 'Codeforces' : 'LeetCode'}
-      aria-label={isCF ? 'Codeforces' : 'LeetCode'}
+      title={isCF ? 'Codeforces' : isLC ? 'LeetCode' : 'CodeChef'}
+      aria-label={isCF ? 'Codeforces' : isLC ? 'LeetCode' : 'CodeChef'}
       style={
         isCF
           ? {
@@ -27,8 +28,14 @@ export function PlatformBadge({ platform, className }: PlatformBadgeProps) {
               background: 'transparent',
               border: 'none',
             }
-          : {
+          : isLC
+          ? {
               color: 'var(--accent-amber)',
+              background: 'transparent',
+              border: 'none',
+            }
+          : {
+              color: '#d97706',
               background: 'transparent',
               border: 'none',
             }

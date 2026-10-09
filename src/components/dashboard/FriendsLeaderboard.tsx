@@ -9,6 +9,7 @@ import { useDashboardData } from '@/hooks/useDashboardData';
 import { useUIStore } from '@/store/useUIStore';
 import Link from 'next/link';
 import { cfRankName, cfRankColor } from '@/lib/codeforces/cf-rank';
+import { ccRankStars, ccRankColor } from '@/lib/codechef/cc-rank';
 
 interface FriendsLeaderboardProps {
   compact?: boolean;
@@ -21,9 +22,11 @@ function rankClass(rank: number) {
   return 'rank-badge rank-badge-default';
 }
 
-export function getRankAbbr(platform: 'ALL' | 'CODEFORCES' | 'LEETCODE', rating: number) {
+export function getRankAbbr(platform: 'ALL' | 'CODEFORCES' | 'LEETCODE' | 'CODECHEF', rating: number) {
   if (platform === 'CODEFORCES') {
     return cfRankName(rating);
+  } else if (platform === 'CODECHEF') {
+    return ccRankStars(rating);
   } else {
     if (rating >= 2200) return 'Guardian';
     if (rating >= 1850) return 'Knight';
@@ -31,9 +34,12 @@ export function getRankAbbr(platform: 'ALL' | 'CODEFORCES' | 'LEETCODE', rating:
   }
 }
 
-export function getRankColor(platform: 'ALL' | 'CODEFORCES' | 'LEETCODE', rating: number) {
+export function getRankColor(platform: 'ALL' | 'CODEFORCES' | 'LEETCODE' | 'CODECHEF', rating: number) {
   if (platform === 'CODEFORCES') {
     return cfRankColor(rating);
+  }
+  if (platform === 'CODECHEF') {
+    return ccRankColor(rating);
   }
   return undefined;
 }
