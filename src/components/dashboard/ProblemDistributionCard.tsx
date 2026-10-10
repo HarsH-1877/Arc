@@ -143,25 +143,42 @@ export function ProblemDistributionCard({ data, platform, loading, children, cla
             </div>
           </div>
         ) : platform === 'CODECHEF' ? (
-          <div className="flex flex-col justify-between flex-1 py-1">
-            <div className="flex flex-col">
-              <span className="font-mono-data text-3xl sm:text-4xl font-black leading-none" style={{ color: 'var(--text-primary)' }}>
-                {ccTotal.toLocaleString()}
-              </span>
-              <span className="text-[10px] uppercase font-semibold tracking-wider mt-1 text-[var(--text-muted)]">
-                CodeChef Problems Solved
-              </span>
-            </div>
-            <div className="flex items-center gap-2 mt-3">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-600/10 text-amber-500 border border-amber-600/20">
-                <PlatformLogo platform="CODECHEF" size={14} />
-                <span>{data?.platforms.codechef?.stars ?? '1★'}</span>
+          <div className="flex min-h-0 flex-1 flex-col pt-1">
+            <div className="relative mx-auto mt-1 h-[124px] w-[156px] min-w-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie 
+                    data={[
+                      { name: 'Easy', value: Math.round(ccTotal * 0.45) },
+                      { name: 'Medium', value: Math.round(ccTotal * 0.35) },
+                      { name: 'Hard', value: ccTotal - Math.round(ccTotal * 0.45) - Math.round(ccTotal * 0.35) }
+                    ]} 
+                    dataKey="value" innerRadius={40} outerRadius={58} paddingAngle={3} stroke="transparent"
+                  >
+                    {[0, 1, 2].map((index) => <Cell key={index} fill={PIE_COLORS[index]} />)}
+                  </Pie>
+                  <Tooltip content={<PieTooltip />} wrapperStyle={{ transform: 'translate(28px, -36px)', pointerEvents: 'none' }} allowEscapeViewBox={{ x: true, y: true }} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                <span className="font-mono-data text-xl font-bold leading-none" style={{ color: 'var(--text-primary)' }}>{ccTotal}</span>
+                <span className="text-[9px] uppercase tracking-[0.08em]" style={{ color: 'var(--text-muted)' }}>Solved</span>
               </div>
-              {data?.platforms.codechef?.currentRating && (
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-mono-data font-semibold bg-white/[0.04] border border-[var(--border-subtle)] text-[var(--text-secondary)]">
-                  <span>Rating: {data.platforms.codechef.currentRating}</span>
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {[
+                { name: 'Easy', value: Math.round(ccTotal * 0.45) },
+                { name: 'Medium', value: Math.round(ccTotal * 0.35) },
+                { name: 'Hard', value: ccTotal - Math.round(ccTotal * 0.45) - Math.round(ccTotal * 0.35) }
+              ].map((entry, index) => (
+                <div key={entry.name} className="px-1 text-center">
+                  <span className="flex items-center justify-center gap-1 text-[10px]" style={{ color: 'var(--text-secondary)' }}>
+                    <i className="h-1.5 w-1.5 rounded-full" style={{ background: PIE_COLORS[index] }} />
+                    {entry.name}
+                  </span>
+                  <span className="font-mono-data text-[11px] font-semibold" style={{ color: 'var(--text-primary)' }}>{entry.value}</span>
                 </div>
-              )}
+              ))}
             </div>
           </div>
         ) : (

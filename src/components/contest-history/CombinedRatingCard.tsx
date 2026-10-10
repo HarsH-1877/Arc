@@ -28,8 +28,14 @@ export function CombinedRatingCard({
       rank: c.rank,
       solved: c.solved,
       total: c.total,
+      platform: c.platform,
     }));
   }, [history]);
+
+  const displayPlatforms = useMemo(() => {
+    const present = new Set(chartData.map(d => d.platform));
+    return (['CODEFORCES', 'LEETCODE', 'CODECHEF'] as const).filter(p => present.has(p as any));
+  }, [chartData]);
 
   const [hovered, setHovered] = useState<any>(null);
 
@@ -101,34 +107,40 @@ export function CombinedRatingCard({
             <div className="text-xs text-[var(--text-muted)]">No contest history to chart.</div>
           )}
         </div>
-        <div className="relative mt-1 min-h-[58px] w-full flex-1 -mx-1 -mb-1">
-          {chartData.length > 0 && (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart 
-                data={chartData} 
-                onMouseMove={(e) => {
-                  if (e.activePayload) setHovered(e.activePayload[0].payload);
-                }}
-                onMouseLeave={() => setHovered(null)}
-                margin={{ top: 10, right: 10, bottom: 0, left: 10 }}
-              >
-                <XAxis dataKey="year" hide />
-                <Tooltip 
-                  content={<></>} 
-                  cursor={{ stroke: 'var(--border-strong)', strokeWidth: 1, strokeDasharray: '4 4' }} 
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="rating" 
-                  stroke="#f59e0b" 
-                  strokeWidth={2}
-                  dot={{ r: 0, fill: '#f59e0b', strokeWidth: 0 }}
-                  activeDot={{ r: 5, fill: '#f59e0b', stroke: '#11131d', strokeWidth: 2 }}
-                  isAnimationActive={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
+        <div className="relative mt-1 min-h-[58px] w-full flex-1 -mx-1 -mb-1 flex flex-col gap-0.5">
+          {displayPlatforms.map(platform => {
+            const pData = chartData.filter(d => d.platform === platform);
+            const color = platform === 'CODEFORCES' ? '#3b82f6' : platform === 'CODECHEF' ? '#b45309' : '#f59e0b';
+            return (
+              <div key={platform} className="flex-1 min-h-0 w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart 
+                    data={pData} 
+                    onMouseMove={(e) => {
+                      if (e.activePayload) setHovered(e.activePayload[0].payload);
+                    }}
+                    onMouseLeave={() => setHovered(null)}
+                    margin={{ top: 2, right: 10, bottom: 2, left: 10 }}
+                  >
+                    <XAxis dataKey="year" hide />
+                    <Tooltip 
+                      content={<></>} 
+                      cursor={{ stroke: 'var(--border-strong)', strokeWidth: 1, strokeDasharray: '4 4' }} 
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="rating" 
+                      stroke={color} 
+                      strokeWidth={2}
+                      dot={{ r: 0, fill: color, strokeWidth: 0 }}
+                      activeDot={{ r: 4, fill: color, stroke: '#11131d', strokeWidth: 2 }}
+                      isAnimationActive={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            );
+          })}
         </div>
         <div className="flex justify-between px-2 pt-1 text-[9px] font-medium tracking-wider" style={{ color: 'var(--text-muted)' }}>
           <span>{chartData[0]?.year}</span>

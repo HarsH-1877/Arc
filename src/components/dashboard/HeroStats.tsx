@@ -80,16 +80,13 @@ export function HeroStats({ data, loading }: HeroStatsProps) {
                   </motion.span>
                   {selectedPlatform === 'CODECHEF' && starText && (
                     <span
-                      className="mb-1.5 inline-flex items-center gap-1 rounded-lg px-2.5 py-0.5 text-xs font-extrabold tracking-wide"
+                      className="mb-1.5 inline-flex items-center justify-center rounded-lg px-2 py-0.5 text-xs font-bold tracking-wide"
                       style={{
-                        background: `${starColor}20`,
-                        color: starColor,
-                        border: `1px solid ${starColor}45`,
-                        boxShadow: `0 0 12px ${starColor}25`,
+                        background: starColor,
+                        color: '#fff',
                       }}
                     >
-                      <span className="text-[11px]">★</span>
-                      <span>{starText}</span>
+                      {starText}
                     </span>
                   )}
                   {selectedPlatform !== 'CODECHEF' && rating && (

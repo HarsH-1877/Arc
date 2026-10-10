@@ -105,9 +105,32 @@ function ComparePageContent() {
           <EmptyState icon={<GitCompare size={48} />} title="Unable to load comparison" description={error.message || 'Something went wrong.'} />
         </Card>
       ) : data ? (
-        <div className="space-y-6">
-          <CompareHeader user={data.user} friend={data.friend} />
-          <StatComparison user={data.user} friend={data.friend} />
+        (() => {
+          const isCF = selectedPlatform === 'CODEFORCES';
+          const isLC = selectedPlatform === 'LEETCODE';
+          const isCC = selectedPlatform === 'CODECHEF';
+          const platformName = isCF ? 'Codeforces' : isCC ? 'CodeChef' : 'LeetCode';
+          
+          const userHasPlatform = isCF ? !!data.user.cfHandle : isCC ? !!data.user.ccHandle : !!data.user.lcHandle;
+          const friendHasPlatform = isCF ? !!data.friend.cfHandle : isCC ? !!data.friend.ccHandle : !!data.friend.lcHandle;
+
+          if (!userHasPlatform || !friendHasPlatform) {
+            const missingWhom = !userHasPlatform && !friendHasPlatform 
+              ? 'Neither of you have' 
+              : !userHasPlatform 
+              ? 'You have not' 
+              : `${data.friend.username} has not`;
+            return (
+              <Card padding="32px">
+                <EmptyState icon={<GitCompare size={48} />} title="Platform Not Connected" description={`${missingWhom} connected a ${platformName} account. Please select a different platform.`} />
+              </Card>
+            );
+          }
+
+          return (
+            <div className="space-y-6">
+              <CompareHeader user={data.user} friend={data.friend} />
+              <StatComparison user={data.user} friend={data.friend} />
           <div className="flex gap-6 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
             {TABS.map((tab) => {
               const active = activeTab === tab;
@@ -129,7 +152,9 @@ function ComparePageContent() {
               {activeTab === 'Consistency' && <ConsistencyComparison user={data.user} friend={data.friend} />}
             </motion.div>
           </AnimatePresence>
-        </div>
+            </div>
+          );
+        })()
       ) : null}
     </div>
   );
