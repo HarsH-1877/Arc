@@ -32,7 +32,10 @@ function ratingLabel(
     ? (value ? ccRankStars(value) : null)
     : (value ? getLCRank(value) : null);
   const rankColor = isCf && value ? cfRankColor(value) : isCc && value ? ccRankColor(value) : undefined;
-  const accent = isCf ? 'var(--accent-cyan)' : isCc ? '#f59e0b' : 'var(--accent-amber)';
+  
+  const platformColor = isCf ? '#3b82f6' : isCc ? '#2dd4bf' : '#f59e0b';
+  const accent = rankColor || platformColor;
+  
   const profileUrl = handle
     ? platform === 'CODEFORCES'
       ? `https://codeforces.com/profile/${handle}`
@@ -43,18 +46,32 @@ function ratingLabel(
 
   const badge = (
     <span
-      className="font-mono-data inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all hover:scale-105"
+      className="inline-flex items-center gap-2.5 rounded-full pl-2.5 pr-3.5 py-1.5 transition-all hover:scale-105"
       style={{
-        background: won ? (isCf ? 'rgba(34,211,238,0.1)' : isCc ? 'rgba(245,158,11,0.1)' : 'rgba(251,191,36,0.1)') : 'var(--bg-input)',
-        border: won ? `1px solid ${accent}` : '1px solid var(--border-default)',
-        color: won ? accent : 'var(--text-secondary)',
+        background: won ? `${accent}15` : 'transparent',
+        border: `1px solid ${won ? accent : `${accent}50`}`,
         cursor: profileUrl ? 'pointer' : 'default',
       }}
     >
-      <PlatformLogo platform={platform} size={20} active={won} />
-      {value != null ? Math.round(value).toLocaleString() : '-'}
-      {rank && <span className="ml-0.5 font-sans tracking-wide" style={{ color: rankColor || 'inherit', opacity: rankColor ? 1 : 0.7 }}>({rank})</span>}
-      {handle && <span className="font-sans text-[10px] opacity-60 ml-0.5 max-w-[80px] truncate">({handle})</span>}
+      <div className="flex items-center gap-1.5">
+        <PlatformLogo platform={platform} size={16} active={true} />
+        <span className="font-mono-data text-[13px] font-bold" style={{ color: 'var(--text-primary)' }}>
+          {value != null ? Math.round(value).toLocaleString() : '-'}
+        </span>
+      </div>
+      
+      <div className="h-6 w-[1px]" style={{ background: `${accent}40` }} />
+      
+      <div className="flex flex-col justify-center text-left">
+        <span className="font-sans text-[10px] font-bold leading-[1.2]" style={{ color: accent }}>
+          {rank || (isCf ? 'Codeforces' : isCc ? 'CodeChef' : 'LeetCode')}
+        </span>
+        {handle && (
+          <span className="font-sans text-[9px] leading-[1.2] opacity-60 max-w-[80px] truncate" style={{ color: 'var(--text-primary)' }}>
+            {handle}
+          </span>
+        )}
+      </div>
     </span>
   );
 
