@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Card } from '@/components/shared/Card';
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { PlatformLogo } from '@/components/shared/PlatformLogo';
 import type { ContestItem } from '@/hooks/useContestsData';
 
 export function CombinedRatingCard({ 
@@ -107,37 +108,55 @@ export function CombinedRatingCard({
             <div className="text-xs text-[var(--text-muted)]">No contest history to chart.</div>
           )}
         </div>
-        <div className="relative mt-1 min-h-[58px] w-full flex-1 -mx-1 -mb-1 flex flex-col gap-0.5">
+        <div className="relative mt-1 min-h-[58px] w-full flex-1 -mx-1 -mb-1 flex flex-col gap-1">
           {displayPlatforms.map(platform => {
             const pData = chartData.filter(d => d.platform === platform);
             const color = platform === 'CODEFORCES' ? '#3b82f6' : platform === 'CODECHEF' ? '#b45309' : '#f59e0b';
+            const label = platform === 'CODEFORCES' ? 'CF' : platform === 'CODECHEF' ? 'CC' : 'LC';
             return (
-              <div key={platform} className="flex-1 min-h-0 w-full relative">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart 
-                    data={pData} 
-                    onMouseMove={(e) => {
-                      if (e.activePayload) setHovered(e.activePayload[0].payload);
-                    }}
-                    onMouseLeave={() => setHovered(null)}
-                    margin={{ top: 2, right: 10, bottom: 2, left: 10 }}
-                  >
-                    <XAxis dataKey="year" hide />
-                    <Tooltip 
-                      content={<></>} 
-                      cursor={{ stroke: 'var(--border-strong)', strokeWidth: 1, strokeDasharray: '4 4' }} 
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="rating" 
-                      stroke={color} 
-                      strokeWidth={2}
-                      dot={{ r: 0, fill: color, strokeWidth: 0 }}
-                      activeDot={{ r: 4, fill: color, stroke: '#11131d', strokeWidth: 2 }}
-                      isAnimationActive={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+              <div key={platform} className="flex-1 min-h-0 w-full flex items-center gap-1.5 relative">
+                {/* Platform badge label */}
+                <div
+                  className="flex shrink-0 items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold font-mono-data border leading-none"
+                  style={{
+                    background: `${color}15`,
+                    borderColor: `${color}35`,
+                    color,
+                    minWidth: '42px',
+                  }}
+                  title={platform === 'CODEFORCES' ? 'Codeforces' : platform === 'CODECHEF' ? 'CodeChef' : 'LeetCode'}
+                >
+                  <PlatformLogo platform={platform} size={12} active={true} />
+                  <span>{label}</span>
+                </div>
+                {/* Line chart */}
+                <div className="flex-1 h-full min-h-0 relative">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart 
+                      data={pData} 
+                      onMouseMove={(e) => {
+                        if (e.activePayload) setHovered(e.activePayload[0].payload);
+                      }}
+                      onMouseLeave={() => setHovered(null)}
+                      margin={{ top: 2, right: 6, bottom: 2, left: 2 }}
+                    >
+                      <XAxis dataKey="year" hide />
+                      <Tooltip 
+                        content={<></>} 
+                        cursor={{ stroke: 'var(--border-strong)', strokeWidth: 1, strokeDasharray: '4 4' }} 
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="rating" 
+                        stroke={color} 
+                        strokeWidth={2}
+                        dot={{ r: 0, fill: color, strokeWidth: 0 }}
+                        activeDot={{ r: 4, fill: color, stroke: '#11131d', strokeWidth: 2 }}
+                        isAnimationActive={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             );
           })}
