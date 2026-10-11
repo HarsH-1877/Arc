@@ -5,10 +5,10 @@ import { USE_MOCK_DATA, MOCK_PROFILE } from '@/lib/mock';
 import { adminAuth } from '@/lib/firebase/server';
 
 export async function GET() {
-  if (USE_MOCK_DATA) return NextResponse.json(MOCK_PROFILE);
+  const session = await getSession();
+  if (session?.isGuest || USE_MOCK_DATA) return NextResponse.json(MOCK_PROFILE);
 
   try {
-    const session = await getSession();
     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
 
     const user = await db.user.findUnique({
@@ -37,14 +37,15 @@ export async function GET() {
 }
 
 export async function DELETE() {
-  if (USE_MOCK_DATA) {
+  const session = await getSession();
+  if (session?.isGuest || USE_MOCK_DATA) {
     const response = NextResponse.json({ ok: true });
     response.cookies.set('arc-session', '', { path: '/', maxAge: 0 });
+    response.cookies.set('arc-guest', '', { path: '/', maxAge: 0 });
     return response;
   }
 
   try {
-    const session = await getSession();
     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
 
     const firebaseUser = await adminAuth.getUserByEmail(session.email).catch(() => null);
@@ -67,13 +68,13 @@ export async function DELETE() {
 }
 
 export async function PATCH(req: Request) {
-  if (USE_MOCK_DATA) {
+  const session = await getSession();
+  if (session?.isGuest || USE_MOCK_DATA) {
     const body = await req.json();
     return NextResponse.json({ ...MOCK_PROFILE, ...body });
   }
 
   try {
-    const session = await getSession();
     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
 
     const { bio } = await req.json();

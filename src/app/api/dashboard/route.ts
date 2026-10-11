@@ -2,15 +2,39 @@ import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import { USE_MOCK_DATA, MOCK_DASHBOARD } from '@/lib/mock';
+import { MOCK_CONTEST_HISTORY } from '@/lib/mock/data';
 import { fetchUpcomingContests, fetchContestSchedule, buildContestCalendarEvents, contestResultsToHistory, mergeRatingChartData } from '@/lib/contests/schedule';
 import { getLCContestHistory } from '@/lib/fetchers/leetcode';
 import { getStoredCodeforcesProblemKey } from '@/lib/codeforces/solved-problems';
 
 // GET /api/dashboard
 export async function GET() {
-  if (USE_MOCK_DATA) return NextResponse.json(MOCK_DASHBOARD);
-
   const session = await getSession();
+
+  if (session?.isGuest || USE_MOCK_DATA) {
+    const schedule = await fetchContestSchedule().catch(() => []);
+    const now = Date.now();
+    const futureContests = schedule.filter((c) => new Date(c.startTime).getTime() >= now);
+    const upcomingContests = (futureContests.length > 0 ? futureContests : schedule).slice(0, 5).map((c) => ({
+      id: c.id,
+      name: c.name,
+      platform: c.platform,
+      startTime: c.startTime,
+      durationSeconds: c.durationSeconds,
+      href: c.href,
+    }));
+    const attendedKeys = new Set(
+      MOCK_CONTEST_HISTORY.map((contest) => `${contest.platform}:${contest.date}:${contest.name}`),
+    );
+    const calendarEvents = buildContestCalendarEvents(MOCK_CONTEST_HISTORY, schedule, attendedKeys);
+
+    return NextResponse.json({
+      ...MOCK_DASHBOARD,
+      upcomingContests,
+      contestCalendarEvents: calendarEvents,
+    });
+  }
+
   if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
 
   const user = await db.user.findUnique({

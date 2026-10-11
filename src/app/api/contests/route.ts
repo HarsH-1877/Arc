@@ -8,20 +8,69 @@ import {
 } from '@/lib/contests/schedule';
 import type { UserContestHistoryItem } from '@/lib/contests/types';
 import { USE_MOCK_DATA } from '@/lib/mock';
+import { MOCK_CONTEST_HISTORY } from '@/lib/mock/data';
 
-// GET /api/contests â€” user contest history + global upcoming schedule
+// GET /api/contests — user contest history + global upcoming schedule
 export async function GET() {
-  if (USE_MOCK_DATA) {
+  const session = await getSession();
+
+  if (session?.isGuest || USE_MOCK_DATA) {
+    const fullSchedule = await fetchContestSchedule().catch(() => []);
+    const history = MOCK_CONTEST_HISTORY;
+    const now = Date.now();
+    const upcoming = fullSchedule
+      .filter((c) => new Date(c.startTime).getTime() > now)
+      .map((contest) => ({
+        id: contest.id,
+        name: contest.name,
+        platform: contest.platform,
+        date: contest.startTime.slice(0, 10),
+        time: contest.startTime.slice(11, 16),
+        startTime: contest.startTime,
+        durationSeconds: contest.durationSeconds,
+        before: contest.platform === 'CODEFORCES' ? 1823 : contest.platform === 'CODECHEF' ? 1945 : 2450,
+        after: contest.platform === 'CODEFORCES' ? 1823 : contest.platform === 'CODECHEF' ? 1945 : 2450,
+        solved: 0,
+        total: contest.platform === 'LEETCODE' ? 4 : 6,
+        href: contest.href,
+        registrationOpen: contest.registrationOpen ?? true,
+      }));
+
+    const attendedKeys = new Set(
+      history.map((contest) => `${contest.platform}:${contest.date}:${contest.name}`),
+    );
+    const calendarEvents = buildContestCalendarEvents(history, fullSchedule, attendedKeys);
+
+    const bestByPlatform = (['CODEFORCES', 'LEETCODE', 'CODECHEF'] as const)
+      .map((platform) => {
+        const platformHistory = history.filter((contest) => contest.platform === platform);
+        if (!platformHistory.length) return null;
+        const withRank = platformHistory.filter((c) => typeof c.rank === 'number' && c.rank! > 0);
+        if (withRank.length > 0) {
+          return withRank.reduce((best, contest) => (contest.rank! < best.rank! ? contest : best));
+        }
+        return platformHistory.reduce((best, contest) =>
+          contest.ratingChange > best.ratingChange ? contest : best,
+        );
+      })
+      .filter(Boolean);
+
+    const rankedContests = history.filter((c) => typeof c.rank === 'number' && c.rank! > 0);
+    const avgRank = rankedContests.length
+      ? Math.round(rankedContests.reduce((sum, c) => sum + c.rank!, 0) / rankedContests.length)
+      : 0;
+    const bestGain = Math.max(0, ...history.map((c) => c.ratingChange ?? 0));
+    const stats = { totalContests: history.length, avgRank, bestGain };
+
     return NextResponse.json({
-      history: [],
-      upcoming: [],
-      calendarEvents: [],
-      bestByPlatform: [],
-      stats: { totalContests: 0, avgRank: 0, bestGain: 0 },
+      history,
+      upcoming,
+      calendarEvents,
+      bestByPlatform,
+      stats,
     });
   }
 
-  const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
 
   const connections = await db.platformConnection.findMany({
@@ -215,64 +264,7 @@ export async function GET() {
   );
   
   // Default fallback history if DB is empty for demo/new user
-  const fallbackHistory: UserContestHistoryItem[] = [
-    {
-      id: 'cf-round-998',
-      name: 'Codeforces Round 998 (Div. 2)',
-      platform: 'CODEFORCES',
-      date: new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10),
-      time: '17:35',
-      before: 1780,
-      after: 1823,
-      ratingChange: 43,
-      rank: 412,
-      solved: 4,
-      total: 6,
-      href: 'https://codeforces.com/contest/2060',
-    },
-    {
-      id: 'lc-weekly-436',
-      name: 'Weekly Contest 436',
-      platform: 'LEETCODE',
-      date: new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10),
-      time: '02:30',
-      before: 2390,
-      after: 2450,
-      ratingChange: 60,
-      rank: 218,
-      solved: 4,
-      total: 4,
-      href: 'https://leetcode.com/contest/weekly-contest-436',
-    },
-    {
-      id: 'cf-round-995',
-      name: 'Codeforces Round 995 (Div. 3)',
-      platform: 'CODEFORCES',
-      date: new Date(Date.now() - 12 * 86400000).toISOString().slice(0, 10),
-      time: '17:35',
-      before: 1720,
-      after: 1780,
-      ratingChange: 60,
-      rank: 350,
-      solved: 5,
-      total: 7,
-      href: 'https://codeforces.com/contest/2057',
-    },
-    {
-      id: 'lc-weekly-435',
-      name: 'Weekly Contest 435',
-      platform: 'LEETCODE',
-      date: new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10),
-      time: '02:30',
-      before: 2350,
-      after: 2390,
-      ratingChange: 40,
-      rank: 310,
-      solved: 3,
-      total: 4,
-      href: 'https://leetcode.com/contest/weekly-contest-435',
-    },
-  ];
+  const fallbackHistory: UserContestHistoryItem[] = MOCK_CONTEST_HISTORY;
 
   const history = historyByPlatform.length > 0 ? historyByPlatform : fallbackHistory;
 
