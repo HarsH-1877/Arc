@@ -2,7 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const USE_MOCK = process.env.USE_MOCK_DATA === 'true';
 
-const PROTECTED_PREFIXES = ['/dashboard', '/compare', '/friends', '/settings', '/onboarding', '/link-account', '/contest-history'];
+const PROTECTED_PREFIXES = [
+  '/dashboard',
+  '/compare',
+  '/friends',
+  '/settings',
+  '/problems',
+  '/onboarding',
+  '/link-account',
+  '/contest-history',
+];
 
 export async function middleware(request: NextRequest) {
   if (USE_MOCK) return NextResponse.next();
@@ -10,7 +19,8 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isProtectedRoute = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
   const sessionCookie = request.cookies.get('arc-session')?.value;
-  const isLoggedIn = !!sessionCookie;
+  const isGuest = request.cookies.get('arc-guest')?.value === '1' || request.cookies.get('arc-session')?.value === 'guest';
+  const isLoggedIn = !!sessionCookie || isGuest;
 
   if (isProtectedRoute && !isLoggedIn) {
     const loginUrl = new URL('/login', request.url);
@@ -32,6 +42,7 @@ export const config = {
     '/compare/:path*',
     '/friends/:path*',
     '/settings/:path*',
+    '/problems/:path*',
     '/onboarding/:path*',
     '/link-account/:path*',
     '/contest-history/:path*',

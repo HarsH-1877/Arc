@@ -8,6 +8,7 @@ export interface SessionUser {
   username: string;
   avatarUrl: string | null;
   onboarded: boolean;
+  isGuest?: boolean;
 }
 
 import { USE_MOCK_DATA, MOCK_SESSION_USER } from '@/lib/mock';
@@ -20,6 +21,23 @@ import { USE_MOCK_DATA, MOCK_SESSION_USER } from '@/lib/mock';
  * Returns null if unauthenticated or if the token is invalid.
  */
 export async function getSession(): Promise<SessionUser | null> {
+  try {
+    const cookieStore = cookies();
+    const isGuest = cookieStore.get('arc-guest')?.value === '1' || cookieStore.get('arc-session')?.value === 'guest';
+    if (isGuest) {
+      return {
+        id: 'guest-user',
+        email: 'guest@projectarc.app',
+        username: 'Guest Explorer',
+        avatarUrl: null,
+        onboarded: true,
+        isGuest: true,
+      };
+    }
+  } catch {
+    // cookies() unavailable outside request context
+  }
+
   if (USE_MOCK_DATA) {
     return {
       id: MOCK_SESSION_USER.id,
