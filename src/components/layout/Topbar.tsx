@@ -3,7 +3,7 @@
 import { Bell, CalendarClock, CheckCircle2, ChevronDown, Sun, RefreshCw, Menu, UserPlus, Layers3, Plus } from 'lucide-react';
 import { useUIStore } from '@/store/useUIStore';
 import { useQueryClient } from '@tanstack/react-query';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { GoalSetter } from '@/components/layout/GoalSetter';
 import { PlatformLogo } from '@/components/shared/PlatformLogo';
@@ -40,9 +40,13 @@ export function Topbar({ notificationCount = 0, connectedPlatforms = [], isGuest
   useDismissOnOutsideClick(notificationMenuRef, () => setNotificationsOpen(false), notificationsOpen);
   const unreadCount = notifications.filter((notification) => !notification.read).length || notificationCount;
 
-  const availablePlatforms = (isContestHistoryPage && connectedPlatforms.length > 1
-    ? ['ALL', ...connectedPlatforms]
-    : connectedPlatforms) as Array<'ALL' | 'CODEFORCES' | 'LEETCODE' | 'CODECHEF'>;
+  const availablePlatforms = useMemo(
+    () =>
+      (isContestHistoryPage && connectedPlatforms.length > 1
+        ? ['ALL', ...connectedPlatforms]
+        : connectedPlatforms) as Array<'ALL' | 'CODEFORCES' | 'LEETCODE' | 'CODECHEF'>,
+    [isContestHistoryPage, connectedPlatforms],
+  );
 
   const prevIsContestHistoryRef = useRef(false);
 

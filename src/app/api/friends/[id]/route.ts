@@ -6,6 +6,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+    if (session.isGuest) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const friendshipId = params.id;
 

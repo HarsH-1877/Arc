@@ -226,17 +226,17 @@ function computeStrongerTopics(
 
 export async function GET(_req: Request, { params }: { params: { friendId: string } }) {
   try {
-    if (USE_MOCK_DATA) {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: { code: 'UNAUTHENTICATED', message: 'Sign in required' } }, { status: 401 });
+    }
+
+    if (session.isGuest || USE_MOCK_DATA) {
       const data = getMockCompare(params.friendId === 'self' ? MOCK_FRIENDS[0]?.id ?? '' : params.friendId);
       if (!data) {
         return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'Friend not found' } }, { status: 404 });
       }
       return NextResponse.json(data);
-    }
-
-    const session = await getSession();
-    if (!session) {
-      return NextResponse.json({ error: { code: 'UNAUTHENTICATED', message: 'Sign in required' } }, { status: 401 });
     }
 
     const friendId = params.friendId;

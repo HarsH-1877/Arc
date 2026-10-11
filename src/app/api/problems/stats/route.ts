@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import type { Prisma } from '@prisma/client';
+import { USE_MOCK_DATA } from '@/lib/mock';
 import { getStoredCodeforcesProblemKey } from '@/lib/codeforces/solved-problems';
 
 export async function GET(req: Request) {
@@ -12,7 +13,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const platform = searchParams.get('platform');
 
-    const user = await db.user.findUnique({
+    let user = await db.user.findUnique({
       where: { id: session.id },
       include: {
         platforms: {
@@ -24,7 +25,52 @@ export async function GET(req: Request) {
         },
       },
     });
-    if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+    if (!user && (session.isGuest || USE_MOCK_DATA)) {
+      user = await db.user.findFirst({
+        where: { platforms: { some: {} } },
+        include: {
+          platforms: {
+            include: {
+              codeforcesData: true,
+              leetcodeData: true,
+              codechefData: true,
+            },
+          },
+        },
+      });
+    }
+
+    if (!user) {
+      if (session.isGuest || USE_MOCK_DATA) {
+        return NextResponse.json({
+          totalAttempts: 12,
+          totalAccepted: 11,
+          acceptanceRate: 91.7,
+          totalSolved: 1617,
+          totalSolvedTrend: '+48 vs last 90 days',
+          accuracy: 91.7,
+          accuracyTrend: '+2.1% vs 90d',
+          totalSubmissions: 12,
+          totalSubmissionsTrend: '+12 vs last 90 days',
+          avgTime: '—',
+          avgTimeTrend: '—',
+          contestsSolved: 99,
+          contestsTrend: '+0 vs last 90 days',
+          topicWeakness: [
+            { topic: 'Dynamic Programming', accuracy: 50, score: 65, solved: 60, attempts: 120, recommendation: 'Review core DP patterns' },
+            { topic: 'Graphs', accuracy: 55, score: 58, solved: 35, attempts: 64, recommendation: 'Practice BFS/DFS problems' },
+            { topic: 'Binary Search', accuracy: 60, score: 50, solved: 19, attempts: 32, recommendation: 'Revise boundary conditions' },
+          ],
+          languageBreakdown: [
+            { lang: 'C++', count: 850 },
+            { lang: 'Python', count: 347 },
+            { lang: 'Java', count: 420 },
+          ],
+        });
+      }
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
 
     const connectionIds = user.platforms.map((p) => p.id);
     const where: Prisma.SubmissionWhereInput = {

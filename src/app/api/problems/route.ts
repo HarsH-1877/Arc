@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import type { Prisma } from '@prisma/client';
+import { USE_MOCK_DATA, MOCK_DASHBOARD } from '@/lib/mock';
 
 const TAG_ALIASES: Record<string, string[]> = {
   'Graph Theory': ['Graph Theory', 'graphs', 'graph', 'trees', 'shortest paths'],
@@ -47,11 +48,28 @@ export async function GET(req: Request) {
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
     const pageSize = Math.max(1, parseInt(searchParams.get('pageSize') ?? '10', 10));
 
-    const user = await db.user.findUnique({
+    let user = await db.user.findUnique({
       where: { id: session.id },
       include: { platforms: true },
     });
-    if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+    if (!user && (session.isGuest || USE_MOCK_DATA)) {
+      user = await db.user.findFirst({
+        where: { platforms: { some: {} } },
+        include: { platforms: true },
+      });
+    }
+
+    if (!user) {
+      if (session.isGuest || USE_MOCK_DATA) {
+        const mockItems = (MOCK_DASHBOARD.recentSubmissions || []).map((s) => ({
+          ...s,
+          contestName: null,
+        }));
+        return NextResponse.json({ items: mockItems, total: mockItems.length, page: 1, pageSize });
+      }
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
 
     const connectionIds = user.platforms.map((p) => p.id);
     const where: Prisma.SubmissionWhereInput = {

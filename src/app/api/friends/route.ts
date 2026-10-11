@@ -4,10 +4,9 @@ import { db } from '@/lib/db';
 import { USE_MOCK_DATA, MOCK_FRIENDS } from '@/lib/mock';
 
 export async function GET() {
-  if (USE_MOCK_DATA) return NextResponse.json(MOCK_FRIENDS);
-
   try {
     const session = await getSession();
+    if (session?.isGuest || USE_MOCK_DATA) return NextResponse.json(MOCK_FRIENDS);
     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
 
     const friendships = await db.friendship.findMany({
@@ -47,6 +46,7 @@ export async function POST(req: Request) {
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+    if (session.isGuest) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const { friendId } = await req.json();
     if (!friendId) return NextResponse.json({ error: 'friendId required' }, { status: 400 });
