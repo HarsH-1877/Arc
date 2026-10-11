@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { User, Shield, Link2, Bell, AlertTriangle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 const SETTINGS_NAV = [
   { label: 'Profile', href: '/settings/profile', icon: User },
@@ -14,6 +15,17 @@ const SETTINGS_NAV = [
 
 export function SettingsShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+
+  const { data: profile } = useQuery({
+    queryKey: ['profile'],
+    queryFn: async () => {
+      const res = await fetch('/api/user/profile');
+      if (!res.ok) return null;
+      return res.json();
+    },
+  });
+
+  const isGuest = profile?.isGuest;
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -56,7 +68,25 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
           </nav>
         </aside>
 
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="min-w-0 flex-1">
+          {isGuest && (
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-300">
+              <div className="flex items-center gap-2.5">
+                <AlertTriangle size={16} className="text-amber-400 shrink-0" />
+                <span>
+                  You are exploring settings in <strong>Guest Mode</strong>. Actions like connecting handles, updating profiles, and changing security credentials are read-only.
+                </span>
+              </div>
+              <Link
+                href="/signup?fresh=1"
+                className="shrink-0 rounded-lg bg-amber-400 px-3 py-1.5 font-bold text-black hover:bg-amber-300 transition-colors"
+              >
+                Create Free Account
+              </Link>
+            </div>
+          )}
+          {children}
+        </main>
       </div>
     </div>
   );

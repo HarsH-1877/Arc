@@ -52,6 +52,13 @@ export async function PATCH(req: Request) {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
 
+    if (session?.isGuest) {
+      return NextResponse.json(
+        { error: { code: 'FORBIDDEN', message: 'Guest account is read-only. Please create an account to save changes.' } },
+        { status: 403 }
+      );
+    }
+
     const { requestId, action } = await req.json();
     if (!requestId || !action) return NextResponse.json({ error: 'requestId and action required' }, { status: 400 });
 

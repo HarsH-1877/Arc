@@ -18,9 +18,10 @@ interface TopbarProps {
   notificationCount?: number;
   userDisplayName?: string;
   connectedPlatforms?: Array<'CODEFORCES' | 'LEETCODE' | 'CODECHEF'>;
+  isGuest?: boolean;
 }
 
-export function Topbar({ notificationCount = 0, connectedPlatforms = [] }: TopbarProps) {
+export function Topbar({ notificationCount = 0, connectedPlatforms = [], isGuest = false }: TopbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const isProblemsPage = pathname === '/problems' || pathname.startsWith('/problems/');
@@ -141,6 +142,19 @@ export function Topbar({ notificationCount = 0, connectedPlatforms = [] }: Topba
               </motion.div>
             )}
             </AnimatePresence>
+          </div>
+        )}
+
+        {isGuest && (
+          <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-300">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span className="hidden sm:inline">Guest Preview</span>
+            <a
+              href="/signup?fresh=1"
+              className="rounded px-2 py-0.5 text-[11px] font-bold text-black transition-colors bg-amber-400 hover:bg-amber-300"
+            >
+              Sign in
+            </a>
           </div>
         )}
 

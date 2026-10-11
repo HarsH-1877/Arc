@@ -16,9 +16,10 @@ export const MOCK_PROFILE = {
   email: MOCK_SESSION_USER.email,
   username: MOCK_SESSION_USER.username,
   avatarUrl: MOCK_SESSION_USER.avatarUrl,
-  bio: 'Competitive programming enthusiast. CF + LC + CC grind.',
+  bio: 'Competitive programming enthusiast. CF + LC grind.',
   createdAt: new Date('2024-01-15').toISOString(),
   connectedPlatforms: ['CODEFORCES', 'LEETCODE', 'CODECHEF'],
+  isGuest: true,
 };
 
 function daysAgo(n: number): string {

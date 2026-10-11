@@ -151,6 +151,7 @@ export function AppShell({ children }: AppShellProps) {
             notificationCount={unreadCount}
             userDisplayName={profile?.username ?? 'Arc User'}
             connectedPlatforms={profile?.connectedPlatforms ?? []}
+            isGuest={profile?.isGuest ?? false}
           />
           <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden" style={{ padding: '18px 22px 22px' }}>
             <motion.div

@@ -14,6 +14,13 @@ export async function POST(request: NextRequest) {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
 
+    if (session?.isGuest) {
+      return NextResponse.json(
+        { error: { code: 'FORBIDDEN', message: 'Guest account is read-only. Please create an account to save changes.' } },
+        { status: 403 }
+      );
+    }
+
     const { platform, handle } = await request.json() as { platform: Platform; handle: string };
     if (!platform || !handle) {
       return NextResponse.json({ error: 'platform and handle are required' }, { status: 400 });
