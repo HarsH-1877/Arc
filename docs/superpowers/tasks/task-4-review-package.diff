@@ -1,0 +1,739 @@
+﻿diff --git a/src/app/api/contests/route.ts b/src/app/api/contests/route.ts
+index f70ea61..b85675c 100644
+--- a/src/app/api/contests/route.ts
++++ b/src/app/api/contests/route.ts
+@@ -8,20 +8,69 @@ import {
+ } from '@/lib/contests/schedule';
+ import type { UserContestHistoryItem } from '@/lib/contests/types';
+ import { USE_MOCK_DATA } from '@/lib/mock';
++import { MOCK_CONTEST_HISTORY } from '@/lib/mock/data';
+ 
+-// GET /api/contests ├óΓé¼ΓÇ¥ user contest history + global upcoming schedule
++// GET /api/contests ΓÇö user contest history + global upcoming schedule
+ export async function GET() {
+-  if (USE_MOCK_DATA) {
++  const session = await getSession();
++
++  if (session?.isGuest || USE_MOCK_DATA) {
++    const fullSchedule = await fetchContestSchedule().catch(() => []);
++    const history = MOCK_CONTEST_HISTORY;
++    const now = Date.now();
++    const upcoming = fullSchedule
++      .filter((c) => new Date(c.startTime).getTime() > now)
++      .map((contest) => ({
++        id: contest.id,
++        name: contest.name,
++        platform: contest.platform,
++        date: contest.startTime.slice(0, 10),
++        time: contest.startTime.slice(11, 16),
++        startTime: contest.startTime,
++        durationSeconds: contest.durationSeconds,
++        before: contest.platform === 'CODEFORCES' ? 1823 : contest.platform === 'CODECHEF' ? 1945 : 2450,
++        after: contest.platform === 'CODEFORCES' ? 1823 : contest.platform === 'CODECHEF' ? 1945 : 2450,
++        solved: 0,
++        total: contest.platform === 'LEETCODE' ? 4 : 6,
++        href: contest.href,
++        registrationOpen: contest.registrationOpen ?? true,
++      }));
++
++    const attendedKeys = new Set(
++      history.map((contest) => `${contest.platform}:${contest.date}:${contest.name}`),
++    );
++    const calendarEvents = buildContestCalendarEvents(history, fullSchedule, attendedKeys);
++
++    const bestByPlatform = (['CODEFORCES', 'LEETCODE', 'CODECHEF'] as const)
++      .map((platform) => {
++        const platformHistory = history.filter((contest) => contest.platform === platform);
++        if (!platformHistory.length) return null;
++        const withRank = platformHistory.filter((c) => typeof c.rank === 'number' && c.rank! > 0);
++        if (withRank.length > 0) {
++          return withRank.reduce((best, contest) => (contest.rank! < best.rank! ? contest : best));
++        }
++        return platformHistory.reduce((best, contest) =>
++          contest.ratingChange > best.ratingChange ? contest : best,
++        );
++      })
++      .filter(Boolean);
++
++    const rankedContests = history.filter((c) => typeof c.rank === 'number' && c.rank! > 0);
++    const avgRank = rankedContests.length
++      ? Math.round(rankedContests.reduce((sum, c) => sum + c.rank!, 0) / rankedContests.length)
++      : 0;
++    const bestGain = Math.max(0, ...history.map((c) => c.ratingChange ?? 0));
++    const stats = { totalContests: history.length, avgRank, bestGain };
++
+     return NextResponse.json({
+-      history: [],
+-      upcoming: [],
+-      calendarEvents: [],
+-      bestByPlatform: [],
+-      stats: { totalContests: 0, avgRank: 0, bestGain: 0 },
++      history,
++      upcoming,
++      calendarEvents,
++      bestByPlatform,
++      stats,
+     });
+   }
+ 
+-  const session = await getSession();
+   if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+ 
+   const connections = await db.platformConnection.findMany({
+@@ -215,64 +264,7 @@ export async function GET() {
+   );
+   
+   // Default fallback history if DB is empty for demo/new user
+-  const fallbackHistory: UserContestHistoryItem[] = [
+-    {
+-      id: 'cf-round-998',
+-      name: 'Codeforces Round 998 (Div. 2)',
+-      platform: 'CODEFORCES',
+-      date: new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10),
+-      time: '17:35',
+-      before: 1780,
+-      after: 1823,
+-      ratingChange: 43,
+-      rank: 412,
+-      solved: 4,
+-      total: 6,
+-      href: 'https://codeforces.com/contest/2060',
+-    },
+-    {
+-      id: 'lc-weekly-436',
+-      name: 'Weekly Contest 436',
+-      platform: 'LEETCODE',
+-      date: new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10),
+-      time: '02:30',
+-      before: 2390,
+-      after: 2450,
+-      ratingChange: 60,
+-      rank: 218,
+-      solved: 4,
+-      total: 4,
+-      href: 'https://leetcode.com/contest/weekly-contest-436',
+-    },
+-    {
+-      id: 'cf-round-995',
+-      name: 'Codeforces Round 995 (Div. 3)',
+-      platform: 'CODEFORCES',
+-      date: new Date(Date.now() - 12 * 86400000).toISOString().slice(0, 10),
+-      time: '17:35',
+-      before: 1720,
+-      after: 1780,
+-      ratingChange: 60,
+-      rank: 350,
+-      solved: 5,
+-      total: 7,
+-      href: 'https://codeforces.com/contest/2057',
+-    },
+-    {
+-      id: 'lc-weekly-435',
+-      name: 'Weekly Contest 435',
+-      platform: 'LEETCODE',
+-      date: new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10),
+-      time: '02:30',
+-      before: 2350,
+-      after: 2390,
+-      ratingChange: 40,
+-      rank: 310,
+-      solved: 3,
+-      total: 4,
+-      href: 'https://leetcode.com/contest/weekly-contest-435',
+-    },
+-  ];
++  const fallbackHistory: UserContestHistoryItem[] = MOCK_CONTEST_HISTORY;
+ 
+   const history = historyByPlatform.length > 0 ? historyByPlatform : fallbackHistory;
+ 
+diff --git a/src/app/api/dashboard/route.ts b/src/app/api/dashboard/route.ts
+index 544db5a..c2c000e 100644
+--- a/src/app/api/dashboard/route.ts
++++ b/src/app/api/dashboard/route.ts
+@@ -2,15 +2,39 @@ import { NextResponse } from 'next/server';
+ import { getSession } from '@/lib/session';
+ import { db } from '@/lib/db';
+ import { USE_MOCK_DATA, MOCK_DASHBOARD } from '@/lib/mock';
++import { MOCK_CONTEST_HISTORY } from '@/lib/mock/data';
+ import { fetchUpcomingContests, fetchContestSchedule, buildContestCalendarEvents, contestResultsToHistory, mergeRatingChartData } from '@/lib/contests/schedule';
+ import { getLCContestHistory } from '@/lib/fetchers/leetcode';
+ import { getStoredCodeforcesProblemKey } from '@/lib/codeforces/solved-problems';
+ 
+ // GET /api/dashboard
+ export async function GET() {
+-  if (USE_MOCK_DATA) return NextResponse.json(MOCK_DASHBOARD);
+-
+   const session = await getSession();
++
++  if (session?.isGuest || USE_MOCK_DATA) {
++    const schedule = await fetchContestSchedule().catch(() => []);
++    const now = Date.now();
++    const futureContests = schedule.filter((c) => new Date(c.startTime).getTime() >= now);
++    const upcomingContests = (futureContests.length > 0 ? futureContests : schedule).slice(0, 5).map((c) => ({
++      id: c.id,
++      name: c.name,
++      platform: c.platform,
++      startTime: c.startTime,
++      durationSeconds: c.durationSeconds,
++      href: c.href,
++    }));
++    const attendedKeys = new Set(
++      MOCK_CONTEST_HISTORY.map((contest) => `${contest.platform}:${contest.date}:${contest.name}`),
++    );
++    const calendarEvents = buildContestCalendarEvents(MOCK_CONTEST_HISTORY, schedule, attendedKeys);
++
++    return NextResponse.json({
++      ...MOCK_DASHBOARD,
++      upcomingContests,
++      contestCalendarEvents: calendarEvents,
++    });
++  }
++
+   if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+ 
+   const user = await db.user.findUnique({
+diff --git a/src/app/api/user/profile/route.ts b/src/app/api/user/profile/route.ts
+index 705a264..84b70cc 100644
+--- a/src/app/api/user/profile/route.ts
++++ b/src/app/api/user/profile/route.ts
+@@ -5,10 +5,10 @@ import { USE_MOCK_DATA, MOCK_PROFILE } from '@/lib/mock';
+ import { adminAuth } from '@/lib/firebase/server';
+ 
+ export async function GET() {
+-  if (USE_MOCK_DATA) return NextResponse.json(MOCK_PROFILE);
++  const session = await getSession();
++  if (session?.isGuest || USE_MOCK_DATA) return NextResponse.json(MOCK_PROFILE);
+ 
+   try {
+-    const session = await getSession();
+     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+ 
+     const user = await db.user.findUnique({
+@@ -37,14 +37,15 @@ export async function GET() {
+ }
+ 
+ export async function DELETE() {
+-  if (USE_MOCK_DATA) {
++  const session = await getSession();
++  if (session?.isGuest || USE_MOCK_DATA) {
+     const response = NextResponse.json({ ok: true });
+     response.cookies.set('arc-session', '', { path: '/', maxAge: 0 });
++    response.cookies.set('arc-guest', '', { path: '/', maxAge: 0 });
+     return response;
+   }
+ 
+   try {
+-    const session = await getSession();
+     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+ 
+     const firebaseUser = await adminAuth.getUserByEmail(session.email).catch(() => null);
+@@ -67,13 +68,13 @@ export async function DELETE() {
+ }
+ 
+ export async function PATCH(req: Request) {
+-  if (USE_MOCK_DATA) {
++  const session = await getSession();
++  if (session?.isGuest || USE_MOCK_DATA) {
+     const body = await req.json();
+     return NextResponse.json({ ...MOCK_PROFILE, ...body });
+   }
+ 
+   try {
+-    const session = await getSession();
+     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+ 
+     const { bio } = await req.json();
+diff --git a/src/lib/mock/data.ts b/src/lib/mock/data.ts
+index aca8eec..c72d3be 100644
+--- a/src/lib/mock/data.ts
++++ b/src/lib/mock/data.ts
+@@ -1,6 +1,7 @@
+ import type { CompareData } from '@/hooks/useCompareData';
+ import type { Friend, FriendRequest } from '@/hooks/useFriends';
+ import type { NotificationSummary } from '@/types';
++import type { UserContestHistoryItem } from '@/lib/contests/types';
+ 
+ export const MOCK_SESSION_USER = {
+   id: 'mock-user-1',
+@@ -15,8 +16,9 @@ export const MOCK_PROFILE = {
+   email: MOCK_SESSION_USER.email,
+   username: MOCK_SESSION_USER.username,
+   avatarUrl: MOCK_SESSION_USER.avatarUrl,
+-  bio: 'Competitive programming enthusiast. CF + LC grind.',
++  bio: 'Competitive programming enthusiast. CF + LC + CC grind.',
+   createdAt: new Date('2024-01-15').toISOString(),
++  connectedPlatforms: ['CODEFORCES', 'LEETCODE', 'CODECHEF'],
+ };
+ 
+ function daysAgo(n: number): string {
+@@ -60,11 +62,12 @@ function ratingCurve(index: number, base: number, slope: number, amp: number, ph
+   return Math.round(base + index * slope + wave - dip + rebound);
+ }
+ 
+-function addFriendRatingLines(points: { date: string; cfRating: number; lcRating: number }[]) {
++function addFriendRatingLines(points: { date: string; cfRating: number; lcRating: number; ccRating?: number }[]) {
+   return points.map((point, index) => ({
+     ...point,
+     cfRating: ratingCurve(index, 1400, 15, 300, 0.2, 9),
+     lcRating: ratingCurve(index, 1750, 10, 200, 1.1, 14),
++    ccRating: ratingCurve(index, 1600, 14, 180, 0.7, 11),
+     friend1: ratingCurve(index, 2100, 8, 400, 0.4, 8),
+     friend2: ratingCurve(index, 1200, 35, 200, 1.7, 12),
+     friend3: ratingCurve(index, 1900, -10, 350, 2.4, 15),
+@@ -87,6 +90,8 @@ export const MOCK_DASHBOARD = {
+       currentRating: 1823,
+       maxRating: 1912,
+       rank: 'expert',
++      contestCount: 45,
++      totalSolved: 850,
+     },
+     leetcode: {
+       handle: 'arcdev',
+@@ -98,6 +103,20 @@ export const MOCK_DASHBOARD = {
+       mediumSolved: 198,
+       hardSolved: 37,
+       contestRating: 1847.5,
++      contestCount: 30,
++    },
++    codechef: {
++      handle: 'arcdev',
++      syncStatus: 'SYNCED' as const,
++      lastSyncedAt: daysAgo(0),
++      syncError: null,
++      currentRating: 1945,
++      maxRating: 2010,
++      stars: '4Γÿà',
++      globalRank: 1240,
++      countryRank: 310,
++      contestCount: 24,
++      totalSolved: 420,
+     },
+   },
+   streak: {
+@@ -107,10 +126,14 @@ export const MOCK_DASHBOARD = {
+     totalActiveDays: 218,
+   },
+   heatmapData: genHeatmap(),
++  codeforcesHeatmapData: genHeatmap().filter((_, i) => i % 2 === 0),
++  leetcodeHeatmapData: genHeatmap().filter((_, i) => i % 3 === 0),
++  codechefHeatmapData: genHeatmap().filter((_, i) => i % 4 === 0),
+   ratingChartData: addFriendRatingLines(genRatingHistory(1750, 35).map((r, i) => ({
+     date: r.date,
+     cfRating: r.rating,
+     lcRating: 1780 + i * 3 + Math.floor(Math.random() * 20),
++    ccRating: 1800 + i * 5 + Math.floor(Math.random() * 20),
+   }))),
+   topicStats: [
+     { topic: 'dp', value: 100, rawCount: 45 },
+@@ -122,32 +145,237 @@ export const MOCK_DASHBOARD = {
+     { topic: 'two pointers', value: 38, rawCount: 17 },
+     { topic: 'Dynamic Programming', value: 72, rawCount: 32 },
+   ],
++  codeforcesTopicStats: [
++    { topic: 'dp', value: 100, rawCount: 45 },
++    { topic: 'graphs', value: 78, rawCount: 35 },
++    { topic: 'greedy', value: 65, rawCount: 29 },
++    { topic: 'math', value: 52, rawCount: 23 },
++    { topic: 'trees', value: 48, rawCount: 22 },
++  ],
++  leetcodeTopicStats: [
++    { topic: 'Arrays', value: 100, rawCount: 120 },
++    { topic: 'String', value: 80, rawCount: 96 },
++    { topic: 'Hash Table', value: 65, rawCount: 78 },
++    { topic: 'Dynamic Programming', value: 50, rawCount: 60 },
++  ],
++  codechefTopicStats: [
++    { topic: 'basic-programming', value: 100, rawCount: 150 },
++    { topic: 'sorting', value: 85, rawCount: 80 },
++    { topic: 'greedy', value: 70, rawCount: 65 },
++    { topic: 'math', value: 55, rawCount: 45 },
++  ],
+   recentSubmissions: [
+     { id: 's1', problemName: 'Maximum Subarray', platform: 'LEETCODE' as const, verdict: 'Accepted', difficulty: 'medium', tags: ['Array', 'DP'], timestamp: daysAgo(0) },
+     { id: 's2', problemName: 'D. Matrix Cascade', platform: 'CODEFORCES' as const, verdict: 'OK', difficulty: null, tags: ['dp', 'math'], timestamp: daysAgo(1) },
+-    { id: 's3', problemName: 'Binary Tree Level Order', platform: 'LEETCODE' as const, verdict: 'Accepted', difficulty: 'medium', tags: ['Tree', 'BFS'], timestamp: daysAgo(1) },
+-    { id: 's4', problemName: 'C. Competitive Programmer', platform: 'CODEFORCES' as const, verdict: 'OK', difficulty: null, tags: ['greedy'], timestamp: daysAgo(2) },
+-    { id: 's5', problemName: 'Merge k Sorted Lists', platform: 'LEETCODE' as const, verdict: 'Accepted', difficulty: 'hard', tags: ['Heap', 'Linked List'], timestamp: daysAgo(3) },
+-    { id: 's6', problemName: 'B. Array Merge', platform: 'CODEFORCES' as const, verdict: 'WRONG_ANSWER', difficulty: null, tags: ['greedy'], timestamp: daysAgo(4) },
+-    { id: 's7', problemName: 'Valid Parentheses', platform: 'LEETCODE' as const, verdict: 'Accepted', difficulty: 'easy', tags: ['Stack'], timestamp: daysAgo(5) },
+-    { id: 's8', problemName: 'A. Warm Up', platform: 'CODEFORCES' as const, verdict: 'OK', difficulty: null, tags: ['implementation'], timestamp: daysAgo(6) },
+-    { id: 's9', problemName: 'Course Schedule', platform: 'LEETCODE' as const, verdict: 'Accepted', difficulty: 'medium', tags: ['Graph', 'Topological Sort'], timestamp: daysAgo(7) },
+-    { id: 's10', problemName: 'E. Graph Challenge', platform: 'CODEFORCES' as const, verdict: 'OK', difficulty: null, tags: ['graphs'], timestamp: daysAgo(8) },
++    { id: 's3', problemName: 'Chef and Reversing', platform: 'CODECHEF' as const, verdict: 'Accepted', difficulty: 'medium', tags: ['Graph', 'BFS'], timestamp: daysAgo(1) },
++    { id: 's4', problemName: 'Binary Tree Level Order', platform: 'LEETCODE' as const, verdict: 'Accepted', difficulty: 'medium', tags: ['Tree', 'BFS'], timestamp: daysAgo(2) },
++    { id: 's5', problemName: 'C. Competitive Programmer', platform: 'CODEFORCES' as const, verdict: 'OK', difficulty: null, tags: ['greedy'], timestamp: daysAgo(2) },
++    { id: 's6', problemName: 'Distinct Pairs', platform: 'CODECHEF' as const, verdict: 'Accepted', difficulty: 'easy', tags: ['greedy'], timestamp: daysAgo(3) },
++    { id: 's7', problemName: 'Merge k Sorted Lists', platform: 'LEETCODE' as const, verdict: 'Accepted', difficulty: 'hard', tags: ['Heap', 'Linked List'], timestamp: daysAgo(4) },
++    { id: 's8', problemName: 'B. Array Merge', platform: 'CODEFORCES' as const, verdict: 'WRONG_ANSWER', difficulty: null, tags: ['greedy'], timestamp: daysAgo(4) },
++    { id: 's9', problemName: 'Valid Parentheses', platform: 'LEETCODE' as const, verdict: 'Accepted', difficulty: 'easy', tags: ['Stack'], timestamp: daysAgo(5) },
++    { id: 's10', problemName: 'A. Warm Up', platform: 'CODEFORCES' as const, verdict: 'OK', difficulty: null, tags: ['implementation'], timestamp: daysAgo(6) },
++    { id: 's11', problemName: 'Course Schedule', platform: 'LEETCODE' as const, verdict: 'Accepted', difficulty: 'medium', tags: ['Graph', 'Topological Sort'], timestamp: daysAgo(7) },
++    { id: 's12', problemName: 'E. Graph Challenge', platform: 'CODEFORCES' as const, verdict: 'OK', difficulty: null, tags: ['graphs'], timestamp: daysAgo(8) },
+   ],
+   contestCalendarEvents: [
+     { date: daysAgo(14).slice(0, 10), label: 'Codeforces Round 1034', platform: 'CODEFORCES' as const, type: 'given' as const, delta: 35 },
++    { date: daysAgo(10).slice(0, 10), label: 'Starters 155 (Div 2)', platform: 'CODECHEF' as const, type: 'given' as const, delta: 45 },
+     { date: daysAgo(7).slice(0, 10), label: 'LeetCode Weekly Contest 456', platform: 'LEETCODE' as const, type: 'given' as const, delta: 29 },
+     { date: daysAgo(3).slice(0, 10), label: 'Codeforces Round 1035', platform: 'CODEFORCES' as const, type: 'missed' as const },
+   ],
+   upcomingContests: [],
+ };
+ 
++export const MOCK_CONTEST_HISTORY: UserContestHistoryItem[] = [
++  {
++    id: 'cf-round-1034',
++    name: 'Codeforces Round 1034 (Div. 2)',
++    platform: 'CODEFORCES',
++    date: daysAgo(3).slice(0, 10),
++    time: '17:35',
++    startTime: `${daysAgo(3).slice(0, 10)}T17:35:00.000Z`,
++    before: 1780,
++    after: 1823,
++    ratingChange: 43,
++    rank: 412,
++    solved: 4,
++    total: 6,
++    href: 'https://codeforces.com/contest/2065',
++  },
++  {
++    id: 'lc-weekly-456',
++    name: 'LeetCode Weekly Contest 456',
++    platform: 'LEETCODE',
++    date: daysAgo(7).slice(0, 10),
++    time: '02:30',
++    startTime: `${daysAgo(7).slice(0, 10)}T02:30:00.000Z`,
++    before: 2390,
++    after: 2450,
++    ratingChange: 60,
++    rank: 218,
++    solved: 4,
++    total: 4,
++    href: 'https://leetcode.com/contest/weekly-contest-456',
++  },
++  {
++    id: 'cc-starters-155',
++    name: 'CodeChef Starters 155 (Div 2)',
++    platform: 'CODECHEF',
++    date: daysAgo(10).slice(0, 10),
++    time: '14:30',
++    startTime: `${daysAgo(10).slice(0, 10)}T14:30:00.000Z`,
++    before: 1890,
++    after: 1945,
++    ratingChange: 55,
++    rank: 180,
++    solved: 5,
++    total: 6,
++    href: 'https://www.codechef.com/START155B',
++  },
++  {
++    id: 'lc-biweekly-159',
++    name: 'LeetCode Biweekly Contest 159',
++    platform: 'LEETCODE',
++    date: daysAgo(14).slice(0, 10),
++    time: '14:30',
++    startTime: `${daysAgo(14).slice(0, 10)}T14:30:00.000Z`,
++    before: 2345,
++    after: 2390,
++    ratingChange: 45,
++    rank: 285,
++    solved: 4,
++    total: 4,
++    href: 'https://leetcode.com/contest/biweekly-contest-159',
++  },
++  {
++    id: 'cf-educational-171',
++    name: 'Educational Codeforces Round 171',
++    platform: 'CODEFORCES',
++    date: daysAgo(18).slice(0, 10),
++    time: '17:35',
++    startTime: `${daysAgo(18).slice(0, 10)}T17:35:00.000Z`,
++    before: 1735,
++    after: 1780,
++    ratingChange: 45,
++    rank: 530,
++    solved: 4,
++    total: 6,
++    href: 'https://codeforces.com/contest/2060',
++  },
++  {
++    id: 'lc-weekly-454',
++    name: 'LeetCode Weekly Contest 454',
++    platform: 'LEETCODE',
++    date: daysAgo(21).slice(0, 10),
++    time: '02:30',
++    startTime: `${daysAgo(21).slice(0, 10)}T02:30:00.000Z`,
++    before: 2360,
++    after: 2345,
++    ratingChange: -15,
++    rank: 640,
++    solved: 3,
++    total: 4,
++    href: 'https://leetcode.com/contest/weekly-contest-454',
++  },
++  {
++    id: 'cc-starters-153',
++    name: 'CodeChef Starters 153 (Div 2)',
++    platform: 'CODECHEF',
++    date: daysAgo(24).slice(0, 10),
++    time: '14:30',
++    startTime: `${daysAgo(24).slice(0, 10)}T14:30:00.000Z`,
++    before: 1840,
++    after: 1890,
++    ratingChange: 50,
++    rank: 210,
++    solved: 5,
++    total: 6,
++    href: 'https://www.codechef.com/START153B',
++  },
++  {
++    id: 'lc-weekly-453',
++    name: 'LeetCode Weekly Contest 453',
++    platform: 'LEETCODE',
++    date: daysAgo(28).slice(0, 10),
++    time: '02:30',
++    startTime: `${daysAgo(28).slice(0, 10)}T02:30:00.000Z`,
++    before: 2300,
++    after: 2360,
++    ratingChange: 60,
++    rank: 195,
++    solved: 4,
++    total: 4,
++    href: 'https://leetcode.com/contest/weekly-contest-453',
++  },
++  {
++    id: 'cf-round-1030',
++    name: 'Codeforces Round 1030 (Div. 2)',
++    platform: 'CODEFORCES',
++    date: daysAgo(32).slice(0, 10),
++    time: '17:35',
++    startTime: `${daysAgo(32).slice(0, 10)}T17:35:00.000Z`,
++    before: 1750,
++    after: 1735,
++    ratingChange: -15,
++    rank: 1120,
++    solved: 3,
++    total: 6,
++    href: 'https://codeforces.com/contest/2057',
++  },
++  {
++    id: 'cc-starters-151',
++    name: 'CodeChef Starters 151 (Div 2)',
++    platform: 'CODECHEF',
++    date: daysAgo(38).slice(0, 10),
++    time: '14:30',
++    startTime: `${daysAgo(38).slice(0, 10)}T14:30:00.000Z`,
++    before: 1860,
++    after: 1840,
++    ratingChange: -20,
++    rank: 490,
++    solved: 3,
++    total: 6,
++    href: 'https://www.codechef.com/START151B',
++  },
++  {
++    id: 'cf-round-1028',
++    name: 'Codeforces Round 1028 (Div. 2)',
++    platform: 'CODEFORCES',
++    date: daysAgo(46).slice(0, 10),
++    time: '17:35',
++    startTime: `${daysAgo(46).slice(0, 10)}T17:35:00.000Z`,
++    before: 1680,
++    after: 1750,
++    ratingChange: 70,
++    rank: 295,
++    solved: 5,
++    total: 6,
++    href: 'https://codeforces.com/contest/2053',
++  },
++  {
++    id: 'cc-starters-149',
++    name: 'CodeChef Starters 149 (Div 2)',
++    platform: 'CODECHEF',
++    date: daysAgo(52).slice(0, 10),
++    time: '14:30',
++    startTime: `${daysAgo(52).slice(0, 10)}T14:30:00.000Z`,
++    before: 1790,
++    after: 1860,
++    ratingChange: 70,
++    rank: 145,
++    solved: 6,
++    total: 6,
++    href: 'https://www.codechef.com/START149B',
++  },
++];
++
+ export const MOCK_FRIENDS: Friend[] = [
+-  { id: 'mock-friend-1', username: 'tourist', avatarUrl: null, cfRating: 3821, lcRating: 3512, friendshipId: 'fr-1' },
+-  { id: 'mock-friend-2', username: 'benq', avatarUrl: null, cfRating: 3790, lcRating: 3480, friendshipId: 'fr-2' },
+-  { id: 'mock-friend-3', username: 'ecnerwala', avatarUrl: null, cfRating: 3650, lcRating: 3200, friendshipId: 'fr-3' },
+-  { id: 'mock-friend-4', username: 'ksun48', avatarUrl: null, cfRating: 3100, lcRating: 2900, friendshipId: 'fr-4' },
+-  { id: 'mock-friend-5', username: 'neal', avatarUrl: null, cfRating: 2840, lcRating: 2710, friendshipId: 'fr-5' },
++  { id: 'mock-friend-1', username: 'tourist', avatarUrl: null, cfRating: 3821, lcRating: 3512, ccRating: 3100, friendshipId: 'fr-1' },
++  { id: 'mock-friend-2', username: 'benq', avatarUrl: null, cfRating: 3790, lcRating: 3480, ccRating: 2950, friendshipId: 'fr-2' },
++  { id: 'mock-friend-3', username: 'ecnerwala', avatarUrl: null, cfRating: 3650, lcRating: 3200, ccRating: 2820, friendshipId: 'fr-3' },
++  { id: 'mock-friend-4', username: 'ksun48', avatarUrl: null, cfRating: 3100, lcRating: 2900, ccRating: 2600, friendshipId: 'fr-4' },
++  { id: 'mock-friend-5', username: 'neal', avatarUrl: null, cfRating: 2840, lcRating: 2710, ccRating: 2450, friendshipId: 'fr-5' },
+ ];
+ 
+ export const MOCK_FRIEND_REQUESTS: FriendRequest[] = [
+@@ -155,19 +383,19 @@ export const MOCK_FRIEND_REQUESTS: FriendRequest[] = [
+     id: 'req-1',
+     type: 'INCOMING',
+     createdAt: daysAgo(1),
+-    user: { id: 'mock-search-1', username: 'neal', avatarUrl: null, cfRating: 2800, lcRating: 2650 },
++    user: { id: 'mock-search-1', username: 'neal', avatarUrl: null, cfRating: 2800, lcRating: 2650, ccRating: 2400 },
+   },
+   {
+     id: 'req-2',
+     type: 'OUTGOING',
+     createdAt: daysAgo(3),
+-    user: { id: 'mock-search-2', username: 'jiangly', avatarUrl: null, cfRating: 3200, lcRating: 3100 },
++    user: { id: 'mock-search-2', username: 'jiangly', avatarUrl: null, cfRating: 3200, lcRating: 3100, ccRating: 2850 },
+   },
+ ];
+ 
+ export const MOCK_SEARCH_USERS: Friend[] = [
+-  { id: 'mock-search-3', username: 'petr', avatarUrl: null, cfRating: 3500, lcRating: 3400, relationship: 'NONE' },
+-  { id: 'mock-search-4', username: 'rng_58', avatarUrl: null, cfRating: 3200, lcRating: 3000, relationship: 'NONE' },
++  { id: 'mock-search-3', username: 'petr', avatarUrl: null, cfRating: 3500, lcRating: 3400, ccRating: 2900, relationship: 'NONE' },
++  { id: 'mock-search-4', username: 'rng_58', avatarUrl: null, cfRating: 3200, lcRating: 3000, ccRating: 2750, relationship: 'NONE' },
+ ];
+ 
+ export const MOCK_NOTIFICATIONS: NotificationSummary[] = [
+@@ -185,15 +413,19 @@ export function getMockCompare(friendId: string): CompareData | null {
+   const userHeatmap = MOCK_DASHBOARD.heatmapData;
+   const userCfHeatmap = userHeatmap.filter((_, i) => i % 2 === 0);
+   const userLcHeatmap = userHeatmap.filter((_, i) => i % 3 === 0);
++  const userCcHeatmap = userHeatmap.filter((_, i) => i % 4 === 0);
+ 
+   const friendHeatmap = genHeatmap().slice(0, 120);
+   const friendCfHeatmap = friendHeatmap.filter((_, i) => i % 2 === 0);
+   const friendLcHeatmap = friendHeatmap.filter((_, i) => i % 3 !== 0);
++  const friendCcHeatmap = friendHeatmap.filter((_, i) => i % 4 !== 0);
+ 
+   const userRatingHistory = genRatingHistory(1823, 40);
+   const userLcRatingHistory = genRatingHistory(2450, 30);
++  const userCcRatingHistory = genRatingHistory(1945, 30);
+   const friendRatingHistory = genRatingHistory(friend.cfRating ?? 2000, 45);
+   const friendLcRatingHistory = genRatingHistory(friend.lcRating ?? 2200, 35);
++  const friendCcRatingHistory = genRatingHistory(friend.ccRating ?? 1850, 35);
+ 
+   const userTopics = MOCK_DASHBOARD.topicStats;
+   const userCfTopics = [
+@@ -212,6 +444,12 @@ export function getMockCompare(friendId: string): CompareData | null {
+     { topic: 'Two Pointers', value: 40, rawCount: 48 },
+     { topic: 'Sliding Window', value: 35, rawCount: 42 },
+   ];
++  const userCcTopics = [
++    { topic: 'basic-programming', value: 100, rawCount: 150 },
++    { topic: 'sorting', value: 85, rawCount: 80 },
++    { topic: 'greedy', value: 70, rawCount: 65 },
++    { topic: 'math', value: 55, rawCount: 45 },
++  ];
+ 
+   const friendTopics = userTopics.map((t) => ({
+     ...t,
+@@ -228,71 +466,101 @@ export function getMockCompare(friendId: string): CompareData | null {
+     rawCount: Math.max(1, t.rawCount - Math.floor(Math.random() * 20)),
+     value: Math.max(10, t.value - Math.floor(Math.random() * 25)),
+   }));
++  const friendCcTopics = userCcTopics.map((t) => ({
++    ...t,
++    rawCount: Math.max(1, t.rawCount - Math.floor(Math.random() * 15)),
++    value: Math.max(10, t.value - Math.floor(Math.random() * 20)),
++  }));
+ 
+   return {
+     user: {
+       id: MOCK_SESSION_USER.id,
+       username: MOCK_SESSION_USER.username,
+       avatarUrl: MOCK_SESSION_USER.avatarUrl,
++      cfHandle: 'arcdev',
+       cfRating: 1823,
+       cfMaxRating: 1912,
+       cfRank: 'Master',
++      lcHandle: 'arcdev',
+       lcRating: 2450,
+       lcMaxRating: 2518,
+-      totalSolved: 1250,
++      ccHandle: 'arcdev',
++      ccRating: 1945,
++      ccMaxRating: 2010,
++      ccStars: '4Γÿà',
++      totalSolved: 1670,
+       cfSolvedCount: 850,
+       lcSolvedCount: 1250,
++      ccSolvedCount: 420,
+       cfContestCount: 45,
+       cfAverageRank: 684,
+       lcContestCount: 30,
+       lcAverageRank: 421,
++      ccContestCount: 24,
++      ccAverageRank: 310,
+       streak: 42,
+       totalActiveDays: userHeatmap.filter((d) => d.count > 0).length,
+       lastSyncedAt: daysAgo(0),
+       ratingHistory: userRatingHistory,
+       cfRatingHistory: userRatingHistory,
+       lcRatingHistory: userLcRatingHistory,
++      ccRatingHistory: userCcRatingHistory,
+       topicStats: userTopics,
+       cfTopicStats: userCfTopics,
+       lcTopicStats: userLcTopics,
++      ccTopicStats: userCcTopics,
+       heatmapData: userHeatmap,
+       cfHeatmapData: userCfHeatmap,
+       lcHeatmapData: userLcHeatmap,
++      ccHeatmapData: userCcHeatmap,
+     },
+     friend: {
+       id: friend.id,
+       username: friend.username,
+       avatarUrl: friend.avatarUrl,
++      cfHandle: friend.username,
+       cfRating: friend.cfRating,
+       cfMaxRating: friend.cfRating ? friend.cfRating + 74 : null,
+       cfRank: 'master',
++      lcHandle: friend.username,
+       lcRating: friend.lcRating,
+       lcMaxRating: friend.lcRating ? friend.lcRating + 52 : null,
+-      totalSolved: 890 + Math.floor(Math.random() * 200),
++      ccHandle: friend.username,
++      ccRating: friend.ccRating ?? 1850,
++      ccMaxRating: (friend.ccRating ?? 1850) + 60,
++      ccStars: '4Γÿà',
++      totalSolved: 1270 + Math.floor(Math.random() * 200),
+       cfSolvedCount: 500,
+       lcSolvedCount: 390,
++      ccSolvedCount: 380,
+       cfContestCount: 30,
+       cfAverageRank: 802,
+       lcContestCount: 20,
+       lcAverageRank: 516,
++      ccContestCount: 20,
++      ccAverageRank: 450,
+       streak: 7 + Math.floor(Math.random() * 20),
+       totalActiveDays: friendHeatmap.filter((d) => d.count > 0).length,
+       lastSyncedAt: daysAgo(1),
+       ratingHistory: friendRatingHistory,
+       cfRatingHistory: friendRatingHistory,
+       lcRatingHistory: friendLcRatingHistory,
++      ccRatingHistory: friendCcRatingHistory,
+       topicStats: friendTopics,
+       cfTopicStats: friendCfTopics,
+       lcTopicStats: friendLcTopics,
++      ccTopicStats: friendCcTopics,
+       heatmapData: friendHeatmap,
+       cfHeatmapData: friendCfHeatmap,
+       lcHeatmapData: friendLcHeatmap,
++      ccHeatmapData: friendCcHeatmap,
+     },
+     verdict: {
+       totalSolved: 'friend',
+       consistency: 'user',
+       cfRating: friend.cfRating && friend.cfRating > 1823 ? 'friend' : 'user',
+       lcRating: friend.lcRating && friend.lcRating > 1847 ? 'friend' : 'user',
++      ccRating: (friend.ccRating ?? 1850) > 1945 ? 'friend' : (friend.ccRating ?? 1850) === 1945 ? 'tie' : 'user',
+       strongerTopics: {
+         user: ['greedy', 'two pointers'],
+         friend: ['dp', 'graphs', 'math'],

@@ -1,0 +1,193 @@
+﻿diff --git a/src/app/api/friends/requests/route.ts b/src/app/api/friends/requests/route.ts
+index b75a156..2465c46 100644
+--- a/src/app/api/friends/requests/route.ts
++++ b/src/app/api/friends/requests/route.ts
+@@ -52,6 +52,13 @@ export async function PATCH(req: Request) {
+     const session = await getSession();
+     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+ 
++    if (session?.isGuest) {
++      return NextResponse.json(
++        { error: { code: 'FORBIDDEN', message: 'Guest account is read-only. Please create an account to save changes.' } },
++        { status: 403 }
++      );
++    }
++
+     const { requestId, action } = await req.json();
+     if (!requestId || !action) return NextResponse.json({ error: 'requestId and action required' }, { status: 400 });
+ 
+diff --git a/src/app/api/platforms/link/route.ts b/src/app/api/platforms/link/route.ts
+index fe8d53c..0ef6ad4 100644
+--- a/src/app/api/platforms/link/route.ts
++++ b/src/app/api/platforms/link/route.ts
+@@ -14,6 +14,13 @@ export async function POST(request: NextRequest) {
+     const session = await getSession();
+     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+ 
++    if (session?.isGuest) {
++      return NextResponse.json(
++        { error: { code: 'FORBIDDEN', message: 'Guest account is read-only. Please create an account to save changes.' } },
++        { status: 403 }
++      );
++    }
++
+     const { platform, handle } = await request.json() as { platform: Platform; handle: string };
+     if (!platform || !handle) {
+       return NextResponse.json({ error: 'platform and handle are required' }, { status: 400 });
+diff --git a/src/app/api/platforms/sync/route.ts b/src/app/api/platforms/sync/route.ts
+index a4e16c0..c3fdffb 100644
+--- a/src/app/api/platforms/sync/route.ts
++++ b/src/app/api/platforms/sync/route.ts
+@@ -11,6 +11,13 @@ export async function POST(request: NextRequest) {
+     const session = await getSession();
+     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+ 
++    if (session?.isGuest) {
++      return NextResponse.json(
++        { error: { code: 'FORBIDDEN', message: 'Guest account is read-only. Please create an account to save changes.' } },
++        { status: 403 }
++      );
++    }
++
+     const body = await request.json().catch(() => ({})) as { platform?: Platform };
+ 
+     const connections = await db.platformConnection.findMany({
+diff --git a/src/app/api/platforms/unlink/route.ts b/src/app/api/platforms/unlink/route.ts
+index 101a85f..4a88810 100644
+--- a/src/app/api/platforms/unlink/route.ts
++++ b/src/app/api/platforms/unlink/route.ts
+@@ -9,6 +9,13 @@ export async function DELETE(request: NextRequest) {
+     const session = await getSession();
+     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+ 
++    if (session?.isGuest) {
++      return NextResponse.json(
++        { error: { code: 'FORBIDDEN', message: 'Guest account is read-only. Please create an account to save changes.' } },
++        { status: 403 }
++      );
++    }
++
+     const { platform } = await request.json() as { platform: Platform };
+     if (!platform) return NextResponse.json({ error: 'platform required' }, { status: 400 });
+ 
+diff --git a/src/components/layout/AppShell.tsx b/src/components/layout/AppShell.tsx
+index e2af1e7..49b5027 100644
+--- a/src/components/layout/AppShell.tsx
++++ b/src/components/layout/AppShell.tsx
+@@ -151,6 +151,7 @@ export function AppShell({ children }: AppShellProps) {
+             notificationCount={unreadCount}
+             userDisplayName={profile?.username ?? 'Arc User'}
+             connectedPlatforms={profile?.connectedPlatforms ?? []}
++            isGuest={profile?.isGuest ?? false}
+           />
+           <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden" style={{ padding: '18px 22px 22px' }}>
+             <motion.div
+diff --git a/src/components/layout/SettingsShell.tsx b/src/components/layout/SettingsShell.tsx
+index 644b836..a0fea2a 100644
+--- a/src/components/layout/SettingsShell.tsx
++++ b/src/components/layout/SettingsShell.tsx
+@@ -3,6 +3,7 @@
+ import Link from 'next/link';
+ import { usePathname } from 'next/navigation';
+ import { User, Shield, Link2, Bell, AlertTriangle } from 'lucide-react';
++import { useQuery } from '@tanstack/react-query';
+ 
+ const SETTINGS_NAV = [
+   { label: 'Profile', href: '/settings/profile', icon: User },
+@@ -15,6 +16,17 @@ const SETTINGS_NAV = [
+ export function SettingsShell({ children }: { children: React.ReactNode }) {
+   const pathname = usePathname();
+ 
++  const { data: profile } = useQuery({
++    queryKey: ['profile'],
++    queryFn: async () => {
++      const res = await fetch('/api/user/profile');
++      if (!res.ok) return null;
++      return res.json();
++    },
++  });
++
++  const isGuest = profile?.isGuest;
++
+   return (
+     <div className="mx-auto max-w-5xl">
+       <div className="flex flex-col gap-8 md:flex-row">
+@@ -56,7 +68,25 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
+           </nav>
+         </aside>
+ 
+-        <main className="min-w-0 flex-1">{children}</main>
++        <main className="min-w-0 flex-1">
++          {isGuest && (
++            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-300">
++              <div className="flex items-center gap-2.5">
++                <AlertTriangle size={16} className="text-amber-400 shrink-0" />
++                <span>
++                  You are exploring settings in <strong>Guest Mode</strong>. Actions like connecting handles, updating profiles, and changing security credentials are read-only.
++                </span>
++              </div>
++              <Link
++                href="/signup?fresh=1"
++                className="shrink-0 rounded-lg bg-amber-400 px-3 py-1.5 font-bold text-black hover:bg-amber-300 transition-colors"
++              >
++                Create Free Account
++              </Link>
++            </div>
++          )}
++          {children}
++        </main>
+       </div>
+     </div>
+   );
+diff --git a/src/components/layout/Topbar.tsx b/src/components/layout/Topbar.tsx
+index 33a7083..cdc9ff1 100644
+--- a/src/components/layout/Topbar.tsx
++++ b/src/components/layout/Topbar.tsx
+@@ -18,9 +18,10 @@ interface TopbarProps {
+   notificationCount?: number;
+   userDisplayName?: string;
+   connectedPlatforms?: Array<'CODEFORCES' | 'LEETCODE' | 'CODECHEF'>;
++  isGuest?: boolean;
+ }
+ 
+-export function Topbar({ notificationCount = 0, connectedPlatforms = [] }: TopbarProps) {
++export function Topbar({ notificationCount = 0, connectedPlatforms = [], isGuest = false }: TopbarProps) {
+   const pathname = usePathname();
+   const router = useRouter();
+   const isProblemsPage = pathname === '/problems' || pathname.startsWith('/problems/');
+@@ -144,6 +145,19 @@ export function Topbar({ notificationCount = 0, connectedPlatforms = [] }: Topba
+           </div>
+         )}
+ 
++        {isGuest && (
++          <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-300">
++            <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
++            <span className="hidden sm:inline">Guest Preview</span>
++            <a
++              href="/signup?fresh=1"
++              className="rounded px-2 py-0.5 text-[11px] font-bold text-black transition-colors bg-amber-400 hover:bg-amber-300"
++            >
++              Sign in
++            </a>
++          </div>
++        )}
++
+         <div ref={notificationMenuRef} className="relative">
+           <button
+             type="button"
+diff --git a/src/lib/mock/data.ts b/src/lib/mock/data.ts
+index c72d3be..a71eedb 100644
+--- a/src/lib/mock/data.ts
++++ b/src/lib/mock/data.ts
+@@ -16,9 +16,10 @@ export const MOCK_PROFILE = {
+   email: MOCK_SESSION_USER.email,
+   username: MOCK_SESSION_USER.username,
+   avatarUrl: MOCK_SESSION_USER.avatarUrl,
+-  bio: 'Competitive programming enthusiast. CF + LC + CC grind.',
++  bio: 'Competitive programming enthusiast. CF + LC grind.',
+   createdAt: new Date('2024-01-15').toISOString(),
+   connectedPlatforms: ['CODEFORCES', 'LEETCODE', 'CODECHEF'],
++  isGuest: true,
+ };
+ 
+ function daysAgo(n: number): string {
