@@ -28,8 +28,8 @@ export function getRankAbbr(platform: 'ALL' | 'CODEFORCES' | 'LEETCODE' | 'CODEC
   } else if (platform === 'CODECHEF') {
     return ccRankStars(rating);
   } else {
-    if (rating >= 2200) return 'Guardian';
-    if (rating >= 1850) return 'Knight';
+    if (rating >= 2200) return 'G';
+    if (rating >= 1850) return 'K';
     return '';
   }
 }
@@ -41,6 +41,8 @@ export function getRankColor(platform: 'ALL' | 'CODEFORCES' | 'LEETCODE' | 'CODE
   if (platform === 'CODECHEF') {
     return ccRankColor(rating);
   }
+  if (rating >= 2200) return '#ef4444';
+  if (rating >= 1850) return '#3b82f6';
   return undefined;
 }
 

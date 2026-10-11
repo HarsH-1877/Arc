@@ -6,9 +6,10 @@ import { USE_MOCK_DATA, MOCK_SEARCH_USERS, MOCK_FRIENDS } from '@/lib/mock';
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get('q')?.trim().toLowerCase() ?? '';
+  if (!q || q.length < 2) return NextResponse.json([]);
 
-  if (USE_MOCK_DATA) {
-    if (!q || q.length < 2) return NextResponse.json([]);
+  const session = await getSession();
+  if (session?.isGuest || USE_MOCK_DATA) {
     const pool = [...MOCK_SEARCH_USERS, ...MOCK_FRIENDS.map((f) => ({ ...f, relationship: 'FRIEND' as const }))];
     return NextResponse.json(
       pool.filter(
@@ -19,9 +20,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const session = await getSession();
     if (!session) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
-    if (!q || q.length < 2) return NextResponse.json([]);
 
     const users = await db.user.findMany({
       where: {

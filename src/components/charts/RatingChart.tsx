@@ -19,6 +19,7 @@ import { ChevronDown, Layers3 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useUIStore } from '@/store/useUIStore';
 import { useDismissOnOutsideClick } from '@/hooks/useDismissOnOutsideClick';
+import { cfRankColor } from '@/lib/codeforces/cf-rank';
 
 export interface RatingPoint {
   date: string;
@@ -66,8 +67,8 @@ const CC_MILESTONES = [
   { value: 2500, label: '7 Star', abbr: '7★', color: '#ef4444' },
 ];
 const LC_MILESTONES = [
-  { value: 1850, label: 'Knight',   abbr: 'KNT', color: undefined as string | undefined },
-  { value: 2200, label: 'Guardian', abbr: 'GRD', color: undefined as string | undefined },
+  { value: 1850, label: 'Knight',   abbr: 'KNT', color: '#3b82f6' },
+  { value: 2200, label: 'Guardian', abbr: 'GRD', color: '#ef4444' },
 ];
 const LC_AXIS_TICKS = [1500, 1650, 1850, 2000, 2200, 2350, 2500];
 
@@ -192,6 +193,45 @@ export function RatingChart({ data, loading, compact = false, compareMode = fals
     const point = chartData.find((item) => typeof item.userRating === 'number' && item.userRating >= milestone.value);
     return point ? { ...milestone, point } : null;
   }).filter((item): item is typeof activeMilestones[number] & { point: (typeof chartData)[number] } => Boolean(item));
+
+  const renderRightTick = (props: any): React.ReactElement<SVGElement> => {
+    const { x, y, payload } = props;
+    const val = payload?.value;
+    if (val === undefined || val === null) return <g />;
+
+    const milestone = activeMilestones.find((m) => m.value === val);
+    const text = selectedPlatform === 'LEETCODE'
+      ? lcRightTickFormatter(val)
+      : milestone?.abbr ?? String(val);
+
+    if (!text) return <g />;
+
+    let color = milestone?.color;
+    if (!color && selectedPlatform === 'CODEFORCES' && typeof val === 'number') {
+      color = cfRankColor(val);
+    }
+    if (!color && selectedPlatform === 'LEETCODE' && typeof val === 'number') {
+      if (val >= 2200) color = '#ef4444';
+      else if (val >= 1850) color = '#3b82f6';
+    }
+    if (!color) {
+      color = 'var(--text-muted)';
+    }
+
+    return (
+      <text
+        x={Number(x) + 4}
+        y={y}
+        dy="0.355em"
+        textAnchor="start"
+        fill={color}
+        fontSize={10}
+        fontWeight={700}
+      >
+        {text}
+      </text>
+    );
+  };
 
   if (loading) {
     return (
@@ -359,18 +399,13 @@ export function RatingChart({ data, loading, compact = false, compareMode = fals
             <YAxis
               yAxisId="right"
               orientation="right"
-              tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 700 }}
+              tick={renderRightTick}
               axisLine={false}
               tickLine={false}
               width={38}
               domain={[domainMin, domainMax]}
               allowDecimals={false}
               ticks={axisTicks}
-              tickFormatter={(val) =>
-                selectedPlatform === 'LEETCODE'
-                  ? lcRightTickFormatter(val)
-                  : activeMilestones.find((m) => m.value === val)?.abbr ?? String(val)
-              }
             />
             <Tooltip content={<CustomTooltip />} />
             {visibleSeries.filter((series) => !series.primary).map((series) => (

@@ -38,8 +38,8 @@ function colorForName(name: string) {
 function PlatformBadge({ platform, value }: { platform: 'CODEFORCES' | 'LEETCODE' | 'CODECHEF'; value: number }) {
   const isCf = platform === 'CODEFORCES';
   const isCc = platform === 'CODECHEF';
-  const rankStr = isCf ? cfRankName(value) : isCc ? ccRankStars(value) : null;
-  const rankCol = isCf ? cfRankColor(value) : isCc ? ccRankColor(value) : undefined;
+  const rankStr = isCf ? cfRankName(value) : isCc ? ccRankStars(value) : value >= 2200 ? 'G' : value >= 1850 ? 'K' : null;
+  const rankCol = isCf ? cfRankColor(value) : isCc ? ccRankColor(value) : value >= 2200 ? '#ef4444' : value >= 1850 ? '#3b82f6' : undefined;
   
   return (
     <span className="font-mono-data inline-flex items-center gap-1.5" style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)', borderRadius: '999px', padding: '3px 9px 3px 5px', fontSize: '12px', fontWeight: 700 }}>

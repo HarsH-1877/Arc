@@ -373,10 +373,11 @@ export const MOCK_CONTEST_HISTORY: UserContestHistoryItem[] = [
 
 export const MOCK_FRIENDS: Friend[] = [
   { id: 'mock-friend-1', username: 'tourist', avatarUrl: null, cfRating: 3821, lcRating: 3512, ccRating: 3100, friendshipId: 'fr-1' },
-  { id: 'mock-friend-2', username: 'benq', avatarUrl: null, cfRating: 3790, lcRating: 3480, ccRating: 2950, friendshipId: 'fr-2' },
-  { id: 'mock-friend-3', username: 'ecnerwala', avatarUrl: null, cfRating: 3650, lcRating: 3200, ccRating: 2820, friendshipId: 'fr-3' },
-  { id: 'mock-friend-4', username: 'ksun48', avatarUrl: null, cfRating: 3100, lcRating: 2900, ccRating: 2600, friendshipId: 'fr-4' },
-  { id: 'mock-friend-5', username: 'neal', avatarUrl: null, cfRating: 2840, lcRating: 2710, ccRating: 2450, friendshipId: 'fr-5' },
+  { id: 'mock-friend-2', username: 'neal', avatarUrl: null, cfRating: 2140, lcRating: 2350, ccRating: 2050, friendshipId: 'fr-2' },
+  { id: 'mock-friend-3', username: 'alex_coder', avatarUrl: null, cfRating: 1780, lcRating: 1920, ccRating: 1840, friendshipId: 'fr-3' },
+  { id: 'mock-friend-4', username: 'sarah_cp', avatarUrl: null, cfRating: 1480, lcRating: 1650, ccRating: 1620, friendshipId: 'fr-4' },
+  { id: 'mock-friend-5', username: 'dev_rookie', avatarUrl: null, cfRating: 1240, lcRating: 1420, ccRating: 1410, friendshipId: 'fr-5' },
+  { id: 'mock-friend-6', username: 'noob_coder', avatarUrl: null, cfRating: 1050, lcRating: 1280, ccRating: 1200, friendshipId: 'fr-6' },
 ];
 
 export const MOCK_FRIEND_REQUESTS: FriendRequest[] = [
@@ -384,19 +385,21 @@ export const MOCK_FRIEND_REQUESTS: FriendRequest[] = [
     id: 'req-1',
     type: 'INCOMING',
     createdAt: daysAgo(1),
-    user: { id: 'mock-search-1', username: 'neal', avatarUrl: null, cfRating: 2800, lcRating: 2650, ccRating: 2400 },
+    user: { id: 'mock-search-1', username: 'sarah_cp', avatarUrl: null, cfRating: 1480, lcRating: 1650, ccRating: 1620 },
   },
   {
     id: 'req-2',
     type: 'OUTGOING',
     createdAt: daysAgo(3),
-    user: { id: 'mock-search-2', username: 'jiangly', avatarUrl: null, cfRating: 3200, lcRating: 3100, ccRating: 2850 },
+    user: { id: 'mock-search-2', username: 'jiangly', avatarUrl: null, cfRating: 3400, lcRating: 3300, ccRating: 2900 },
   },
 ];
 
 export const MOCK_SEARCH_USERS: Friend[] = [
-  { id: 'mock-search-3', username: 'petr', avatarUrl: null, cfRating: 3500, lcRating: 3400, ccRating: 2900, relationship: 'NONE' },
-  { id: 'mock-search-4', username: 'rng_58', avatarUrl: null, cfRating: 3200, lcRating: 3000, ccRating: 2750, relationship: 'NONE' },
+  { id: 'mock-search-2', username: 'jiangly', avatarUrl: null, cfRating: 3400, lcRating: 3300, ccRating: 2900, relationship: 'NONE' },
+  { id: 'mock-search-3', username: 'algo_wizard', avatarUrl: null, cfRating: 1950, lcRating: 2180, ccRating: 1920, relationship: 'NONE' },
+  { id: 'mock-search-4', username: 'byte_master', avatarUrl: null, cfRating: 1620, lcRating: 1750, ccRating: 1650, relationship: 'NONE' },
+  { id: 'mock-search-5', username: 'freshman', avatarUrl: null, cfRating: 1150, lcRating: 1350, ccRating: 1300, relationship: 'NONE' },
 ];
 
 export const MOCK_NOTIFICATIONS: NotificationSummary[] = [

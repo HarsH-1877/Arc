@@ -33,7 +33,13 @@ export function UserSelector() {
       try {
         const response = await fetch(`/api/friends/search?q=${encodeURIComponent(q)}`, { signal: controller.signal });
         if (response.ok) setResults(await response.json());
-      } finally { if (!controller.signal.aborted) setLoading(false); }
+      } catch (err: any) {
+        if (err?.name !== 'AbortError') {
+          console.error(err);
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
     }, 180);
     return () => { window.clearTimeout(timer); controller.abort(); };
   }, [query]);
