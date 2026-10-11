@@ -94,27 +94,35 @@ export function Hero() {
              Weakness tracking, contest calendar and more useful CP tools.
             </p>
 
-            {/* CTA */}
-            <Link
-              ref={ctaRef}
-              href="/signup?fresh=1"
-              className="landing-connect-link relative z-20 inline-flex items-center gap-3 border font-mono text-[13px] font-medium uppercase tracking-[0.1em] px-6 py-3.5 transition-all duration-150 self-start hover:brightness-110"
-              style={{
-                background: 'var(--active-tier, #3B7DDB)',
-                borderColor: 'var(--active-tier, #3B7DDB)',
-                borderRadius: 2,
-                color: '#FFFFFF',
-                transitionTimingFunction: 'cubic-bezier(0.4,0,0.2,1)',
-              }}
-            >
-              Connect your handle
-              <span
-                className="font-mono text-base"
-                style={{ color: '#FFFFFF', animation: 'blink 1s step-end infinite' }}
+            {/* CTA buttons */}
+            <div className="flex flex-wrap items-center gap-4">
+              <Link
+                ref={ctaRef}
+                href="/signup?fresh=1"
+                className="landing-connect-link relative z-20 inline-flex items-center gap-3 border font-mono text-[13px] font-medium uppercase tracking-[0.1em] px-6 py-3.5 transition-all duration-150 self-start hover:brightness-110"
+                style={{
+                  background: 'var(--active-tier, #3B7DDB)',
+                  borderColor: 'var(--active-tier, #3B7DDB)',
+                  borderRadius: 2,
+                  color: '#FFFFFF',
+                  transitionTimingFunction: 'cubic-bezier(0.4,0,0.2,1)',
+                }}
               >
-                _
-              </span>
-            </Link>
+                Connect your handle
+                <span
+                  className="font-mono text-base"
+                  style={{ color: '#FFFFFF', animation: 'blink 1s step-end infinite' }}
+                >
+                  _
+                </span>
+              </Link>
+              <Link
+                href="/api/auth/guest"
+                className="relative z-20 inline-flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.08em] px-4 py-3 transition-colors text-[#8A8A85] hover:text-[#EDEAE4]"
+              >
+                Explore in Guest Mode →
+              </Link>
+            </div>
 
             {/* Live stat */}
             <p

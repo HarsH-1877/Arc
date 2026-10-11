@@ -101,6 +101,19 @@ export function LandingNav() {
           Sign in
         </Link>
         <Link
+          href="/api/auth/guest"
+          className="inline-flex h-9 items-center justify-center border px-3.5 font-mono text-[11px] uppercase tracking-[0.08em] transition-all duration-150 hover:border-[#3B7DDB] hover:text-[#EDEAE4]"
+          style={{
+            borderColor: '#242426',
+            borderRadius: 2,
+            background: 'rgba(255,255,255,0.03)',
+            color: '#A1A1AA',
+          }}
+          title="Try Project Arc instantly with demo data"
+        >
+          Guest Mode
+        </Link>
+        <Link
           ref={btnRef}
           href="/signup?fresh=1"
           className="landing-connect-link inline-flex h-9 items-center justify-center border px-4 font-mono text-[11px] uppercase leading-none tracking-[0.08em] transition-all duration-150"
