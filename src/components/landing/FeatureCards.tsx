@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { PlatformLogo } from '@/components/shared/PlatformLogo';
 import {
   Users,
   UserPlus,
@@ -76,17 +77,39 @@ function Watermark({ label, side = 'left' }: { label: string; side?: 'left' | 'r
   );
 }
 
+function MarqueeItem() {
+  return (
+    <div className="inline-flex items-center gap-5 font-mono text-xs uppercase tracking-[0.2em] whitespace-nowrap px-8 shrink-0" style={{ color: '#8A8A85' }}>
+      <span className="inline-flex items-center gap-2">
+        <PlatformLogo platform="CODEFORCES" size={14} className="grayscale contrast-125 opacity-75" />
+        <span>CF</span>
+      </span>
+      <span className="opacity-35">——</span>
+      <span className="inline-flex items-center gap-2">
+        <PlatformLogo platform="LEETCODE" size={14} className="grayscale contrast-125 opacity-75" />
+        <span>LC</span>
+      </span>
+      <span className="opacity-35">——</span>
+      <span className="inline-flex items-center gap-2">
+        <PlatformLogo platform="CODECHEF" size={14} className="grayscale contrast-125 opacity-75" />
+        <span>CC</span>
+      </span>
+      <span className="opacity-35">——</span>
+      <span className="inline-flex items-center gap-2">
+        <PlatformLogo platform="HACKERRANK" size={14} className="grayscale contrast-125 opacity-75" />
+        <span>HR</span>
+      </span>
+      <span className="opacity-35">——</span>
+      <span className="tracking-[0.22em]">COMPETITIVE PROGRAMMING. CONNECTED.</span>
+      <span className="opacity-35">——</span>
+    </div>
+  );
+}
+
 /* ─────────────────────────────────────────────
    MAIN COMPONENT
 ───────────────────────────────────────────── */
 export function FeatureCards() {
-  const tickerItems = [
-    'CF —— LC —— CC —— HR —— COMPETITIVE PROGRAMMING. CONNECTED. ——',
-    'CF —— LC —— CC —— HR —— COMPETITIVE PROGRAMMING. CONNECTED. ——',
-    'CF —— LC —— CC —— HR —— COMPETITIVE PROGRAMMING. CONNECTED. ——',
-    'CF —— LC —— CC —— HR —— COMPETITIVE PROGRAMMING. CONNECTED. ——',
-  ];
-
   return (
     <div className="relative z-10 w-full bg-transparent text-[#EDEAE4] overflow-x-hidden">
 
@@ -107,10 +130,8 @@ export function FeatureCards() {
       {/* ── MARQUEE TICKER ── */}
       <div className="w-full border-t border-b border-[#242426] py-3 overflow-hidden opacity-45 group">
         <div className="flex w-max animate-marquee group-hover:[animation-play-state:paused]">
-          {tickerItems.concat(tickerItems).map((text, idx) => (
-            <span key={idx} className="font-mono text-xs uppercase tracking-[0.2em] whitespace-nowrap px-8" style={{ color: '#8A8A85' }}>
-              {text}
-            </span>
+          {[...Array(8)].map((_, idx) => (
+            <MarqueeItem key={idx} />
           ))}
         </div>
       </div>
@@ -287,14 +308,14 @@ export function FeatureCards() {
                 {/* Friend rows */}
                 <div className="divide-y divide-[#1F1F22]">
                   {[
-                    { name:'tourist',   cf:3840, lc:3400, online:true,  you:false },
-                    { name:'You',       cf:1847, lc:2134, online:true,  you:true  },
-                    { name:'nlogn',     cf:2104, lc:1980, online:false, you:false },
-                    { name:'benq',      cf:3120, lc:2950, online:false, you:false },
-                  ].map(({ name, cf, lc, online, you }) => (
+                    { name:'tourist',   cf:3840, lc:3400, cc:3210, online:true,  you:false },
+                    { name:'You',       cf:1847, lc:2134, cc:1945, online:true,  you:true  },
+                    { name:'nlogn',     cf:2104, lc:1980, cc:1880, online:false, you:false },
+                    { name:'benq',      cf:3120, lc:2950, cc:2820, online:false, you:false },
+                  ].map(({ name, cf, lc, cc, online, you }) => (
                     <div
                       key={name}
-                      className="flex items-center gap-4 px-5 py-3 font-mono text-xs"
+                      className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 font-mono text-xs"
                       style={you ? { color:'var(--active-tier,#3B7DDB)' } : { color:'#EDEAE4' }}
                     >
                       {/* Avatar circle */}
@@ -318,13 +339,23 @@ export function FeatureCards() {
                       />
 
                       {/* Name */}
-                      <span className="flex-1 text-left font-bold">{name}</span>
+                      <span className="flex-1 text-left font-bold truncate">{name}</span>
 
                       {/* Ratings */}
-                      <span className="text-[#8A8A85]">CF</span>
-                      <span className={you ? '' : 'text-[#EDEAE4]'}>{cf}</span>
-                      <span className="text-[#8A8A85] ml-2">LC</span>
-                      <span className={you ? '' : 'text-[#EDEAE4]'}>{lc}</span>
+                      <div className="flex items-center gap-3 sm:gap-4 shrink-0 font-mono text-xs">
+                        <div className="flex items-center gap-1.5 min-w-[50px] sm:min-w-[56px] justify-end" title="Codeforces">
+                          <PlatformLogo platform="CODEFORCES" size={15} />
+                          <span className={you ? 'font-bold' : 'text-[#EDEAE4]'}>{cf}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 min-w-[50px] sm:min-w-[56px] justify-end" title="LeetCode">
+                          <PlatformLogo platform="LEETCODE" size={15} />
+                          <span className={you ? 'font-bold' : 'text-[#EDEAE4]'}>{lc}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 min-w-[50px] sm:min-w-[56px] justify-end" title="CodeChef">
+                          <PlatformLogo platform="CODECHEF" size={15} />
+                          <span className={you ? 'font-bold' : 'text-[#EDEAE4]'}>{cc}</span>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
