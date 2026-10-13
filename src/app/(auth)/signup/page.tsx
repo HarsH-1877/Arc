@@ -136,13 +136,18 @@ function SignupForm() {
         const statusRes = await fetch('/api/auth/status');
         const status = await statusRes.json();
 
-        if (status.authenticated && status.onboarded) {
+        if (status.isGuest) {
+          await fetch('/api/auth/session', { method: 'DELETE' });
+        }
+
+        if (status.authenticated && !status.isGuest && status.onboarded) {
           router.replace('/dashboard');
           return;
         }
 
-        if (status.authenticated && !status.onboarded) {
+        if (status.authenticated && !status.isGuest && !status.onboarded) {
           router.replace('/link-account');
+          return;
         }
       } finally {
         if (!cancelled) setBootstrapping(false);
@@ -244,7 +249,7 @@ function SignupForm() {
       <AuthStepper current={step} />
       <section className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[rgba(17,17,20,0.92)] shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
         <div className="border-b border-[var(--border-subtle)] px-7 py-5 text-center">
-          <Image src="/logo.png" width={96} height={96} alt="Arc" className="mx-auto h-24 w-24 object-contain" priority />
+          <Image src="/logo.png" width={220} height={98} alt="Arc" className="mx-auto h-20 w-auto object-contain" priority />
           <h1 className="mt-3 text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)]">
             {step === 0 ? 'Create your account' : 'Choose your Arc credentials'}
           </h1>
@@ -270,7 +275,7 @@ function SignupForm() {
               {error && <ErrorMessage message={error} />}
               <p className="text-center text-sm text-[var(--text-secondary)]">
                 Already have an account?{' '}
-                <Link href="/login" className="font-medium text-[var(--accent-blue)] hover:text-[var(--text-primary)]">
+                <Link href="/login?fresh=1" className="font-medium text-[var(--accent-blue)] hover:text-[var(--text-primary)]">
                   Sign in
                 </Link>
               </p>

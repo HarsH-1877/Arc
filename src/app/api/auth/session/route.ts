@@ -104,6 +104,10 @@ export async function POST(request: NextRequest) {
       path: '/',
       maxAge: SESSION_DURATION_MS / 1000,
     });
+    response.cookies.set('arc-guest', '', {
+      path: '/',
+      maxAge: 0,
+    });
 
     return response;
   } catch (error) {
@@ -130,6 +134,10 @@ export async function DELETE() {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  });
+  response.cookies.set('arc-guest', '', {
     path: '/',
     maxAge: 0,
   });

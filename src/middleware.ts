@@ -19,8 +19,9 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isProtectedRoute = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
   const sessionCookie = request.cookies.get('arc-session')?.value;
-  const isGuest = request.cookies.get('arc-guest')?.value === '1' || request.cookies.get('arc-session')?.value === 'guest';
-  const isLoggedIn = !!sessionCookie || isGuest;
+  const hasRealSession = !!sessionCookie && sessionCookie !== 'guest';
+  const isGuest = request.cookies.get('arc-guest')?.value === '1' || sessionCookie === 'guest';
+  const isLoggedIn = hasRealSession || isGuest;
 
   if (isProtectedRoute && !isLoggedIn) {
     const loginUrl = new URL('/login', request.url);
@@ -28,8 +29,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Only auto-redirect away from login — signup handles existing sessions itself
-  if (isLoggedIn && pathname.startsWith('/login') && request.nextUrl.searchParams.get('fresh') !== '1') {
+  // Only auto-redirect real authenticated users away from login — guests can sign in/sign up freely
+  if (hasRealSession && pathname.startsWith('/login') && request.nextUrl.searchParams.get('fresh') !== '1') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 

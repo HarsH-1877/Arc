@@ -121,7 +121,7 @@ function LoginForm() {
     <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={EASE_OUT_FAST}>
       <section className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[rgba(17,17,20,0.92)] shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
         <div className="border-b border-[var(--border-subtle)] px-7 py-5 text-center">
-          <Image src="/logo.png" width={64} height={64} alt="Arc" className="mx-auto h-16 w-16 object-contain" priority />
+          <Image src="/logo.png" width={220} height={98} alt="Arc" className="mx-auto h-20 w-auto object-contain" priority />
           <h1 className="mt-3 text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)]">Welcome back</h1>
           <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             Sign in with Google or your Arc user ID to continue linking your handles.
@@ -202,7 +202,7 @@ function LoginForm() {
 
           <p className="mt-6 text-center text-sm text-[var(--text-secondary)]">
             New to Arc?{' '}
-            <Link href="/signup" className="font-medium text-[var(--accent-blue)] hover:text-[var(--text-primary)]">
+            <Link href="/signup?fresh=1" className="font-medium text-[var(--accent-blue)] hover:text-[var(--text-primary)]">
               Create account
             </Link>
           </p>
