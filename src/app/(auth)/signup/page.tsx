@@ -79,6 +79,7 @@ function SignupForm() {
   const searchParams = useSearchParams();
   const freshSignup = searchParams.get('fresh') === '1';
   const [googleUser, setGoogleUser] = useState<User | null>(null);
+  const [avatarFailed, setAvatarFailed] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -90,6 +91,15 @@ function SignupForm() {
   const debouncedUsername = useDebounce(username, 350);
   const score = passwordScore(password);
   const step = googleUser ? 1 : 0;
+
+  useEffect(() => {
+    setAvatarFailed(false);
+  }, [googleUser]);
+
+  const photoUrl =
+    googleUser?.photoURL ||
+    googleUser?.providerData?.find((provider) => Boolean(provider?.photoURL))?.photoURL ||
+    null;
 
   const routeExistingGoogleUser = useCallback(async (user: User) => {
     const idToken = await user.getIdToken(true);
@@ -283,7 +293,20 @@ function SignupForm() {
           ) : (
             <form onSubmit={handleCredentials} className="space-y-3.5">
               <div className="flex items-center gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-3.5 py-3">
-                {googleUser.photoURL ? <Image src={googleUser.photoURL} width={28} height={28} alt="" className="h-7 w-7 rounded-full" unoptimized /> : <GoogleIcon />}
+                {photoUrl && !avatarFailed ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={photoUrl}
+                    width={28}
+                    height={28}
+                    alt=""
+                    className="h-7 w-7 shrink-0 rounded-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={() => setAvatarFailed(true)}
+                  />
+                ) : (
+                  <GoogleIcon />
+                )}
                 <p className="min-w-0 truncate text-sm text-[var(--text-secondary)]">{googleUser.email ?? 'Google account connected'}</p>
                 <CheckCircle2 size={16} className="ml-auto shrink-0 text-[var(--accent-green)]" />
               </div>
