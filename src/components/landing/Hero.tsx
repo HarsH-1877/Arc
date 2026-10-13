@@ -118,9 +118,10 @@ export function Hero() {
               </Link>
               <Link
                 href="/api/auth/guest"
-                className="relative z-20 inline-flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.08em] px-4 py-3 transition-colors text-[#8A8A85] hover:text-[#EDEAE4]"
+                className="group relative z-20 inline-flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.08em] px-4 py-3 transition-colors text-[#8A8A85] hover:text-[#EDEAE4]"
               >
-                Explore in Guest Mode →
+                Explore in Guest Mode
+                <span className="inline-block transition-transform duration-150 group-hover:translate-x-1">→</span>
               </Link>
             </div>
 
